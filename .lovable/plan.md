@@ -1,33 +1,62 @@
-# Fix: make adding tables and importing guests obvious
+## Goal
 
-## What's wrong
+Cut the friction. Today every flow asks for too much (column mapping, shape pickers, capacity inputs, RSVP enums, conflict UIs). Replace these with **one smart text box** powered by Lovable AI, plus collapsed "advanced" details. Keep all existing UI as fallback.
 
-When you create a fresh plan, the planner opens on the **Seating** tab, which just shows "Add some tables first" with no button to do so. The tab bar is there but easy to miss, and the entry actions for guests/tables live inside other tabs. Result: it looks like there's nothing to do.
+## The four AI moments
 
-## Fix
+### 1. Smart Add Guests (replaces manual form + bulk paste)
 
-1. **Smart default tab** — when a plan has 0 guests and 0 tables, open on a new **Get started** view (or default to Guests tab) instead of Seating.
+A single textarea on the Guests tab and Get Started card:
 
-2. **First-run "Get started" panel** — replaces the stats bar on an empty plan. Three big cards:
-   - Import a guest spreadsheet (opens file picker directly, plus a "Download template" link)
-   - Add guests one by one (jumps to Guests tab + opens the Add guest dialog)
-   - Add tables (jumps to Tables tab + opens the Add table dialog, plus "Bulk add 10 round tables of 8" shortcut)
-   
-3. **Better empty states inside each tab** — every empty list now has a primary CTA button:
-   - Seating tab empty → "Add tables" / "Add guests" buttons that switch tabs
-   - Guests tab empty → already has Add/Import buttons; make them more prominent (large, centered card)
-   - Tables tab empty → already has Add/Bulk buttons; same treatment
-   - Unassigned panel empty (with no guests at all) → "Import guest list" CTA
+> "Paste or type anything — names, a copy from your wedding website, an email thread, a WhatsApp list. We'll figure it out."
 
-4. **Make the tab bar more visible** — bump size, add subtle dividers, ensure it's clearly above the content on small viewports. Add a small badge/dot on tabs that have unfinished work (e.g. unassigned guests).
+Examples that should work:
+- `John & Sarah Smith +2 kids (vegetarian)`
+- `Mom, Dad, Aunt May (wheelchair), Uncle Bob — bride side`
+- A pasted chunk of an RSVP email
 
-5. **Header hint** — show a short one-line helper under the plan name on first visit: "Start by importing your guest list or adding tables."
+AI returns a structured list of guests (name, party, side, meal, is_kid, accessibility, notes) which we preview in a confirm-table before insert. User can edit inline, then **Add all**.
 
-## Files to touch
+### 2. Smart Spreadsheet Import (kills the column-mapping step)
 
-- `src/pages/Planner.tsx` — smart default tab, get-started panel, helper text
-- `src/components/planner/SeatingView.tsx` — empty-state CTAs that can switch tabs (lift tab control to parent or accept an `onSwitchTab` prop)
-- `src/components/planner/GuestsTab.tsx` and `TablesTab.tsx` — accept an optional `autoOpen` prop so the parent can open the dialog after switching tabs
-- New `src/components/planner/GetStarted.tsx` for the empty-plan onboarding card
+Today: upload → manual dropdown for every column.
+New: upload → AI gets the headers + 3 sample rows → returns the mapping + RSVP/kid normalization rules → we go straight to the preview table. Manual mapping stays as a "Adjust mapping" link for edge cases.
 
-No schema or backend changes needed.
+### 3. Smart Table Setup (replaces Add Table + Bulk Add dialogs)
+
+One input:
+> "Describe your room — e.g. *10 round tables of 8, a head table for 6, two long tables of 12 by the window*"
+
+AI returns a list of `{name, shape, capacity}` rows shown as chips you can tweak/remove before creating. The existing manual + bulk dialogs stay accessible under "Manual setup".
+
+### 4. Slimmer Guest form
+
+The "Add guest" dialog currently shows 8 fields. Reduce to:
+- **Name** (only required field visible)
+- **+ Add details** disclosure → party, side, RSVP, meal, kid, accessibility, notes
+
+Same data model, less visual noise.
+
+## Technical details
+
+- **Edge function `ai-parse`** with three modes: `guests`, `tables`, `mapping`. Calls Lovable AI Gateway (`google/gemini-3-flash-preview`) using **tool-calling for structured output** (per AI Gateway guidance). Handles 429/402 with toast messages.
+- Schemas:
+  - `guests`: `{ guests: [{ name, party?, side?, rsvp?, meal?, is_kid?, accessibility?, notes? }] }`
+  - `tables`: `{ tables: [{ name, shape: "round|rectangle|square|long|head", capacity }] }`
+  - `mapping`: `{ mapping: { [header]: field|null }, rsvp_synonyms?: {attending:[], declined:[], maybe:[]} }`
+- New components:
+  - `SmartGuestInput.tsx` — textarea + preview table + Add all
+  - `SmartTableInput.tsx` — textarea + chips + Create
+  - `GuestPreviewTable.tsx` (shared by smart-add + import)
+- Edits:
+  - `GuestsTab.tsx`: add Smart Add as primary CTA; collapse advanced fields in `GuestEditor`
+  - `TablesTab.tsx`: add Smart Setup as primary CTA
+  - `GetStarted.tsx`: replace 3 cards with one big "Describe your guests / Describe your tables" pair, keep import + manual as secondary links
+  - Spreadsheet import: call `ai-parse` mode `mapping` after parsing the file; skip manual dialog when confident, still allow override
+- No DB schema changes.
+- Keep all current dialogs/buttons reachable so power users aren't blocked.
+
+## Out of scope (call out for follow-up)
+
+- AI-explained seating suggestions ("seated Aunt May at T3 because…") — separate pass on auto-assign.
+- Voice input.
