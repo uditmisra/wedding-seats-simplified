@@ -1,6 +1,6 @@
 import type { Guest, TableDef, Assignment, ConstraintDef } from "@/lib/types";
 import { tableConflicts, unmetMustWith } from "@/lib/seating";
-import { Users, Utensils, LayoutGrid, AlertTriangle } from "lucide-react";
+import { CheckCircle2, AlertTriangle } from "lucide-react";
 
 interface Props {
   guests: Guest[];
@@ -9,44 +9,34 @@ interface Props {
   constraints: ConstraintDef[];
 }
 
+/**
+ * A single calm progress strip. One number that matters: how close are we to done?
+ * Conflicts only surface when present, so the happy path stays quiet.
+ */
 export function StatsBar({ guests, tables, assignments, constraints }: Props) {
   const attending = guests.filter(g => g.rsvp === "attending").length;
-  const declined = guests.filter(g => g.rsvp === "declined").length;
-  const pending = guests.filter(g => g.rsvp === "pending").length;
-  const totalCapacity = tables.reduce((s, t) => s + t.capacity, 0);
   const seatedAttending = assignments.filter(a => guests.find(g => g.id === a.guest_id)?.rsvp === "attending").length;
   const conflicts = tables.flatMap(t => tableConflicts(t.id, assignments, constraints)).length + unmetMustWith(assignments, constraints).length;
-
-  const items = [
-    { icon: Users, label: "Attending", value: `${attending}`, sub: `${pending} pending · ${declined} declined` },
-    { icon: LayoutGrid, label: "Seated", value: `${seatedAttending} / ${attending}`, sub: `${tables.length} tables · ${totalCapacity} seats` },
-    { icon: Utensils, label: "Meals", value: mealSummary(guests), sub: "for caterer" },
-    { icon: AlertTriangle, label: "Conflicts", value: `${conflicts}`, sub: conflicts ? "review constraints" : "all clear", warn: conflicts > 0 },
-  ];
+  const pct = attending ? Math.round((seatedAttending / attending) * 100) : 0;
+  const done = attending > 0 && seatedAttending === attending && conflicts === 0;
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-      {items.map((it, i) => (
-        <div key={i} className={`rounded-xl border bg-card p-4 ${it.warn ? "border-destructive/40" : "border-border/60"}`}>
-          <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
-            <it.icon size={14}/>{it.label}
-          </div>
-          <div className={`mt-1 font-display text-2xl ${it.warn ? "text-destructive" : ""}`}>{it.value}</div>
-          <div className="text-xs text-muted-foreground mt-0.5 truncate">{it.sub}</div>
+    <div className="rounded-2xl border border-border/60 bg-card/70 backdrop-blur px-5 py-4 flex items-center gap-5">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-baseline gap-2">
+          <span className="font-display text-2xl">{seatedAttending}</span>
+          <span className="text-muted-foreground text-sm">of {attending} guests seated</span>
+          {done && <span className="ml-auto text-sm text-primary inline-flex items-center gap-1"><CheckCircle2 size={14}/>All set</span>}
         </div>
-      ))}
+        <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
+          <div className="h-full bg-primary transition-all duration-500" style={{ width: `${pct}%` }}/>
+        </div>
+      </div>
+      {conflicts > 0 && (
+        <div className="flex items-center gap-1.5 text-sm text-destructive whitespace-nowrap">
+          <AlertTriangle size={14}/>{conflicts} to review
+        </div>
+      )}
     </div>
   );
-}
-
-function mealSummary(guests: Guest[]) {
-  const counts = new Map<string, number>();
-  for (const g of guests) {
-    if (g.rsvp !== "attending") continue;
-    const k = (g.meal || "—").toLowerCase();
-    counts.set(k, (counts.get(k) ?? 0) + 1);
-  }
-  const top = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 2);
-  if (!top.length) return "—";
-  return top.map(([k, v]) => `${v} ${k}`).join(", ");
 }
