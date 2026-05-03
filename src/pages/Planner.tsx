@@ -52,8 +52,8 @@ const Planner = () => {
   };
 
   const goImport = () => { setGuestsAutoOpen("import"); setTab("guests"); };
-  const goAddGuest = () => { setGuestsAutoOpen("new"); setTab("guests"); };
-  const goAddTable = () => { setTablesAutoOpen("new"); setTab("tables"); };
+  const goAddGuest = () => { setTab("guests"); };
+  const goAddTable = () => { setTab("tables"); };
   const goBulkTables = () => { setTablesAutoOpen("bulk"); setTab("tables"); };
 
   return (
