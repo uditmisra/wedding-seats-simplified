@@ -13,7 +13,6 @@ import { ConstraintsPanel } from "@/components/planner/ConstraintsPanel";
 import { ExportPanel } from "@/components/planner/ExportPanel";
 import { AutoAssignDialog } from "@/components/planner/AutoAssignDialog";
 import { OnboardingFlow } from "@/components/planner/OnboardingFlow";
-import { downloadGuestTemplate } from "@/lib/template";
 import { Sparkles, Link as LinkIcon, Check, ArrowLeft, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 
