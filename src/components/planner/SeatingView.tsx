@@ -11,6 +11,7 @@ import { LayoutDashboard, List as ListIcon } from "lucide-react";
 
 interface Props {
   planId: string;
+  scenarioId: string;
   guests: Guest[];
   tables: TableDef[];
   assignments: Assignment[];
@@ -20,7 +21,7 @@ interface Props {
   onGoToTables?: () => void;
 }
 
-export function SeatingView({ planId, guests, tables, assignments, constraints, refresh, onGoToGuests, onGoToTables }: Props) {
+export function SeatingView({ planId, scenarioId, guests, tables, assignments, constraints, refresh, onGoToGuests, onGoToTables }: Props) {
   const [search, setSearch] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [view, setView] = useState<"list" | "floor">("list");
@@ -51,7 +52,7 @@ export function SeatingView({ planId, guests, tables, assignments, constraints, 
     if (existing) {
       await supabase.from("assignments").update({ table_id: overId }).eq("id", existing.id);
     } else {
-      await supabase.from("assignments").insert({ plan_id: planId, guest_id: guestId, table_id: overId });
+      await supabase.from("assignments").insert({ plan_id: planId, scenario_id: scenarioId, guest_id: guestId, table_id: overId });
     }
     refresh();
   };
