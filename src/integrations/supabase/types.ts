@@ -20,6 +20,7 @@ export type Database = {
           id: string
           pinned: boolean
           plan_id: string
+          scenario_id: string
           seat_index: number | null
           table_id: string
         }
@@ -28,6 +29,7 @@ export type Database = {
           id?: string
           pinned?: boolean
           plan_id: string
+          scenario_id: string
           seat_index?: number | null
           table_id: string
         }
@@ -36,6 +38,7 @@ export type Database = {
           id?: string
           pinned?: boolean
           plan_id?: string
+          scenario_id?: string
           seat_index?: number | null
           table_id?: string
         }
@@ -186,6 +189,30 @@ export type Database = {
         }
         Relationships: []
       }
+      scenarios: {
+        Row: {
+          created_at: string
+          id: string
+          is_default: boolean
+          name: string
+          plan_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          plan_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          plan_id?: string
+        }
+        Relationships: []
+      }
       tables_def: {
         Row: {
           capacity: number
@@ -194,6 +221,7 @@ export type Database = {
           name: string
           plan_id: string
           rotation: number
+          scenario_id: string
           shape: string
           x: number
           y: number
@@ -205,6 +233,7 @@ export type Database = {
           name: string
           plan_id: string
           rotation?: number
+          scenario_id: string
           shape?: string
           x?: number
           y?: number
@@ -216,6 +245,7 @@ export type Database = {
           name?: string
           plan_id?: string
           rotation?: number
+          scenario_id?: string
           shape?: string
           x?: number
           y?: number
