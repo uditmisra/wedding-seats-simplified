@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Guest, TableDef, Assignment, ConstraintDef } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Pin, X } from "lucide-react";
+import { Search, Pin, X, LayoutGrid, UserPlus } from "lucide-react";
 import { tableConflicts } from "@/lib/seating";
 
 interface Props {
@@ -14,9 +14,11 @@ interface Props {
   assignments: Assignment[];
   constraints: ConstraintDef[];
   refresh: () => void;
+  onGoToGuests?: () => void;
+  onGoToTables?: () => void;
 }
 
-export function SeatingView({ planId, guests, tables, assignments, constraints, refresh }: Props) {
+export function SeatingView({ planId, guests, tables, assignments, constraints, refresh, onGoToGuests, onGoToTables }: Props) {
   const [search, setSearch] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
@@ -59,9 +61,16 @@ export function SeatingView({ planId, guests, tables, assignments, constraints, 
   return (
     <DndContext sensors={sensors} onDragStart={e => setActiveId(String(e.active.id))} onDragEnd={onDragEnd}>
       <div className="grid lg:grid-cols-[280px_1fr] gap-4">
-        <UnassignedPanel guests={unassigned} search={search} setSearch={setSearch}/>
+        <UnassignedPanel guests={unassigned} search={search} setSearch={setSearch} totalGuests={guests.length} onAddGuest={onGoToGuests}/>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-          {tables.length === 0 && <div className="text-muted-foreground p-8 col-span-full text-center">Add some tables first.</div>}
+          {tables.length === 0 && (
+            <div className="col-span-full rounded-xl border border-dashed border-border bg-card/50 p-10 text-center">
+              <LayoutGrid className="mx-auto text-muted-foreground" size={28}/>
+              <div className="font-display text-lg mt-3">No tables yet</div>
+              <div className="text-sm text-muted-foreground mt-1 mb-4">Set up your reception tables before assigning seats.</div>
+              <Button onClick={onGoToTables}>Add tables</Button>
+            </div>
+          )}
           {tables.map(t => {
             const seated = assignments.filter(a => a.table_id === t.id);
             const conflicts = tableConflicts(t.id, assignments, constraints);
@@ -78,7 +87,7 @@ export function SeatingView({ planId, guests, tables, assignments, constraints, 
   );
 }
 
-function UnassignedPanel({ guests, search, setSearch }: { guests: Guest[]; search: string; setSearch: (s: string) => void }) {
+function UnassignedPanel({ guests, search, setSearch, totalGuests, onAddGuest }: { guests: Guest[]; search: string; setSearch: (s: string) => void; totalGuests: number; onAddGuest?: () => void }) {
   const { setNodeRef, isOver } = useDroppable({ id: "__unassign__" });
   return (
     <div ref={setNodeRef} className={`rounded-xl border bg-card p-3 lg:sticky lg:top-4 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto ${isOver ? "border-primary" : "border-border/60"}`}>
@@ -89,7 +98,14 @@ function UnassignedPanel({ guests, search, setSearch }: { guests: Guest[]; searc
       </div>
       <div className="space-y-1">
         {guests.map(g => <GuestPill key={g.id} guest={g}/>)}
-        {guests.length === 0 && <div className="text-xs text-muted-foreground py-4 text-center">All seated 🎉</div>}
+        {guests.length === 0 && totalGuests === 0 && (
+          <div className="text-center py-4">
+            <UserPlus className="mx-auto text-muted-foreground mb-2" size={20}/>
+            <div className="text-xs text-muted-foreground mb-2">No guests yet</div>
+            <Button size="sm" variant="outline" onClick={onAddGuest}>Add guests</Button>
+          </div>
+        )}
+        {guests.length === 0 && totalGuests > 0 && <div className="text-xs text-muted-foreground py-4 text-center">All seated 🎉</div>}
       </div>
     </div>
   );
