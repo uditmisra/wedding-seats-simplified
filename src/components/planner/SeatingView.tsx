@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Pin, X, LayoutGrid, UserPlus } from "lucide-react";
 import { tableConflicts } from "@/lib/seating";
+import { FloorPlan } from "./FloorPlan";
+import { LayoutDashboard, List as ListIcon } from "lucide-react";
 
 interface Props {
   planId: string;
@@ -21,6 +23,7 @@ interface Props {
 export function SeatingView({ planId, guests, tables, assignments, constraints, refresh, onGoToGuests, onGoToTables }: Props) {
   const [search, setSearch] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [view, setView] = useState<"list" | "floor">("list");
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
   const assignedMap = useMemo(() => new Map(assignments.map(a => [a.guest_id, a])), [assignments]);
@@ -60,6 +63,29 @@ export function SeatingView({ planId, guests, tables, assignments, constraints, 
 
   return (
     <DndContext sensors={sensors} onDragStart={e => setActiveId(String(e.active.id))} onDragEnd={onDragEnd}>
+      <div className="flex justify-end mb-3">
+        <div className="inline-flex rounded-full border border-border/60 bg-card p-0.5 text-sm">
+          <button
+            onClick={() => setView("list")}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-full transition ${view === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            <ListIcon size={14}/> List
+          </button>
+          <button
+            onClick={() => setView("floor")}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-full transition ${view === "floor" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            <LayoutDashboard size={14}/> Floor plan
+          </button>
+        </div>
+      </div>
+
+      {view === "floor" ? (
+        <div className="grid lg:grid-cols-[280px_1fr] gap-4">
+          <UnassignedPanel guests={unassigned} search={search} setSearch={setSearch} totalGuests={guests.length} onAddGuest={onGoToGuests}/>
+          <FloorPlan tables={tables} assignments={assignments} guests={guests} constraints={constraints}/>
+        </div>
+      ) : (
       <div className="grid lg:grid-cols-[280px_1fr] gap-4">
         <UnassignedPanel guests={unassigned} search={search} setSearch={setSearch} totalGuests={guests.length} onAddGuest={onGoToGuests}/>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -80,6 +106,7 @@ export function SeatingView({ planId, guests, tables, assignments, constraints, 
           })}
         </div>
       </div>
+      )}
       <DragOverlay>
         {activeId ? <GuestPill guest={guestById.get(activeId)!} dragging/> : null}
       </DragOverlay>
