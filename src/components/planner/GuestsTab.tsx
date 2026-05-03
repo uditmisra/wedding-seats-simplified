@@ -172,17 +172,18 @@ export function GuestsTab({ planId, guests, refresh, autoOpen, onAutoOpenHandled
           <Search className="absolute left-3 top-2.5 text-muted-foreground" size={16}/>
           <Input placeholder="Search guests…" value={search} onChange={e => setSearch(e.target.value)} className="pl-9"/>
         </div>
-        <Select value={filterRsvp} onValueChange={setFilterRsvp}>
-          <SelectTrigger className="w-[160px]"><SelectValue/></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All RSVPs</SelectItem>
-            {RSVPS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        {guests.length > 15 && (
+          <Select value={filterRsvp} onValueChange={setFilterRsvp}>
+            <SelectTrigger className="w-[160px]"><SelectValue/></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All RSVPs</SelectItem>
+              {RSVPS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
         <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls" className="hidden"
           onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }}/>
         <Button variant="outline" onClick={() => fileRef.current?.click()}><Upload size={16} className="mr-1.5"/>Import</Button>
-        <Button variant="ghost" size="sm" onClick={downloadTemplate}><Download size={14} className="mr-1"/>Template</Button>
         <Button onClick={() => setEditing("new")}><Plus size={16} className="mr-1.5"/>Add guest</Button>
       </div>
 
@@ -246,6 +247,9 @@ export function GuestsTab({ planId, guests, refresh, autoOpen, onAutoOpenHandled
             ))}
           </div>
           <DialogFooter>
+            <button type="button" onClick={downloadTemplate} className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 mr-auto">
+              <Download size={12}/> Don't have a spreadsheet? Download our template
+            </button>
             <Button variant="ghost" onClick={() => setImportRows(null)}>Cancel</Button>
             <Button onClick={confirmImport} disabled={autoMapping}>Import {importRows?.length} guests</Button>
           </DialogFooter>
