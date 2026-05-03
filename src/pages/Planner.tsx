@@ -13,12 +13,15 @@ import { ConstraintsPanel } from "@/components/planner/ConstraintsPanel";
 import { ExportPanel } from "@/components/planner/ExportPanel";
 import { AutoAssignDialog } from "@/components/planner/AutoAssignDialog";
 import { OnboardingFlow } from "@/components/planner/OnboardingFlow";
+import { ScenarioSwitcher } from "@/components/planner/ScenarioSwitcher";
+import { CompareScenarios } from "@/components/planner/CompareScenarios";
 import { Sparkles, Link as LinkIcon, Check, ArrowLeft, Wand2 } from "lucide-react";
 import { toast } from "sonner";
+import { addRecentPlan } from "@/lib/recentPlans";
 
 const Planner = () => {
   const { code } = useParams();
-  const { plan, setPlan, guests, tables, assignments, constraints, loading, notFound, refresh } = usePlanData(code);
+  const { plan, setPlan, scenarios, scenarioId, setScenarioId, guests, tables, assignments, constraints, loading, notFound, refresh } = usePlanData(code);
   const [editingName, setEditingName] = useState(false);
   const [autoOpen, setAutoOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -32,6 +35,11 @@ const Planner = () => {
   useEffect(() => {
     if (showOnboarding) setTab("seating");
   }, [showOnboarding]);
+
+  // Track recently opened plans
+  useEffect(() => {
+    if (plan) addRecentPlan({ code: plan.code, name: plan.name, openedAt: Date.now() });
+  }, [plan?.id, plan?.name]);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading…</div>;
   if (notFound || !plan) return (
@@ -66,6 +74,17 @@ const Planner = () => {
           )}
           <span className="text-xs text-muted-foreground hidden sm:inline">code: {plan.code}</span>
           <div className="ml-auto flex gap-2">
+            {scenarioId && (
+              <ScenarioSwitcher
+                planId={plan.id}
+                scenarios={scenarios}
+                scenarioId={scenarioId}
+                setScenarioId={setScenarioId}
+                tables={tables}
+                assignments={assignments}
+                refresh={refresh}
+              />
+            )}
             <Button variant="outline" size="sm" onClick={copyLink}>
               {copied ? <><Check size={14} className="mr-1"/>Copied</> : <><LinkIcon size={14} className="mr-1"/>Share link</>}
             </Button>
@@ -78,6 +97,7 @@ const Planner = () => {
         {showOnboarding ? (
           <OnboardingFlow
             planId={plan.id}
+            scenarioId={scenarioId ?? ""}
             guestCount={guests.length}
             tableCount={tables.length}
             onImport={goImport}
@@ -94,19 +114,23 @@ const Planner = () => {
             <TabsTrigger value="seating">Seating</TabsTrigger>
             <TabsTrigger value="guests">Guests ({guests.length})</TabsTrigger>
             <TabsTrigger value="tables">Tables ({tables.length})</TabsTrigger>
+            <TabsTrigger value="compare">Compare</TabsTrigger>
             <TabsTrigger value="constraints">Constraints ({constraints.length})</TabsTrigger>
             <TabsTrigger value="export">Export</TabsTrigger>
           </TabsList>
 
           <TabsContent value="seating" className="mt-4">
-            <SeatingView planId={plan.id} guests={guests} tables={tables} assignments={assignments} constraints={constraints} refresh={refresh}
+            <SeatingView planId={plan.id} scenarioId={scenarioId ?? ""} guests={guests} tables={tables} assignments={assignments} constraints={constraints} refresh={refresh}
               onGoToGuests={() => setTab("guests")} onGoToTables={() => setTab("tables")}/>
           </TabsContent>
           <TabsContent value="guests" className="mt-4">
             <GuestsTab planId={plan.id} guests={guests} refresh={refresh} autoOpen={guestsAutoOpen} onAutoOpenHandled={() => setGuestsAutoOpen(null)}/>
           </TabsContent>
           <TabsContent value="tables" className="mt-4">
-            <TablesTab planId={plan.id} tables={tables} assignments={assignments} refresh={refresh} autoOpen={tablesAutoOpen} onAutoOpenHandled={() => setTablesAutoOpen(null)}/>
+            <TablesTab planId={plan.id} scenarioId={scenarioId ?? ""} tables={tables} assignments={assignments} refresh={refresh} autoOpen={tablesAutoOpen} onAutoOpenHandled={() => setTablesAutoOpen(null)}/>
+          </TabsContent>
+          <TabsContent value="compare" className="mt-4">
+            <CompareScenarios scenarios={scenarios} currentScenarioId={scenarioId} currentTables={tables} currentAssignments={assignments} guests={guests} constraints={constraints}/>
           </TabsContent>
           <TabsContent value="constraints" className="mt-4">
             <ConstraintsPanel planId={plan.id} guests={guests} constraints={constraints} refresh={refresh}/>
@@ -118,7 +142,7 @@ const Planner = () => {
       </main>
 
       {autoOpen && (
-        <AutoAssignDialog planId={plan.id} guests={guests} tables={tables} assignments={assignments} constraints={constraints} onClose={() => { setAutoOpen(false); refresh(); toast.success("Done"); }}/>
+        <AutoAssignDialog planId={plan.id} scenarioId={scenarioId ?? ""} guests={guests} tables={tables} assignments={assignments} constraints={constraints} onClose={() => { setAutoOpen(false); refresh(); toast.success("Done"); }}/>
       )}
     </div>
   );
