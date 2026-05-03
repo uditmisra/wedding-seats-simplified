@@ -201,7 +201,14 @@ export function GuestsTab({ planId, guests, refresh, autoOpen, onAutoOpenHandled
           </thead>
           <tbody>
             {filtered.length === 0 && (
-              <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No guests yet — import a spreadsheet or add one.</td></tr>
+              <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">
+                No guests yet — import a spreadsheet or add one.
+                {guests.length === 0 && (
+                  <button type="button" onClick={downloadTemplate} className="block mx-auto mt-2 text-xs text-primary hover:underline inline-flex items-center gap-1">
+                    <Download size={12}/> Download our template
+                  </button>
+                )}
+              </td></tr>
             )}
             {filtered.map(g => (
               <tr key={g.id} className="border-t border-border/40 hover:bg-muted/30">
