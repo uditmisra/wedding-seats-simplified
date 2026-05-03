@@ -9,6 +9,7 @@ type Step = 1 | 2 | 3;
 
 interface Props {
   planId: string;
+  scenarioId: string;
   guestCount: number;
   tableCount: number;
   onImport: () => void;
@@ -17,7 +18,7 @@ interface Props {
   refresh: () => void;
 }
 
-export function OnboardingFlow({ planId, guestCount, tableCount, onImport, onAutoAssign, onFinish, refresh }: Props) {
+export function OnboardingFlow({ planId, scenarioId, guestCount, tableCount, onImport, onAutoAssign, onFinish, refresh }: Props) {
   const [step, setStep] = useState<Step>(guestCount > 0 ? (tableCount > 0 ? 3 : 2) : 1);
 
   const steps = [
@@ -87,7 +88,7 @@ export function OnboardingFlow({ planId, guestCount, tableCount, onImport, onAut
             <h2 className="font-display text-2xl md:text-3xl">Set up your room</h2>
             <p className="text-muted-foreground mt-1">Describe your tables in one line — e.g. "10 rounds of 8 + a head table for 6".</p>
           </div>
-          <SmartTableInput planId={planId} existingCount={tableCount} onDone={refresh}/>
+          <SmartTableInput planId={planId} scenarioId={scenarioId} existingCount={tableCount} onDone={refresh}/>
 
           <div className="flex justify-between pt-2 border-t border-border/40">
             <Button variant="ghost" onClick={() => setStep(1)}>← Back to guests</Button>
