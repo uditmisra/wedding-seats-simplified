@@ -13,6 +13,8 @@ import { Plus, Upload, Download, Trash2, Pencil, Search } from "lucide-react";
 import { toast } from "sonner";
 import type { Guest, RSVP } from "@/lib/types";
 import { downloadGuestTemplate } from "@/lib/template";
+import { SmartGuestInput } from "./SmartGuestInput";
+import { ChevronDown } from "lucide-react";
 
 interface Props {
   planId: string;
@@ -46,6 +48,7 @@ export function GuestsTab({ planId, guests, refresh, autoOpen, onAutoOpenHandled
   const [search, setSearch] = useState("");
   const [filterRsvp, setFilterRsvp] = useState<string>("all");
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const [autoMapping, setAutoMapping] = useState(false);
 
   useEffect(() => {
     if (autoOpen === "new") { setEditing("new"); onAutoOpenHandled?.(); }
@@ -69,7 +72,7 @@ export function GuestsTab({ planId, guests, refresh, autoOpen, onAutoOpenHandled
     const headers = Object.keys(rows[0]);
     setImportHeaders(headers);
     setImportRows(rows);
-    // auto-guess
+    // Heuristic guess as a baseline
     const guess: Record<string, FieldKey | ""> = {};
     for (const h of headers) {
       const lo = h.toLowerCase().trim();
@@ -86,6 +89,25 @@ export function GuestsTab({ planId, guests, refresh, autoOpen, onAutoOpenHandled
       else guess[h] = "";
     }
     setMapping(guess);
+    // Ask AI to refine the mapping
+    setAutoMapping(true);
+    try {
+      const samples = rows.slice(0, 3);
+      const { data } = await supabase.functions.invoke("ai-parse", { body: { mode: "mapping", input: { headers, samples } } });
+      const aiMap = data?.mapping as Record<string, string | null> | undefined;
+      if (aiMap) {
+        const merged: Record<string, FieldKey | ""> = { ...guess };
+        for (const h of headers) {
+          const v = aiMap[h];
+          if (v && (FIELD_KEYS as readonly string[]).includes(v)) merged[h] = v as FieldKey;
+        }
+        setMapping(merged);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setAutoMapping(false);
+    }
   };
 
   const confirmImport = async () => {
@@ -143,6 +165,8 @@ export function GuestsTab({ planId, guests, refresh, autoOpen, onAutoOpenHandled
 
   return (
     <div className="space-y-4">
+      <SmartGuestInput planId={planId} onDone={refresh}/>
+
       <div className="flex flex-wrap gap-2 items-center">
         <div className="relative flex-1 min-w-[220px]">
           <Search className="absolute left-3 top-2.5 text-muted-foreground" size={16}/>
@@ -203,8 +227,10 @@ export function GuestsTab({ planId, guests, refresh, autoOpen, onAutoOpenHandled
 
       <Dialog open={!!importRows} onOpenChange={(o) => !o && setImportRows(null)}>
         <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>Map your spreadsheet columns</DialogTitle></DialogHeader>
-          <p className="text-sm text-muted-foreground">Tell us which of your columns matches each field. {importRows?.length} rows detected.</p>
+          <DialogHeader><DialogTitle>{autoMapping ? "AI is mapping your columns…" : "Confirm column mapping"}</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            {autoMapping ? "Hang tight — auto-detecting which column means what." : `We've matched your columns automatically. Tweak below if anything is off. ${importRows?.length} rows detected.`}
+          </p>
           <div className="max-h-[50vh] overflow-y-auto space-y-2 mt-2">
             {importHeaders.map(h => (
               <div key={h} className="grid grid-cols-2 gap-3 items-center">
@@ -221,7 +247,7 @@ export function GuestsTab({ planId, guests, refresh, autoOpen, onAutoOpenHandled
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setImportRows(null)}>Cancel</Button>
-            <Button onClick={confirmImport}>Import {importRows?.length} guests</Button>
+            <Button onClick={confirmImport} disabled={autoMapping}>Import {importRows?.length} guests</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -248,6 +274,7 @@ function RsvpBadge({ rsvp }: { rsvp: RSVP }) {
 
 function GuestEditor({ planId, guest, onClose }: { planId: string; guest: Guest | null; onClose: () => void }) {
   const [form, setForm] = useState<Partial<Guest>>(guest ?? { rsvp: "pending", is_kid: false });
+  const [showMore, setShowMore] = useState(!!guest);
   const save = async () => {
     if (!form.name?.trim()) { toast.error("Name required"); return; }
     if (guest) {
@@ -262,26 +289,34 @@ function GuestEditor({ planId, guest, onClose }: { planId: string; guest: Guest 
       <DialogContent>
         <DialogHeader><DialogTitle>{guest ? "Edit guest" : "Add guest"}</DialogTitle></DialogHeader>
         <div className="grid gap-3">
-          <div><Label>Name</Label><Input value={form.name ?? ""} onChange={e => setForm({ ...form, name: e.target.value })}/></div>
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label>Party / group</Label><Input value={form.party ?? ""} onChange={e => setForm({ ...form, party: e.target.value })}/></div>
-            <div><Label>Side</Label><Input value={form.side ?? ""} onChange={e => setForm({ ...form, side: e.target.value })}/></div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>RSVP</Label>
-              <Select value={form.rsvp ?? "pending"} onValueChange={(v) => setForm({ ...form, rsvp: v as RSVP })}>
-                <SelectTrigger><SelectValue/></SelectTrigger>
-                <SelectContent>{RSVPS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div><Label>Meal</Label><Input value={form.meal ?? ""} onChange={e => setForm({ ...form, meal: e.target.value })}/></div>
-          </div>
-          <div><Label>Accessibility</Label><Input placeholder="wheelchair, hearing-aid…" value={form.accessibility ?? ""} onChange={e => setForm({ ...form, accessibility: e.target.value })}/></div>
-          <div><Label>Notes</Label><Textarea rows={2} value={form.notes ?? ""} onChange={e => setForm({ ...form, notes: e.target.value })}/></div>
-          <label className="flex items-center gap-2 text-sm">
-            <Checkbox checked={!!form.is_kid} onCheckedChange={(v) => setForm({ ...form, is_kid: !!v })}/> Child / kid
-          </label>
+          <div><Label>Name</Label><Input autoFocus value={form.name ?? ""} onChange={e => setForm({ ...form, name: e.target.value })}/></div>
+          {!showMore ? (
+            <button type="button" onClick={() => setShowMore(true)} className="text-sm text-primary hover:underline self-start flex items-center gap-1">
+              <ChevronDown size={14}/> Add details (optional)
+            </button>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Party / group</Label><Input value={form.party ?? ""} onChange={e => setForm({ ...form, party: e.target.value })}/></div>
+                <div><Label>Side</Label><Input value={form.side ?? ""} onChange={e => setForm({ ...form, side: e.target.value })}/></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>RSVP</Label>
+                  <Select value={form.rsvp ?? "pending"} onValueChange={(v) => setForm({ ...form, rsvp: v as RSVP })}>
+                    <SelectTrigger><SelectValue/></SelectTrigger>
+                    <SelectContent>{RSVPS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div><Label>Meal</Label><Input value={form.meal ?? ""} onChange={e => setForm({ ...form, meal: e.target.value })}/></div>
+              </div>
+              <div><Label>Accessibility</Label><Input placeholder="wheelchair, hearing-aid…" value={form.accessibility ?? ""} onChange={e => setForm({ ...form, accessibility: e.target.value })}/></div>
+              <div><Label>Notes</Label><Textarea rows={2} value={form.notes ?? ""} onChange={e => setForm({ ...form, notes: e.target.value })}/></div>
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox checked={!!form.is_kid} onCheckedChange={(v) => setForm({ ...form, is_kid: !!v })}/> Child / kid
+              </label>
+            </>
+          )}
         </div>
         <DialogFooter><Button variant="ghost" onClick={onClose}>Cancel</Button><Button onClick={save}>Save</Button></DialogFooter>
       </DialogContent>
