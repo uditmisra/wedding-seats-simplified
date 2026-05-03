@@ -28,8 +28,8 @@ export function TablesTab({ planId, scenarioId, tables, assignments, refresh, au
   const [showManual, setShowManual] = useState(false);
 
   useEffect(() => {
-    if (autoOpen === "new") { setEditing("new"); onAutoOpenHandled?.(); }
-    else if (autoOpen === "bulk") { setBulkOpen(true); onAutoOpenHandled?.(); }
+    if (autoOpen === "new") { setShowManual(true); setEditing("new"); onAutoOpenHandled?.(); }
+    else if (autoOpen === "bulk") { setShowManual(true); setBulkOpen(true); onAutoOpenHandled?.(); }
   }, [autoOpen, onAutoOpenHandled]);
 
   const seatedCount = (tid: string) => assignments.filter(a => a.table_id === tid).length;
