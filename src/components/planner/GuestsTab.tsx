@@ -85,7 +85,7 @@ export function GuestsTab({ planId, guests, refresh }: Props) {
     for (const [h, f] of Object.entries(mapping)) if (f) inverse[f] = h;
     if (!inverse.name) { toast.error("Map a 'Name' column"); return; }
 
-    const newGuests: Partial<Guest>[] = [];
+    const newGuests: Array<{ plan_id: string; name: string; party: string | null; rsvp: RSVP; meal: string | null; side: string | null; is_kid: boolean; accessibility: string | null; notes: string | null }> = [];
     const constraintsRaw: { aName: string; bName: string; kind: "with" | "not_with" }[] = [];
     for (const r of importRows) {
       const name = String(r[inverse.name!] ?? "").trim();
