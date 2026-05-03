@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Upload, Download, Trash2, Pencil, Search } from "lucide-react";
 import { toast } from "sonner";
 import type { Guest, RSVP } from "@/lib/types";
+import { downloadGuestTemplate } from "@/lib/template";
 
 interface Props {
   planId: string;
@@ -138,13 +139,7 @@ export function GuestsTab({ planId, guests, refresh, autoOpen, onAutoOpenHandled
     refresh();
   };
 
-  const downloadTemplate = () => {
-    const csv = "Name,Party,RSVP,Meal,Side,Is Kid,Accessibility,Notes,Must sit with,Must not sit with\nJane Doe,Doe Family,attending,Chicken,Bride,no,,Allergic to nuts,John Doe,\nJohn Doe,Doe Family,attending,Fish,Bride,no,,,Jane Doe,\n";
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = "guest-template.csv"; a.click();
-    URL.revokeObjectURL(url);
-  };
+  const downloadTemplate = downloadGuestTemplate;
 
   return (
     <div className="space-y-4">

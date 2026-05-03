@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,11 +16,18 @@ interface Props {
   tables: TableDef[];
   assignments: Assignment[];
   refresh: () => void;
+  autoOpen?: "new" | "bulk" | null;
+  onAutoOpenHandled?: () => void;
 }
 
-export function TablesTab({ planId, tables, assignments, refresh }: Props) {
+export function TablesTab({ planId, tables, assignments, refresh, autoOpen, onAutoOpenHandled }: Props) {
   const [editing, setEditing] = useState<TableDef | "new" | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
+
+  useEffect(() => {
+    if (autoOpen === "new") { setEditing("new"); onAutoOpenHandled?.(); }
+    else if (autoOpen === "bulk") { setBulkOpen(true); onAutoOpenHandled?.(); }
+  }, [autoOpen, onAutoOpenHandled]);
 
   const seatedCount = (tid: string) => assignments.filter(a => a.table_id === tid).length;
 
