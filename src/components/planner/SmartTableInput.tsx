@@ -11,6 +11,7 @@ interface ParsedTable { name: string; shape: Shape; capacity: number }
 
 interface Props {
   planId: string;
+  scenarioId: string;
   existingCount: number;
   onDone: () => void;
 }
@@ -20,7 +21,7 @@ const PLACEHOLDER = `Try things like:
 • Two long tables of 12, four squares of 4
 • Sweetheart table + 12 rounds seating 10`;
 
-export function SmartTableInput({ planId, existingCount, onDone }: Props) {
+export function SmartTableInput({ planId, scenarioId, existingCount, onDone }: Props) {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [parsed, setParsed] = useState<ParsedTable[] | null>(null);
@@ -41,6 +42,7 @@ export function SmartTableInput({ planId, existingCount, onDone }: Props) {
     if (!parsed) return;
     const rows = parsed.filter(t => t.name?.trim()).map((t, i) => ({
       plan_id: planId,
+      scenario_id: scenarioId,
       name: t.name.trim(),
       shape: t.shape,
       capacity: t.capacity,
