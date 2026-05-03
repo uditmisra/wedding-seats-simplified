@@ -1,62 +1,55 @@
 ## Goal
 
-Cut the friction. Today every flow asks for too much (column mapping, shape pickers, capacity inputs, RSVP enums, conflict UIs). Replace these with **one smart text box** powered by Lovable AI, plus collapsed "advanced" details. Keep all existing UI as fallback.
+Two related needs:
+1. **Multiple seating charts** — manage many weddings (or many drafts of one) from the home page.
+2. **Alternate table configs / scenarios** — within a single wedding, compare side-by-side variants of tables + assignments without losing the current arrangement.
 
-## The four AI moments
+## Approach
 
-### 1. Smart Add Guests (replaces manual form + bulk paste)
+Introduce a **Scenarios** concept *inside* a plan. Each plan keeps its shared guest list (the people coming don't change between drafts), but **tables and assignments belong to a scenario**. This gives:
 
-A single textarea on the Guests tab and Get Started card:
+- "Plan A: round tables, family style" vs "Plan B: long tables, mingle"
+- Quick **duplicate** to fork the current arrangement and tweak.
+- A **compare view** to see two floor plans side-by-side.
 
-> "Paste or type anything — names, a copy from your wedding website, an email thread, a WhatsApp list. We'll figure it out."
+Multiple charts across weddings is already covered by plan codes — we'll polish the home page so users can see/manage their recently opened plans (stored in localStorage, no auth).
 
-Examples that should work:
-- `John & Sarah Smith +2 kids (vegetarian)`
-- `Mom, Dad, Aunt May (wheelchair), Uncle Bob — bride side`
-- A pasted chunk of an RSVP email
+## Scope
 
-AI returns a structured list of guests (name, party, side, meal, is_kid, accessibility, notes) which we preview in a confirm-table before insert. User can edit inline, then **Add all**.
+### Data model
+- New table `scenarios { id, plan_id, name, is_default, created_at }`.
+- Add `scenario_id uuid` to `tables_def` and `assignments` (FK to scenarios; for backward compat we backfill one default scenario per existing plan and move existing rows under it).
+- Constraints stay on the plan (people-level rules, not scenario-level).
+- Realtime continues to work; hooks subscribe to current scenario.
 
-### 2. Smart Spreadsheet Import (kills the column-mapping step)
+### UI
+- **Scenario switcher** in the planner header: dropdown showing all scenarios for this plan + actions: New, Duplicate current, Rename, Delete, Set default. Switching scenario reloads tables/assignments for that scenario.
+- **Compare mode**: toggle in Seating tab to show two floor plans side-by-side (left = current scenario, right = chosen comparison scenario). Read-only on right. Stats bar shows deltas (seated count, conflicts).
+- **Home page**: list "Recent plans" from localStorage with name, code, last opened, quick "Open" link. Keep the existing "Open by code" and "New plan" flows.
 
-Today: upload → manual dropdown for every column.
-New: upload → AI gets the headers + 3 sample rows → returns the mapping + RSVP/kid normalization rules → we go straight to the preview table. Manual mapping stays as a "Adjust mapping" link for edge cases.
-
-### 3. Smart Table Setup (replaces Add Table + Bulk Add dialogs)
-
-One input:
-> "Describe your room — e.g. *10 round tables of 8, a head table for 6, two long tables of 12 by the window*"
-
-AI returns a list of `{name, shape, capacity}` rows shown as chips you can tweak/remove before creating. The existing manual + bulk dialogs stay accessible under "Manual setup".
-
-### 4. Slimmer Guest form
-
-The "Add guest" dialog currently shows 8 fields. Reduce to:
-- **Name** (only required field visible)
-- **+ Add details** disclosure → party, side, RSVP, meal, kid, accessibility, notes
-
-Same data model, less visual noise.
+### Out of scope
+- Cross-scenario merge/diff of individual assignments (call out as follow-up).
+- Sharing scenarios with separate links (share link still scopes to plan; the URL gets `?scenario=<id>` for deep-linking).
 
 ## Technical details
 
-- **Edge function `ai-parse`** with three modes: `guests`, `tables`, `mapping`. Calls Lovable AI Gateway (`google/gemini-3-flash-preview`) using **tool-calling for structured output** (per AI Gateway guidance). Handles 429/402 with toast messages.
-- Schemas:
-  - `guests`: `{ guests: [{ name, party?, side?, rsvp?, meal?, is_kid?, accessibility?, notes? }] }`
-  - `tables`: `{ tables: [{ name, shape: "round|rectangle|square|long|head", capacity }] }`
-  - `mapping`: `{ mapping: { [header]: field|null }, rsvp_synonyms?: {attending:[], declined:[], maybe:[]} }`
-- New components:
-  - `SmartGuestInput.tsx` — textarea + preview table + Add all
-  - `SmartTableInput.tsx` — textarea + chips + Create
-  - `GuestPreviewTable.tsx` (shared by smart-add + import)
-- Edits:
-  - `GuestsTab.tsx`: add Smart Add as primary CTA; collapse advanced fields in `GuestEditor`
-  - `TablesTab.tsx`: add Smart Setup as primary CTA
-  - `GetStarted.tsx`: replace 3 cards with one big "Describe your guests / Describe your tables" pair, keep import + manual as secondary links
-  - Spreadsheet import: call `ai-parse` mode `mapping` after parsing the file; skip manual dialog when confident, still allow override
-- No DB schema changes.
-- Keep all current dialogs/buttons reachable so power users aren't blocked.
+- **Migration**:
+  - `CREATE TABLE scenarios (...)`, public RLS like other tables.
+  - Add nullable `scenario_id` columns to `tables_def`, `assignments`.
+  - Backfill: for each distinct `plan_id`, insert a `Default` scenario and `UPDATE` rows to that id, then `ALTER COLUMN ... SET NOT NULL`.
+  - Index on `(plan_id)` and `(scenario_id)` for both tables.
+- **`usePlanData` hook**: takes optional `scenarioId`; fetches scenarios list + scoped tables/assignments. Default to plan's `is_default` scenario; sync `?scenario=` query param.
+- **New components**:
+  - `ScenarioSwitcher.tsx` (header dropdown)
+  - `CompareScenarios.tsx` (two `FloorPlan`s side-by-side with a scenario picker on the right)
+  - `RecentPlans.tsx` (home-page list reading `localStorage["lovable-seats-recent"]`)
+- **Edge cases**: deleting current scenario falls back to default; can't delete the last scenario; duplicating clones tables and assignments with new ids.
+- **No breaking change to AI flows** — Smart inputs already pass `planId`; we'll extend them to also pass the active `scenarioId`.
 
-## Out of scope (call out for follow-up)
+## Migration ordering
 
-- AI-explained seating suggestions ("seated Aunt May at T3 because…") — separate pass on auto-assign.
-- Voice input.
+1. Migration (schema + backfill).
+2. Update types, hook, and all insert sites to include `scenario_id`.
+3. Add Scenario switcher to planner header.
+4. Add Compare view inside Seating tab.
+5. Home page recent-plans list.
