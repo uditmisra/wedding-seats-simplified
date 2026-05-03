@@ -183,7 +183,7 @@ export function GuestsTab({ planId, guests, refresh, autoOpen, onAutoOpenHandled
         )}
         <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls" className="hidden"
           onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }}/>
-        <Button variant="outline" onClick={() => fileRef.current?.click()}><Upload size={16} className="mr-1.5"/>Import</Button>
+        <Button variant="outline" onClick={() => fileRef.current?.click()} title="Import CSV or Excel"><Upload size={16} className="mr-1.5"/>Import</Button>
         <Button onClick={() => setEditing("new")}><Plus size={16} className="mr-1.5"/>Add guest</Button>
       </div>
 
@@ -247,9 +247,6 @@ export function GuestsTab({ planId, guests, refresh, autoOpen, onAutoOpenHandled
             ))}
           </div>
           <DialogFooter>
-            <button type="button" onClick={downloadTemplate} className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 mr-auto">
-              <Download size={12}/> Don't have a spreadsheet? Download our template
-            </button>
             <Button variant="ghost" onClick={() => setImportRows(null)}>Cancel</Button>
             <Button onClick={confirmImport} disabled={autoMapping}>Import {importRows?.length} guests</Button>
           </DialogFooter>
