@@ -16,7 +16,7 @@ import { AutoAssignDialog } from "@/components/planner/AutoAssignDialog";
 import { OnboardingFlow } from "@/components/planner/OnboardingFlow";
 import { ScenarioSwitcher } from "@/components/planner/ScenarioSwitcher";
 import { CompareScenarios } from "@/components/planner/CompareScenarios";
-import { Sparkles, Link as LinkIcon, Check, ArrowLeft, Wand2, MoreHorizontal, GitCompareArrows, ShieldAlert, Download } from "lucide-react";
+import { Link as LinkIcon, Check, ArrowLeft, Wand2, MoreHorizontal, GitCompareArrows, ShieldAlert, Download } from "lucide-react";
 import { toast } from "sonner";
 import { addRecentPlan } from "@/lib/recentPlans";
 
@@ -67,7 +67,6 @@ const Planner = () => {
       <header className="border-b border-border/60 bg-background/70 backdrop-blur sticky top-0 z-30">
         <div className="container py-3 flex items-center gap-3">
           <Link to="/" aria-label="Home" className="text-muted-foreground hover:text-foreground"><ArrowLeft size={16}/></Link>
-          <Sparkles className="text-primary" size={18}/>
           {editingName ? (
             <Input autoFocus value={plan.name} onChange={e => renamePlan(e.target.value)} onBlur={() => setEditingName(false)} className="h-8 w-64 font-display text-lg"/>
           ) : (
