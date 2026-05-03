@@ -8,12 +8,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { generatePlanCode } from "@/lib/planCode";
 import { toast } from "sonner";
 import { Sparkles, ArrowRight, Users, LayoutGrid, FileDown } from "lucide-react";
+import { useEffect, useState as useState2 } from "react";
+import { getRecentPlans, removeRecentPlan, type RecentPlan } from "@/lib/recentPlans";
+import { X } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [openCode, setOpenCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [recents, setRecents] = useState2<RecentPlan[]>([]);
+  useEffect(() => { setRecents(getRecentPlans()); }, []);
 
   const createPlan = async () => {
     setLoading(true);
@@ -78,6 +83,29 @@ const Index = () => {
                 <Button variant="secondary" onClick={openPlan}>Open</Button>
               </div>
             </Card>
+
+            {recents.length > 0 && (
+              <Card className="p-6 border-border/60">
+                <h3 className="font-display text-lg mb-3">Recent plans</h3>
+                <ul className="space-y-1">
+                  {recents.map(r => (
+                    <li key={r.code} className="group flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-muted/50">
+                      <button onClick={() => navigate(`/plan/${r.code}`)} className="flex-1 text-left">
+                        <div className="font-medium truncate">{r.name}</div>
+                        <div className="text-xs text-muted-foreground">{r.code} · {new Date(r.openedAt).toLocaleDateString()}</div>
+                      </button>
+                      <button
+                        onClick={() => { removeRecentPlan(r.code); setRecents(getRecentPlans()); }}
+                        className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
+                        aria-label="Remove from recents"
+                      >
+                        <X size={14}/>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            )}
           </div>
         </div>
       </main>
