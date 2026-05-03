@@ -12,8 +12,7 @@ import { SeatingView } from "@/components/planner/SeatingView";
 import { ConstraintsPanel } from "@/components/planner/ConstraintsPanel";
 import { ExportPanel } from "@/components/planner/ExportPanel";
 import { AutoAssignDialog } from "@/components/planner/AutoAssignDialog";
-import { GetStarted } from "@/components/planner/GetStarted";
-import { downloadGuestTemplate } from "@/lib/template";
+import { OnboardingFlow } from "@/components/planner/OnboardingFlow";
 import { Sparkles, Link as LinkIcon, Check, ArrowLeft, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -26,12 +25,13 @@ const Planner = () => {
   const [tab, setTab] = useState<string>("seating");
   const [guestsAutoOpen, setGuestsAutoOpen] = useState<"new" | "import" | null>(null);
   const [tablesAutoOpen, setTablesAutoOpen] = useState<"new" | "bulk" | null>(null);
-  const isEmpty = !loading && plan && guests.length === 0 && tables.length === 0;
+  const onboardingActive = !loading && plan && (guests.length === 0 || tables.length === 0);
+  const [onboardingDismissed, setOnboardingDismissed] = useState(false);
+  const showOnboarding = onboardingActive && !onboardingDismissed;
 
-  // Default tab when empty: jump to guests so the first action is obvious
   useEffect(() => {
-    if (isEmpty) setTab("seating"); // keep on seating; GetStarted card will show
-  }, [isEmpty]);
+    if (showOnboarding) setTab("seating");
+  }, [showOnboarding]);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading…</div>;
   if (notFound || !plan) return (
@@ -51,10 +51,7 @@ const Planner = () => {
     await supabase.from("plans").update({ name }).eq("id", plan.id);
   };
 
-  const goImport = () => { setGuestsAutoOpen("import"); setTab("guests"); };
-  const goAddGuest = () => { setTab("guests"); };
-  const goAddTable = () => { setTab("tables"); };
-  const goBulkTables = () => { setTablesAutoOpen("bulk"); setTab("tables"); };
+  const goImport = () => { setGuestsAutoOpen("import"); setTab("guests"); setOnboardingDismissed(true); };
 
   return (
     <div className="min-h-screen" style={{ background: "var(--gradient-soft)" }}>
@@ -78,13 +75,15 @@ const Planner = () => {
       </header>
 
       <main className="container py-6 space-y-6">
-        {isEmpty ? (
-          <GetStarted
+        {showOnboarding ? (
+          <OnboardingFlow
+            planId={plan.id}
+            guestCount={guests.length}
+            tableCount={tables.length}
             onImport={goImport}
-            onAddGuest={goAddGuest}
-            onAddTable={goAddTable}
-            onBulkTables={goBulkTables}
-            onDownloadTemplate={downloadGuestTemplate}
+            onAutoAssign={() => { setAutoOpen(true); setOnboardingDismissed(true); }}
+            onFinish={() => { setOnboardingDismissed(true); setTab("seating"); }}
+            refresh={refresh}
           />
         ) : (
           <StatsBar guests={guests} tables={tables} assignments={assignments} constraints={constraints}/>
