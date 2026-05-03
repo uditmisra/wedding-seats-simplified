@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SmartGuestInput } from "./SmartGuestInput";
 import { SmartTableInput } from "./SmartTableInput";
-import { Check, Users, LayoutGrid, Wand2, ArrowRight, Upload, Download } from "lucide-react";
+import { Check, Users, LayoutGrid, Wand2, Upload, Download } from "lucide-react";
 import { downloadGuestTemplate } from "@/lib/template";
 
 type Step = 1 | 2 | 3;
@@ -60,7 +60,7 @@ export function OnboardingFlow({ planId, scenarioId, guestCount, tableCount, onI
         <div className="space-y-4">
           <div>
             <h2 className="font-display text-2xl md:text-3xl">Who's coming?</h2>
-            <p className="text-muted-foreground mt-1">Just paste or type — names, an RSVP email, a list. We'll structure it. Only the name is required.</p>
+            <p className="text-muted-foreground mt-1">Paste or type names — we'll structure the rest.</p>
           </div>
           <SmartGuestInput planId={planId} onDone={refresh}/>
 
@@ -68,16 +68,6 @@ export function OnboardingFlow({ planId, scenarioId, guestCount, tableCount, onI
             <span className="text-xs text-muted-foreground">Have a spreadsheet?</span>
             <Button variant="outline" size="sm" onClick={onImport}><Upload size={14} className="mr-1.5"/>Import CSV / Excel</Button>
             <Button variant="ghost" size="sm" onClick={downloadGuestTemplate}><Download size={14} className="mr-1"/>Template</Button>
-
-            <div className="ml-auto flex gap-2">
-              {guestCount === 0 ? (
-                <Button variant="ghost" onClick={() => setStep(2)}>Skip for now</Button>
-              ) : (
-                <Button onClick={() => setStep(2)}>
-                  Next: tables <ArrowRight size={14} className="ml-1.5"/>
-                </Button>
-              )}
-            </div>
           </div>
         </div>
       )}
@@ -86,22 +76,9 @@ export function OnboardingFlow({ planId, scenarioId, guestCount, tableCount, onI
         <div className="space-y-4">
           <div>
             <h2 className="font-display text-2xl md:text-3xl">Set up your room</h2>
-            <p className="text-muted-foreground mt-1">Describe your tables in one line — e.g. "10 rounds of 8 + a head table for 6".</p>
+            <p className="text-muted-foreground mt-1">Try: "10 rounds of 8 + a head table for 6".</p>
           </div>
           <SmartTableInput planId={planId} scenarioId={scenarioId} existingCount={tableCount} onDone={refresh}/>
-
-          <div className="flex justify-between pt-2 border-t border-border/40">
-            <Button variant="ghost" onClick={() => setStep(1)}>← Back to guests</Button>
-            <div className="flex gap-2">
-              {tableCount === 0 ? (
-                <Button variant="ghost" onClick={() => setStep(3)}>Skip for now</Button>
-              ) : (
-                <Button onClick={() => setStep(3)}>
-                  Next: seat them <ArrowRight size={14} className="ml-1.5"/>
-                </Button>
-              )}
-            </div>
-          </div>
         </div>
       )}
 
@@ -111,8 +88,8 @@ export function OnboardingFlow({ planId, scenarioId, guestCount, tableCount, onI
             <h2 className="font-display text-2xl md:text-3xl">You're ready 🎉</h2>
             <p className="text-muted-foreground mt-1">
               {guestCount > 0 && tableCount > 0
-                ? `${guestCount} guests, ${tableCount} tables. Let AI do a first pass — you can drag people around after.`
-                : "Add some guests and tables first, then come back to auto-seat them."}
+                ? `${guestCount} guests, ${tableCount} tables. Let AI do a first pass.`
+                : "Add guests and tables first, then come back."}
             </p>
           </div>
 
@@ -134,10 +111,6 @@ export function OnboardingFlow({ planId, scenarioId, guestCount, tableCount, onI
               <div className="font-display text-lg mt-2">Open seating chart</div>
               <div className="text-sm text-muted-foreground mt-1">Drag and drop guests onto tables yourself.</div>
             </button>
-          </div>
-
-          <div className="flex justify-between pt-2 border-t border-border/40">
-            <Button variant="ghost" onClick={() => setStep(2)}>← Back to tables</Button>
           </div>
         </div>
       )}

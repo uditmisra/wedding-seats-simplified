@@ -172,17 +172,18 @@ export function GuestsTab({ planId, guests, refresh, autoOpen, onAutoOpenHandled
           <Search className="absolute left-3 top-2.5 text-muted-foreground" size={16}/>
           <Input placeholder="Search guests…" value={search} onChange={e => setSearch(e.target.value)} className="pl-9"/>
         </div>
-        <Select value={filterRsvp} onValueChange={setFilterRsvp}>
-          <SelectTrigger className="w-[160px]"><SelectValue/></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All RSVPs</SelectItem>
-            {RSVPS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        {guests.length > 15 && (
+          <Select value={filterRsvp} onValueChange={setFilterRsvp}>
+            <SelectTrigger className="w-[160px]"><SelectValue/></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All RSVPs</SelectItem>
+              {RSVPS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
         <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls" className="hidden"
           onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }}/>
-        <Button variant="outline" onClick={() => fileRef.current?.click()}><Upload size={16} className="mr-1.5"/>Import</Button>
-        <Button variant="ghost" size="sm" onClick={downloadTemplate}><Download size={14} className="mr-1"/>Template</Button>
+        <Button variant="outline" onClick={() => fileRef.current?.click()} title="Import CSV or Excel"><Upload size={16} className="mr-1.5"/>Import</Button>
         <Button onClick={() => setEditing("new")}><Plus size={16} className="mr-1.5"/>Add guest</Button>
       </div>
 
@@ -200,7 +201,14 @@ export function GuestsTab({ planId, guests, refresh, autoOpen, onAutoOpenHandled
           </thead>
           <tbody>
             {filtered.length === 0 && (
-              <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No guests yet — import a spreadsheet or add one.</td></tr>
+              <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">
+                No guests yet — import a spreadsheet or add one.
+                {guests.length === 0 && (
+                  <button type="button" onClick={downloadTemplate} className="block mx-auto mt-2 text-xs text-primary hover:underline inline-flex items-center gap-1">
+                    <Download size={12}/> Download our template
+                  </button>
+                )}
+              </td></tr>
             )}
             {filtered.map(g => (
               <tr key={g.id} className="border-t border-border/40 hover:bg-muted/30">
