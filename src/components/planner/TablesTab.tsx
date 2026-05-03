@@ -25,6 +25,7 @@ interface Props {
 export function TablesTab({ planId, scenarioId, tables, assignments, refresh, autoOpen, onAutoOpenHandled }: Props) {
   const [editing, setEditing] = useState<TableDef | "new" | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [showManual, setShowManual] = useState(false);
 
   useEffect(() => {
     if (autoOpen === "new") { setEditing("new"); onAutoOpenHandled?.(); }
@@ -37,11 +38,16 @@ export function TablesTab({ planId, scenarioId, tables, assignments, refresh, au
     <div className="space-y-4">
       <SmartTableInput planId={planId} scenarioId={scenarioId} existingCount={tables.length} onDone={refresh}/>
 
-      <div className="flex flex-wrap gap-2 items-center">
-        <span className="text-xs text-muted-foreground mr-1">Or set up manually:</span>
-        <Button variant="outline" size="sm" onClick={() => setEditing("new")}><Plus size={14} className="mr-1.5"/>Add table</Button>
-        <Button variant="ghost" size="sm" onClick={() => setBulkOpen(true)}><Layers size={14} className="mr-1.5"/>Bulk add</Button>
-      </div>
+      {showManual ? (
+        <div className="flex flex-wrap gap-2 items-center">
+          <Button variant="outline" size="sm" onClick={() => setEditing("new")}><Plus size={14} className="mr-1.5"/>Add table</Button>
+          <Button variant="ghost" size="sm" onClick={() => setBulkOpen(true)}><Layers size={14} className="mr-1.5"/>Bulk add</Button>
+        </div>
+      ) : (
+        <button type="button" onClick={() => setShowManual(true)} className="text-xs text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
+          Prefer to add them manually?
+        </button>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {tables.length === 0 && <div className="text-muted-foreground p-8 col-span-full text-center">No tables yet.</div>}
