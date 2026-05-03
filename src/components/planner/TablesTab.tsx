@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Plus, Trash2, Pencil, Layers } from "lucide-react";
 import type { TableDef, Shape, Assignment } from "@/lib/types";
 import { toast } from "sonner";
+import { SmartTableInput } from "./SmartTableInput";
 
 const SHAPES: Shape[] = ["round", "rectangle", "square", "long", "head"];
 
@@ -33,9 +34,12 @@ export function TablesTab({ planId, tables, assignments, refresh, autoOpen, onAu
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        <Button onClick={() => setEditing("new")}><Plus size={16} className="mr-1.5"/>Add table</Button>
-        <Button variant="outline" onClick={() => setBulkOpen(true)}><Layers size={16} className="mr-1.5"/>Bulk add</Button>
+      <SmartTableInput planId={planId} existingCount={tables.length} onDone={refresh}/>
+
+      <div className="flex flex-wrap gap-2 items-center">
+        <span className="text-xs text-muted-foreground mr-1">Or set up manually:</span>
+        <Button variant="outline" size="sm" onClick={() => setEditing("new")}><Plus size={14} className="mr-1.5"/>Add table</Button>
+        <Button variant="ghost" size="sm" onClick={() => setBulkOpen(true)}><Layers size={14} className="mr-1.5"/>Bulk add</Button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
