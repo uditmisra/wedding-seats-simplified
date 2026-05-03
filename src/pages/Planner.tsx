@@ -4,6 +4,7 @@ import { usePlanData } from "@/hooks/usePlanData";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { StatsBar } from "@/components/planner/StatsBar";
 import { GuestsTab } from "@/components/planner/GuestsTab";
@@ -15,7 +16,7 @@ import { AutoAssignDialog } from "@/components/planner/AutoAssignDialog";
 import { OnboardingFlow } from "@/components/planner/OnboardingFlow";
 import { ScenarioSwitcher } from "@/components/planner/ScenarioSwitcher";
 import { CompareScenarios } from "@/components/planner/CompareScenarios";
-import { Sparkles, Link as LinkIcon, Check, ArrowLeft, Wand2 } from "lucide-react";
+import { Sparkles, Link as LinkIcon, Check, ArrowLeft, Wand2, MoreHorizontal, GitCompareArrows, ShieldAlert, Download } from "lucide-react";
 import { toast } from "sonner";
 import { addRecentPlan } from "@/lib/recentPlans";
 
@@ -64,16 +65,15 @@ const Planner = () => {
   return (
     <div className="min-h-screen" style={{ background: "var(--gradient-soft)" }}>
       <header className="border-b border-border/60 bg-background/70 backdrop-blur sticky top-0 z-30">
-        <div className="container py-3 flex items-center gap-3 flex-wrap">
-          <Link to="/" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft size={14}/>Home</Link>
+        <div className="container py-3 flex items-center gap-3">
+          <Link to="/" aria-label="Home" className="text-muted-foreground hover:text-foreground"><ArrowLeft size={16}/></Link>
           <Sparkles className="text-primary" size={18}/>
           {editingName ? (
             <Input autoFocus value={plan.name} onChange={e => renamePlan(e.target.value)} onBlur={() => setEditingName(false)} className="h-8 w-64 font-display text-lg"/>
           ) : (
-            <button onClick={() => setEditingName(true)} className="font-display text-xl truncate hover:underline">{plan.name}</button>
+            <button onClick={() => setEditingName(true)} className="font-display text-xl truncate hover:underline underline-offset-4 decoration-primary/40">{plan.name}</button>
           )}
-          <span className="text-xs text-muted-foreground hidden sm:inline">code: {plan.code}</span>
-          <div className="ml-auto flex gap-2">
+          <div className="ml-auto flex items-center gap-2">
             {scenarioId && (
               <ScenarioSwitcher
                 planId={plan.id}
@@ -85,10 +85,10 @@ const Planner = () => {
                 refresh={refresh}
               />
             )}
-            <Button variant="outline" size="sm" onClick={copyLink}>
-              {copied ? <><Check size={14} className="mr-1"/>Copied</> : <><LinkIcon size={14} className="mr-1"/>Share link</>}
+            <Button variant="ghost" size="sm" onClick={copyLink} title="Share link with your co-planner">
+              {copied ? <><Check size={14} className="mr-1"/>Copied</> : <><LinkIcon size={14} className="mr-1"/>Share</>}
             </Button>
-            <Button size="sm" onClick={() => setAutoOpen(true)}><Wand2 size={14} className="mr-1"/>Auto-assign</Button>
+            <Button size="sm" onClick={() => setAutoOpen(true)} className="shadow-sm"><Wand2 size={14} className="mr-1.5"/>Auto-seat</Button>
           </div>
         </div>
       </header>
@@ -110,14 +110,32 @@ const Planner = () => {
         )}
 
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="bg-card/60 border border-border/60 h-11">
-            <TabsTrigger value="seating">Seating</TabsTrigger>
-            <TabsTrigger value="guests">Guests ({guests.length})</TabsTrigger>
-            <TabsTrigger value="tables">Tables ({tables.length})</TabsTrigger>
-            <TabsTrigger value="compare">Compare</TabsTrigger>
-            <TabsTrigger value="constraints">Constraints ({constraints.length})</TabsTrigger>
-            <TabsTrigger value="export">Export</TabsTrigger>
-          </TabsList>
+          <div className="flex items-center justify-between gap-2">
+            <TabsList className="bg-card/60 border border-border/60 h-11">
+              <TabsTrigger value="seating">Seating</TabsTrigger>
+              <TabsTrigger value="guests">Guests <span className="ml-1.5 text-xs text-muted-foreground">{guests.length}</span></TabsTrigger>
+              <TabsTrigger value="tables">Tables <span className="ml-1.5 text-xs text-muted-foreground">{tables.length}</span></TabsTrigger>
+            </TabsList>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-11 w-11 p-0" aria-label="More">
+                  <MoreHorizontal size={18}/>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuItem onClick={() => setTab("compare")}>
+                  <GitCompareArrows size={14} className="mr-2"/>Compare layouts
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTab("constraints")}>
+                  <ShieldAlert size={14} className="mr-2"/>Constraints
+                  {constraints.length > 0 && <span className="ml-auto text-xs text-muted-foreground">{constraints.length}</span>}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTab("export")}>
+                  <Download size={14} className="mr-2"/>Export & print
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
 
           <TabsContent value="seating" className="mt-4">
             <SeatingView planId={plan.id} scenarioId={scenarioId ?? ""} guests={guests} tables={tables} assignments={assignments} constraints={constraints} refresh={refresh}
