@@ -14,6 +14,7 @@ const SHAPES: Shape[] = ["round", "rectangle", "square", "long", "head"];
 
 interface Props {
   planId: string;
+  scenarioId: string;
   tables: TableDef[];
   assignments: Assignment[];
   refresh: () => void;
@@ -21,7 +22,7 @@ interface Props {
   onAutoOpenHandled?: () => void;
 }
 
-export function TablesTab({ planId, tables, assignments, refresh, autoOpen, onAutoOpenHandled }: Props) {
+export function TablesTab({ planId, scenarioId, tables, assignments, refresh, autoOpen, onAutoOpenHandled }: Props) {
   const [editing, setEditing] = useState<TableDef | "new" | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
 
@@ -34,7 +35,7 @@ export function TablesTab({ planId, tables, assignments, refresh, autoOpen, onAu
 
   return (
     <div className="space-y-4">
-      <SmartTableInput planId={planId} existingCount={tables.length} onDone={refresh}/>
+      <SmartTableInput planId={planId} scenarioId={scenarioId} existingCount={tables.length} onDone={refresh}/>
 
       <div className="flex flex-wrap gap-2 items-center">
         <span className="text-xs text-muted-foreground mr-1">Or set up manually:</span>
@@ -66,20 +67,20 @@ export function TablesTab({ planId, tables, assignments, refresh, autoOpen, onAu
         })}
       </div>
 
-      {editing && <TableEditor planId={planId} table={editing === "new" ? null : editing} count={tables.length} onClose={() => { setEditing(null); refresh(); }}/>}
-      {bulkOpen && <BulkAddDialog planId={planId} count={tables.length} onClose={() => { setBulkOpen(false); refresh(); }}/>}
+      {editing && <TableEditor planId={planId} scenarioId={scenarioId} table={editing === "new" ? null : editing} count={tables.length} onClose={() => { setEditing(null); refresh(); }}/>}
+      {bulkOpen && <BulkAddDialog planId={planId} scenarioId={scenarioId} count={tables.length} onClose={() => { setBulkOpen(false); refresh(); }}/>}
     </div>
   );
 }
 
-function TableEditor({ planId, table, count, onClose }: { planId: string; table: TableDef | null; count: number; onClose: () => void }) {
+function TableEditor({ planId, scenarioId, table, count, onClose }: { planId: string; scenarioId: string; table: TableDef | null; count: number; onClose: () => void }) {
   const [name, setName] = useState(table?.name ?? `Table ${count + 1}`);
   const [capacity, setCapacity] = useState(table?.capacity ?? 8);
   const [shape, setShape] = useState<Shape>(table?.shape ?? "round");
   const save = async () => {
     if (!name.trim()) { toast.error("Name required"); return; }
     if (table) await supabase.from("tables_def").update({ name, capacity, shape }).eq("id", table.id);
-    else await supabase.from("tables_def").insert({ plan_id: planId, name, capacity, shape });
+    else await supabase.from("tables_def").insert({ plan_id: planId, scenario_id: scenarioId, name, capacity, shape });
     onClose();
   };
   return (
@@ -105,7 +106,7 @@ function TableEditor({ planId, table, count, onClose }: { planId: string; table:
   );
 }
 
-function BulkAddDialog({ planId, count, onClose }: { planId: string; count: number; onClose: () => void }) {
+function BulkAddDialog({ planId, scenarioId, count, onClose }: { planId: string; scenarioId: string; count: number; onClose: () => void }) {
   const [howMany, setHowMany] = useState(10);
   const [capacity, setCapacity] = useState(8);
   const [shape, setShape] = useState<Shape>("round");
@@ -113,6 +114,7 @@ function BulkAddDialog({ planId, count, onClose }: { planId: string; count: numb
   const create = async () => {
     const rows = Array.from({ length: howMany }, (_, i) => ({
       plan_id: planId,
+      scenario_id: scenarioId,
       name: `${prefix} ${count + i + 1}`,
       capacity, shape,
       x: (i % 5) * 180,

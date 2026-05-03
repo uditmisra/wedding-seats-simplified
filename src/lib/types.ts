@@ -9,6 +9,14 @@ export interface Plan {
   event_date: string | null;
 }
 
+export interface Scenario {
+  id: string;
+  plan_id: string;
+  name: string;
+  is_default: boolean;
+  created_at: string;
+}
+
 export interface Guest {
   id: string;
   plan_id: string;
@@ -25,6 +33,7 @@ export interface Guest {
 export interface TableDef {
   id: string;
   plan_id: string;
+  scenario_id: string;
   name: string;
   capacity: number;
   shape: Shape;
@@ -36,6 +45,7 @@ export interface TableDef {
 export interface Assignment {
   id: string;
   plan_id: string;
+  scenario_id: string;
   guest_id: string;
   table_id: string;
   seat_index: number | null;

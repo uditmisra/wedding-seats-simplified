@@ -11,6 +11,7 @@ import { Sparkles } from "lucide-react";
 
 interface Props {
   planId: string;
+  scenarioId: string;
   guests: Guest[];
   tables: TableDef[];
   assignments: Assignment[];
@@ -18,7 +19,7 @@ interface Props {
   onClose: () => void;
 }
 
-export function AutoAssignDialog({ planId, guests, tables, assignments, constraints, onClose }: Props) {
+export function AutoAssignDialog({ planId, scenarioId, guests, tables, assignments, constraints, onClose }: Props) {
   const [includeMaybe, setIncludeMaybe] = useState(false);
   const [keepExisting, setKeepExisting] = useState(true);
   const [preview, setPreview] = useState<Map<string, string> | null>(null);
@@ -38,14 +39,14 @@ export function AutoAssignDialog({ planId, guests, tables, assignments, constrai
     setLoading(true);
     // Wipe non-pinned (or all) and re-insert
     if (keepExisting) {
-      await supabase.from("assignments").delete().eq("plan_id", planId).eq("pinned", false);
+      await supabase.from("assignments").delete().eq("scenario_id", scenarioId).eq("pinned", false);
     } else {
-      await supabase.from("assignments").delete().eq("plan_id", planId);
+      await supabase.from("assignments").delete().eq("scenario_id", scenarioId);
     }
     const pinnedIds = new Set(assignments.filter(a => a.pinned).map(a => a.guest_id));
     const rows = [...preview.entries()]
       .filter(([gid]) => !pinnedIds.has(gid))
-      .map(([guest_id, table_id]) => ({ plan_id: planId, guest_id, table_id }));
+      .map(([guest_id, table_id]) => ({ plan_id: planId, scenario_id: scenarioId, guest_id, table_id }));
     if (rows.length) await supabase.from("assignments").insert(rows);
     setLoading(false);
     toast.success(`Seated ${rows.length} guests`);
