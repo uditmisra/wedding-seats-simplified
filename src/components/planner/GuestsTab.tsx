@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,8 @@ interface Props {
   planId: string;
   guests: Guest[];
   refresh: () => void;
+  autoOpen?: "new" | "import" | null;
+  onAutoOpenHandled?: () => void;
 }
 
 const RSVPS: RSVP[] = ["pending", "attending", "maybe", "declined"];
@@ -35,13 +37,19 @@ const FIELD_LABEL: Record<FieldKey, string> = {
   must_not_with: "Must NOT sit with",
 };
 
-export function GuestsTab({ planId, guests, refresh }: Props) {
+export function GuestsTab({ planId, guests, refresh, autoOpen, onAutoOpenHandled }: Props) {
   const [editing, setEditing] = useState<Guest | "new" | null>(null);
   const [importRows, setImportRows] = useState<Record<string, unknown>[] | null>(null);
   const [importHeaders, setImportHeaders] = useState<string[]>([]);
   const [mapping, setMapping] = useState<Record<string, FieldKey | "">>({});
   const [search, setSearch] = useState("");
   const [filterRsvp, setFilterRsvp] = useState<string>("all");
+  const fileRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (autoOpen === "new") { setEditing("new"); onAutoOpenHandled?.(); }
+    else if (autoOpen === "import") { fileRef.current?.click(); onAutoOpenHandled?.(); }
+  }, [autoOpen, onAutoOpenHandled]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -152,11 +160,9 @@ export function GuestsTab({ planId, guests, refresh }: Props) {
             {RSVPS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
           </SelectContent>
         </Select>
-        <label>
-          <input type="file" accept=".csv,.xlsx,.xls" className="hidden"
-            onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])}/>
-          <Button variant="outline" asChild><span><Upload size={16} className="mr-1.5"/>Import</span></Button>
-        </label>
+        <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls" className="hidden"
+          onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }}/>
+        <Button variant="outline" onClick={() => fileRef.current?.click()}><Upload size={16} className="mr-1.5"/>Import</Button>
         <Button variant="ghost" size="sm" onClick={downloadTemplate}><Download size={14} className="mr-1"/>Template</Button>
         <Button onClick={() => setEditing("new")}><Plus size={16} className="mr-1.5"/>Add guest</Button>
       </div>
