@@ -14,7 +14,222 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      assignments: {
+        Row: {
+          guest_id: string
+          id: string
+          pinned: boolean
+          plan_id: string
+          seat_index: number | null
+          table_id: string
+        }
+        Insert: {
+          guest_id: string
+          id?: string
+          pinned?: boolean
+          plan_id: string
+          seat_index?: number | null
+          table_id: string
+        }
+        Update: {
+          guest_id?: string
+          id?: string
+          pinned?: boolean
+          plan_id?: string
+          seat_index?: number | null
+          table_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assignments_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: true
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assignments_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assignments_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "tables_def"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      constraints_def: {
+        Row: {
+          guest_a: string
+          guest_b: string
+          id: string
+          kind: string
+          plan_id: string
+        }
+        Insert: {
+          guest_a: string
+          guest_b: string
+          id?: string
+          kind: string
+          plan_id: string
+        }
+        Update: {
+          guest_a?: string
+          guest_b?: string
+          id?: string
+          kind?: string
+          plan_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "constraints_def_guest_a_fkey"
+            columns: ["guest_a"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "constraints_def_guest_b_fkey"
+            columns: ["guest_b"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "constraints_def_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guests: {
+        Row: {
+          accessibility: string | null
+          created_at: string
+          id: string
+          is_kid: boolean
+          meal: string | null
+          name: string
+          notes: string | null
+          party: string | null
+          plan_id: string
+          rsvp: string
+          side: string | null
+        }
+        Insert: {
+          accessibility?: string | null
+          created_at?: string
+          id?: string
+          is_kid?: boolean
+          meal?: string | null
+          name: string
+          notes?: string | null
+          party?: string | null
+          plan_id: string
+          rsvp?: string
+          side?: string | null
+        }
+        Update: {
+          accessibility?: string | null
+          created_at?: string
+          id?: string
+          is_kid?: boolean
+          meal?: string | null
+          name?: string
+          notes?: string | null
+          party?: string | null
+          plan_id?: string
+          rsvp?: string
+          side?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guests_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plans: {
+        Row: {
+          code: string
+          created_at: string
+          event_date: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          event_date?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          event_date?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tables_def: {
+        Row: {
+          capacity: number
+          created_at: string
+          id: string
+          name: string
+          plan_id: string
+          rotation: number
+          shape: string
+          x: number
+          y: number
+        }
+        Insert: {
+          capacity?: number
+          created_at?: string
+          id?: string
+          name: string
+          plan_id: string
+          rotation?: number
+          shape?: string
+          x?: number
+          y?: number
+        }
+        Update: {
+          capacity?: number
+          created_at?: string
+          id?: string
+          name?: string
+          plan_id?: string
+          rotation?: number
+          shape?: string
+          x?: number
+          y?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tables_def_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
