@@ -206,10 +206,10 @@ const Planner = () => {
           <div className="flex items-center justify-between gap-2 border-b hairline">
             <TabsList className="bg-transparent h-auto p-0 gap-6 rounded-none">
               <UnderlineTab value="seating" label="Seating"/>
-              <UnderlineTab value="guests" label="Guests" count={guests.length}/>
-              <UnderlineTab value="tables" label="Tables" count={tables.length}/>
+              {canEdit && <UnderlineTab value="guests" label="Guests" count={guests.length}/>}
+              {canEdit && <UnderlineTab value="tables" label="Tables" count={tables.length}/>}
             </TabsList>
-            <DropdownMenu>
+            {canEdit && <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="text-sm text-soft hover:text-foreground inline-flex items-center gap-1 px-2 py-2.5">
                   More <MoreHorizontal size={14}/>
@@ -227,11 +227,11 @@ const Planner = () => {
                   <Download size={14} className="mr-2"/>Export &amp; print
                 </DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
+            </DropdownMenu>}
           </div>
 
           <TabsContent value="seating" className="mt-6 animate-tab-in">
-            <SeatingView planId={plan.id} scenarioId={scenarioId ?? ""} guests={guests} tables={tables} assignments={assignments} constraints={constraints} refresh={refresh}
+            <SeatingView planId={plan.id} scenarioId={scenarioId ?? ""} guests={guests} tables={tables} assignments={assignments} constraints={constraints} refresh={refresh} canEdit={canEdit}
               onGoToGuests={() => setTab("guests")} onGoToTables={() => setTab("tables")}/>
           </TabsContent>
           <TabsContent value="guests" className="mt-6 animate-tab-in">
