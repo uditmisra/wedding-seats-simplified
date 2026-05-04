@@ -1,54 +1,77 @@
 ## Goal
 
-Make the seating "Floor plan" canvas (`src/components/planner/FloorPlan.tsx`) feel like a Miro board — a living, navigable surface — and fix the chair layout on long/rectangular tables so seats sit cleanly along both long sides.
+Let users place each guest into a **specific seat** at a table — not just "at table 5". The current model already has `assignments.seat_index` in the database; it's just unused. We'll start writing it, render guests at their assigned seat, and make every seat a real drop target with swap-on-collision and a right-click menu.
 
 ## What changes
 
-### 1. Miro-style canvas behavior
+### 1. Seat-level drag & drop on the floor plan
 
-Replace the fixed `viewBox` SVG + grid layout with a pan/zoom workspace:
+In `src/components/planner/FloorPlan.tsx`:
 
-- Wrap the SVG in a transform layer (`translate(panX, panY) scale(zoom)`).
-- **Pan**: middle-mouse drag, space-bar + drag, or two-finger trackpad drag.
-- **Zoom**: ⌘/Ctrl + scroll, pinch, and on-screen `+ / − / Fit` buttons (bottom-right cluster, like Miro/Figma).
-- **Background**: subtle dot-grid that scales with zoom (replaces the current radial wash) so motion is felt.
-- **Fit-to-content** button frames all tables; **Reset view** returns to 100%.
-- Persist `{ panX, panY, zoom }` per scenario in `localStorage` so the view survives refresh.
-- Tables remain drag-and-drop targets for guests — drop math is updated to account for the pan/zoom transform.
+- Each computed seat becomes its own `useDroppable` with id `seat:{tableId}:{seatIndex}`.
+- The existing whole-table drop zone stays, with id `table:{tableId}` (auto-pick first empty seat) — so users can be precise *or* casual.
+- Each occupied seat becomes a `useDraggable` with id `guest:{guestId}` (today the invisible handle is hard to grab — we'll make the seated chip itself the drag handle).
+- Visual feedback while dragging:
+  - Hovered empty seat → solid primary fill + ring.
+  - Hovered occupied seat → amber ring with a small ⇄ icon (swap preview).
+  - Hovered table background → soft primary tint (current behaviour).
 
-### 2. Dynamic feel
+### 2. Swap-on-collision logic
 
-- Soft entrance animation when tables mount (fade + slight scale, staggered).
-- Hover lift on tables (subtle shadow + 1–2px rise).
-- Smooth `transition` on pan/zoom when triggered by buttons (not while actively dragging).
-- Tiny zoom-percentage chip in the corner.
-- Cursor changes: `grab` over empty canvas, `grabbing` while panning.
+In `src/components/planner/SeatingView.tsx` `onDragEnd`:
 
-Visual restraint preserved — no new colors, just motion and depth using existing tokens.
+- Parse the drop id: `seat:tid:idx` vs `table:tid` vs `__unassign__`.
+- For a seat drop:
+  - If the target seat is **empty** → upsert the dragged guest's assignment with `{ table_id: tid, seat_index: idx }`.
+  - If the target seat is **occupied** → swap: write the dragged guest into `(tid, idx)` and move the displaced guest into the dragged guest's previous `(table_id, seat_index)`. If the dragged guest was unassigned, the displaced guest becomes unassigned (delete their row).
+  - Both writes go through a single batched update so the UI doesn't flash an inconsistent state.
+- For a table drop (no seat): find the lowest free `seat_index` in `[0, capacity)` and assign there. If full, fall back to `seat_index = null` (overflow, current behaviour).
+- All writes set `seat_index` going forward.
 
-### 3. Chairs on both long sides
+### 3. Render guests at their assigned seat
 
-Rework `computeSeats` in `FloorPlan.tsx` for `rectangle`, `long`, and `head` shapes so that:
+Today `FloorPlan` zips `seated[i]` with `seats[i]` in arrival order. New rule:
 
-- Two end seats (head/foot) are reserved first when capacity ≥ 4.
-- Remaining seats are split evenly between the top and bottom long sides (`Math.ceil` top, `Math.floor` bottom, or vice-versa) so neither side is starved.
-- Seats are spaced uniformly along each side using the table's actual width.
-- Odd capacities place the extra seat on the top side for consistency.
+- Build a `Map<seatIndex, Assignment>` per table.
+- For each computed seat position `i`, look up `seatMap.get(i)`.
+- Assignments with `seat_index = null` (legacy rows or overflow) are listed under the table as "unseated at this table" chips, and can be dragged onto a specific seat to claim it.
+- One-time, lazy backfill: when the seating tab loads, any assignment with `seat_index = null` whose table still has an obvious free slot is silently assigned the lowest free index. Pure client-side, no migration needed.
 
-This guarantees long tables always show chairs on both sides at every capacity, including small ones (e.g. 6, 7, 9) where the current code can stack everything on one side.
+### 4. Right-click / long-press seat menu
 
-### 4. Out of scope
+New tiny component `SeatMenu` (uses existing `DropdownMenu` from shadcn) wrapping each occupied seat:
 
-- Room editor (`RoomEditor.tsx`) — left untouched unless you also want the Miro treatment there.
-- No data-model changes, no new dependencies.
+- **Unassign** — delete the assignment row.
+- **Pin / Unpin** — toggle `pinned`.
+- **Move to…** — submenu listing other tables; choosing one moves the guest to that table's first free seat.
+- **Swap with…** — submenu listing currently seated guests at the same table.
+
+Long-press on touch devices opens the same menu.
+
+### 5. List-view parity
+
+In `SeatingView`'s list view, each `TableCard` already shows seated guests as a vertical list. We'll:
+
+- Render exactly `capacity` rows in seat order (1…N), each row being either a guest pill or an empty `[ Seat n ]` slot.
+- Each row is a droppable seat target (same `seat:tid:idx` id), so seat-level placement works in list view too.
+- Drag handle on the pill works the same as on the canvas.
+
+### 6. Out of scope
+
+- No DB schema changes — `assignments.seat_index` already exists.
+- No changes to auto-assign / constraints solver beyond making it write `seat_index` (lowest-free) when it places a guest. That's a 5-line tweak in `AutoAssignDialog` if needed; we'll confirm during implementation.
+- Room editor and other tabs untouched.
 
 ## Files touched
 
-- `src/components/planner/FloorPlan.tsx` — pan/zoom wrapper, dot-grid, zoom controls, animations, updated `computeSeats`.
+- `src/components/planner/FloorPlan.tsx` — per-seat droppables, draggable seated chips, swap visuals.
+- `src/components/planner/SeatingView.tsx` — drop-id parsing, swap logic, seat-level list view, lazy backfill.
+- `src/components/planner/SeatMenu.tsx` — new, small wrapper around `DropdownMenu`.
+- Possibly `src/components/planner/AutoAssignDialog.tsx` — write `seat_index` on insert (one-line).
 
 ## Technical notes
 
-- Pan/zoom implemented with a single CSS `transform` on a wrapper `<div>` that contains both the SVG and the drag-overlay layer, so guest drop coordinates stay aligned without extra math.
-- Drop-zone hit-testing already uses percentage offsets relative to the wrapper, which keeps working under transform.
-- Dot-grid drawn as a CSS `background-image: radial-gradient(...)` with `background-size` scaled by zoom — cheap and crisp at any level.
-- Zoom range clamped 0.4×–2.5×; pan clamped so at least part of the content stays in view.
+- Drop ids encode both table and seat to keep dnd-kit's flat id space happy: `seat:{tableId}:{idx}`, `table:{tableId}`, `__unassign__`.
+- Swap is two writes; we issue them in parallel with `Promise.all` and then `refresh()` once. If either fails we toast an error and refetch to recover.
+- `seat_index` is constrained to `[0, capacity)` at write time. If capacity later shrinks below an existing index, that guest renders as "unseated at this table" until moved.
+- The current invisible `SeatDragHandle` is removed — the visible seat chip becomes the drag handle, which is what users expect and stops the "I can't grab the guest" issue.
