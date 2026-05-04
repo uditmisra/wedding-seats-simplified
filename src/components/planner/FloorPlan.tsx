@@ -395,9 +395,10 @@ interface ShapeProps {
   table: TableDef; index: number; cx: number; cy: number;
   seated: Assignment[]; conflict: boolean; over: boolean;
   diff?: "added" | "removed" | "changed" | null;
+  dims: TableDims;
 }
 
-function TableShapeBg({ table, index, cx, cy, seated, conflict, over, diff }: ShapeProps) {
+function TableShapeBg({ table, index, cx, cy, conflict, over, diff, dims }: ShapeProps) {
   const diffColor =
     diff === "added" ? "hsl(var(--olive))" :
     diff === "removed" ? "hsl(var(--ink-4))" :
@@ -411,17 +412,17 @@ function TableShapeBg({ table, index, cx, cy, seated, conflict, over, diff }: Sh
   let shape: JSX.Element;
   let innerRing: JSX.Element | null = null;
   if (table.shape === "round") {
-    shape = <circle cx={cx} cy={cy} r={60} fill={fill} stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} filter="url(#tableShadow)"/>;
-    innerRing = <circle cx={cx} cy={cy} r={54} fill="none" stroke={baseStroke} strokeWidth={0.5} opacity={0.35}/>;
+    const r = dims.radius;
+    shape = <circle cx={cx} cy={cy} r={r} fill={fill} stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} filter="url(#tableShadow)"/>;
+    innerRing = <circle cx={cx} cy={cy} r={Math.max(0, r - 6)} fill="none" stroke={baseStroke} strokeWidth={0.5} opacity={0.35}/>;
   } else if (table.shape === "square") {
-    shape = <rect x={cx - 55} y={cy - 55} width={110} height={110} rx={8} fill={fill} stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} filter="url(#tableShadow)"/>;
-    innerRing = <rect x={cx - 49} y={cy - 49} width={98} height={98} rx={6} fill="none" stroke={baseStroke} strokeWidth={0.5} opacity={0.35}/>;
-  } else if (table.shape === "head") {
-    shape = <rect x={cx - 90} y={cy - 32} width={180} height={64} rx={10} fill={fill} stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} filter="url(#tableShadow)"/>;
-  } else if (table.shape === "long") {
-    shape = <rect x={cx - 100} y={cy - 30} width={200} height={60} rx={6} fill={fill} stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} filter="url(#tableShadow)"/>;
+    const s = dims.shapeW;
+    shape = <rect x={cx - s/2} y={cy - s/2} width={s} height={s} rx={8} fill={fill} stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} filter="url(#tableShadow)"/>;
+    innerRing = <rect x={cx - s/2 + 6} y={cy - s/2 + 6} width={s - 12} height={s - 12} rx={6} fill="none" stroke={baseStroke} strokeWidth={0.5} opacity={0.35}/>;
   } else {
-    shape = <rect x={cx - 80} y={cy - 45} width={160} height={90} rx={6} fill={fill} stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} filter="url(#tableShadow)"/>;
+    const w = dims.shapeW, h = dims.shapeH;
+    const rx = table.shape === "head" ? 10 : 6;
+    shape = <rect x={cx - w/2} y={cy - h/2} width={w} height={h} rx={rx} fill={fill} stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} filter="url(#tableShadow)"/>;
   }
 
   return (
@@ -433,17 +434,17 @@ function TableShapeBg({ table, index, cx, cy, seated, conflict, over, diff }: Sh
   );
 }
 
-function computeSeats(t: TableDef, cx: number, cy: number): { x: number; y: number }[] {
+function computeSeats(t: TableDef, cx: number, cy: number, dims: TableDims): { x: number; y: number }[] {
   const cap = Math.max(1, t.capacity);
   if (t.shape === "round" || t.shape === "square") {
-    const r = t.shape === "round" ? 78 : 82;
+    const r = (t.shape === "round" ? dims.radius : dims.shapeW / 2) + SEAT_GAP;
     return Array.from({ length: cap }, (_, i) => {
       const a = (i / cap) * Math.PI * 2 - Math.PI / 2;
       return { x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r };
     });
   }
-  const w = t.shape === "head" ? 180 : t.shape === "long" ? 200 : 160;
-  const h = t.shape === "head" ? 64 : t.shape === "long" ? 60 : 90;
+  const w = dims.shapeW;
+  const h = dims.shapeH;
   const seats: { x: number; y: number }[] = [];
   const useEnds = cap >= 4;
   const sideTotal = useEnds ? cap - 2 : cap;
@@ -455,11 +456,11 @@ function computeSeats(t: TableDef, cx: number, cy: number): { x: number; y: numb
       seats.push({ x, y });
     }
   };
-  placeRow(top, cy - h / 2 - 18);
-  placeRow(bot, cy + h / 2 + 18);
+  placeRow(top, cy - h / 2 - SEAT_GAP);
+  placeRow(bot, cy + h / 2 + SEAT_GAP);
   if (useEnds) {
-    seats.push({ x: cx - w / 2 - 18, y: cy });
-    seats.push({ x: cx + w / 2 + 18, y: cy });
+    seats.push({ x: cx - w / 2 - SEAT_GAP, y: cy });
+    seats.push({ x: cx + w / 2 + SEAT_GAP, y: cy });
   }
   return seats.slice(0, cap);
 }
