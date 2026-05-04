@@ -4,6 +4,7 @@ import type { Guest, TableDef, Assignment, ConstraintDef } from "@/lib/types";
 import { tableConflicts } from "@/lib/seating";
 import { Plus, Minus, Maximize2, RotateCcw } from "lucide-react";
 import { SeatMenu } from "./SeatMenu";
+import { SeatPicker } from "./SeatPicker";
 
 interface Props {
   tables: TableDef[];
@@ -16,13 +17,16 @@ interface Props {
   onTogglePin?: (a: Assignment) => void;
   onMoveTo?: (a: Assignment, tableId: string) => void;
   onSwapWith?: (a: Assignment, b: Assignment) => void;
+  unassigned?: Guest[];
+  onAssign?: (guestId: string, tableId: string, seatIndex: number) => void;
+  canEdit?: boolean;
 }
 
 const MIN_ZOOM = 0.4;
 const MAX_ZOOM = 2.5;
 
 const noop = () => {};
-export function FloorPlan({ tables, assignments, guests, constraints, highlights, scenarioId, onUnassign = noop, onTogglePin = noop, onMoveTo = noop, onSwapWith = noop }: Props) {
+export function FloorPlan({ tables, assignments, guests, constraints, highlights, scenarioId, onUnassign = noop, onTogglePin = noop, onMoveTo = noop, onSwapWith = noop, unassigned = [], onAssign, canEdit = true }: Props) {
   const guestById = useMemo(() => new Map(guests.map(g => [g.id, g])), [guests]);
 
   // Cell size grows with the largest table on the floor so big tables don't crowd neighbours.
