@@ -1,85 +1,78 @@
-## What's there now
+## The honest answer: no, the exports don't match the app
 
-- Empty seats on the floor plan are drop targets only. Clicking does nothing — you can drag a guest from the unassigned panel onto a seat, but you can't tap a seat to pick a person.
-- Right-click on an *occupied* seat opens a menu (pin, move, swap, remove). Empty seats have no menu at all.
-- The unassigned panel lives off to the side, which is fine for sweeping work but slow when you've zoomed into one table.
+The on-screen Export tab is beautifully art-directed — paper grain, Newsreader display type, terracotta accents, a "Fig. 01" preview. The actual files people download look nothing like that:
+
+- **PDFs use jsPDF's default Helvetica on stark white.** No paper tone, no display serif, no hairline rules, no chapter numerals — none of the editorial language that defines the rest of the app.
+- **"Big seating chart"** is a bare two-column text dump. No header block, no totals, no zebra rows.
+- **"One page per table"** is a bullet list. No table number badge, no shape indicator, no seat order.
+- **"Place cards"** is a wireframe — eight grey rectangles per A4 with a centred name. No fold guide, no decorative motif, no cut marks, nothing you'd actually put on a table.
+- **No actual visual seating chart export.** The app's hero artifact — the floor plan — is missing from the deliverables.
+- **CSV is fine but minimal.** Misses seat index, table shape, side, accessibility, kid flag.
+
+The exports undersell the product. People who download them won't believe it's the same app.
 
 ## What we'll build
 
-A click-to-assign popover anchored to any empty seat. Tapping the numbered seat opens a compact card that shows recommended guests first, a search box, and a couple of useful filters. Picking someone seats them in that exact seat (with the same swap/move plumbing the drag flow already uses).
+Four redesigned PDFs + an upgraded CSV, all sharing the paper/serif/terracotta language.
 
-### The card
+### 1. Visual seating chart PDF (new — becomes the hero export)
+
+Render the same floor-plan SVG used in the planner into the PDF as vector. Single landscape A4 (with A3 toggle) showing every table laid out, seat numbers, guest initials, table names, and a small legend. This is the format people frame or hang at the venue entrance.
+
+### 2. Big seating chart (A–Z list) — redesigned
+
+- Header: plan name in Newsreader, event date, "Seating · A–Z" tagline, totals strip ("128 guests · 16 tables · 12 dietary marks").
+- Two-column body with hairline rule between columns.
+- Each row: guest name (serif), party tag (small caps mono), table name right-aligned with leader dots.
+- Section headings by initial letter as oversized italic display ("A", "B", "C").
+- Footer: plan code, page X of Y, "Made with Seatly".
+- Optional dietary chip after the name.
+
+### 3. One page per table — redesigned
+
+- Per-table page: large "T1" badge, table name in serif display, shape and capacity in mono, inline seat-map thumbnail.
+- Guest list with seat order (Seat 1 → N), name, party, dietary tag.
+- Conflict callout at the bottom if any constraints are violated.
+
+### 4. Place cards — redesigned
+
+- 4 per A4 sheet (not 8), printed two-up duplex-friendly: front shows guest name in display serif and table in italic; back shows meal preference and a tiny floor-plan dot showing which table.
+- Crop marks and fold guides as hairlines.
+- Optional "Mr./Ms." prefix toggle.
+
+### 5. CSV — small additions
+
+Add columns: seat index, table shape, party side, accessibility notes, kid flag.
+
+## Technical approach
 
 ```text
-┌─ Seat 3 · T2 · College ──────────── ✕ ┐
-│ [🔍 Search guests…                 ]  │
-│                                       │
-│ Filters: [All] [Bride] [Groom] [Kids] │
-│          [V] [GF] [Accessibility]     │
-│                                       │
-│ RECOMMENDED                           │
-│ ● Gabriela Reyes      College · Bride │
-│   ↳ must sit with Benjamin (here)     │
-│ ● Felix Andersson     College · Groom │
-│   ↳ same party as 3 others here       │
-│                                       │
-│ ALL UNASSIGNED (12)                   │
-│ ○ Camila Vargas       Work · Groom GF │
-│ ○ Hiroki Tanaka       Work · Bride    │
-│ … scrollable                          │
-│                                       │
-│ ⚠ Felix can't sit with Hiroki (here)  │
-└───────────────────────────────────────┘
+Current: jsPDF .text() calls → flat A4 default fonts
+Target:  jsPDF + custom fonts + paper background + SVG embed
 ```
 
-### Recommendation logic (in priority order)
-
-1. **Must-sit-with** a guest already at this table (`constraints.kind = "with"`).
-2. **Same party** as the majority of guests already at this table.
-3. **Same side** (bride/groom) as the table's lean.
-4. **Kids** if the table already has a kid.
-5. Everyone else, alphabetised — but anyone with a `not_with` conflict against someone seated here is **dimmed and shows a warning chip**, not hidden (user can override).
-
-Capacity full → card opens in "swap" mode: the recommended list shows current seat occupants you'd be replacing.
-
-### Filters
-
-Compact chip row with single-select category + multi-select tags:
-- **Side**: All · Bride · Groom · Either
-- **Group**: Adults · Kids
-- **Diet**: V · GF · Accessibility (any)
-- **Party**: free text already covered by search
-
-### Search
-
-Matches name, party, and notes. Debounced 80ms. Up arrow / down arrow to move through the list, Enter to seat the highlighted guest.
-
-### Interaction
-
-- **Single click on empty seat** → opens the popover (Radix Popover anchored to the seat).
-- **Drag still works** — popover only opens on a clean click, not a drag start.
-- **Right-click on empty seat** → same popover (kept consistent with occupied-seat menu).
-- **Click on occupied seat** → keep current behavior (drag to move). Right-click still opens the existing edit menu.
-- **Mobile**: popover becomes a bottom sheet using the existing `Drawer` component, same content.
-- **Esc** closes; clicking outside closes; selecting a guest closes and toasts "Maya seated at T1 · Family · Seat 3".
-
-### Edge cases
-
-- **No unassigned guests left** → popover shows "Everyone's seated" with a button to swap from another table.
-- **Already-seated guest picked** → reuses `placeGuestAtSeat` (already handles swap with the previous occupant).
-- **Read-only mode** (`canEdit = false`) → popover doesn't open; empty seat shows tooltip "Read-only".
-- **Constraint conflict on pick** → still allows it but toasts a warning.
+- **Fonts**: Embed Newsreader (display) + Inter Tight (body) in jsPDF via `addFileToVFS` + `addFont`. Fetch the WOFF/TTF the app already loads, base64 once at module load.
+- **Paper tone**: Fill page background with `hsl(41 40% 92%)` converted to RGB before drawing.
+- **Hairlines**: 0.3pt rules in `hsl(50 14% 15% / 0.15)`.
+- **Floor-plan embed**: Extract `computeSeats` and `tableDims` into `src/lib/floorplanGeometry.ts` so both the React canvas and the export use them; build an SVG string from that geometry and render via `jspdf.svg()` (svg2pdf.js) at vector quality.
+- **Refactor**: Each export becomes `src/lib/export/<format>.ts`. `ExportPanel.tsx` stays thin. A shared `pdfTheme.ts` holds colors, fonts, and page setup.
+- **Preview**: Update on-screen `PaperPreview` to render the same components as the actual PDF — what you see is what prints. Add a sub-toggle to preview each format before downloading.
 
 ## Files affected
 
-- `src/components/planner/SeatPicker.tsx` (new) — the popover/sheet UI, search, filters, recommendation list, keyboard nav.
-- `src/lib/seatRecommend.ts` (new) — pure ranking function `rankCandidates(seat, table, tableSeated, allUnassigned, allSeated, constraints) → RankedGuest[]`.
-- `src/components/planner/FloorPlan.tsx` — wrap empty-seat node in the new picker; thread `onAssign(guestId, tableId, seatIndex)` and the relevant data props down from `SeatingView`.
-- `src/components/planner/SeatingView.tsx` — pass `unassigned`, `assignments`, `constraints`, `guestById`, `onAssign={placeGuestAtSeat}` into `FloorPlan`.
-- No DB changes. Reuses the existing `placeGuestAtSeat` flow, so swap, pin, and constraint logic stay in one place.
+- `src/lib/export/pdfTheme.ts` (new) — fonts, colors, page helpers
+- `src/lib/export/seatingChart.ts` (new) — visual chart PDF
+- `src/lib/export/alphabeticalChart.ts` (new) — A–Z list redesign
+- `src/lib/export/byTable.ts` (new) — per-table redesign
+- `src/lib/export/placeCards.ts` (new) — 4-up double-sided cards
+- `src/lib/export/csv.ts` (new) — extended columns
+- `src/lib/floorplanGeometry.ts` (new) — pure geometry pulled from `FloorPlan.tsx`
+- `src/components/planner/ExportPanel.tsx` — wire up new exports, surface "Visual chart" format, refresh preview
+- `package.json` — add `svg2pdf.js`
 
-## Out of scope (call out if you want them)
+## Two product calls before I build
 
-- AI-assisted "auto-fill this table" suggestion in the same popover.
-- Multi-select to seat several guests across consecutive seats in one go.
-- Persisted per-user filter preferences.
+1. **Hero export — the new visual seating chart, or keep the A–Z list as the default download?**
+2. **Place cards — 4-up double-sided (premium feel) or keep 8-up single-sided (cheaper to print)?**
+
+If you say "just go", I'll default to: visual chart as hero, 4-up double-sided cards, all four PDFs redesigned, geometry extracted, on-screen preview matched to actual output.

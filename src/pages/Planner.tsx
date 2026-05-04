@@ -362,7 +362,7 @@ const Planner = () => {
                 <ConstraintsPanel planId={plan.id} guests={guests} constraints={constraints} refresh={refresh} />
           </TabsContent>
           <TabsContent value="export" className="mt-6 animate-tab-in">
-                <ExportPanel plan={plan} guests={guests} tables={tables} assignments={assignments} />
+                <ExportPanel plan={plan} guests={guests} tables={tables} assignments={assignments} constraints={constraints} />
           </TabsContent>
         </Tabs>
       </main>

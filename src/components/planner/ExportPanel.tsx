@@ -1,15 +1,20 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { jsPDF } from "jspdf";
-import { FileDown, FileText, Printer, Download } from "lucide-react";
-import type { Guest, TableDef, Assignment } from "@/lib/types";
+import { LayoutDashboard, FileDown, FileText, Printer, Download } from "lucide-react";
+import type { Guest, TableDef, Assignment, ConstraintDef, Plan } from "@/lib/types";
 import { PaperTable } from "@/components/PaperTable";
+import { exportSeatingChart } from "@/lib/export/seatingChart";
+import { exportAlphabeticalChart } from "@/lib/export/alphabeticalChart";
+import { exportByTable } from "@/lib/export/byTable";
+import { exportPlaceCards } from "@/lib/export/placeCards";
+import { exportCsv } from "@/lib/export/csv";
 
 interface Props {
-  plan: { name: string };
+  plan: Plan;
   guests: Guest[];
   tables: TableDef[];
   assignments: Assignment[];
+  constraints: ConstraintDef[];
 }
 
 interface OptionState {
@@ -26,134 +31,71 @@ const DEFAULT_OPTIONS: OptionState = {
   showDietary: true,
 };
 
-export function ExportPanel({ plan, guests, tables, assignments }: Props) {
+export function ExportPanel({ plan, guests, tables, assignments, constraints }: Props) {
   const [opts, setOpts] = useState<OptionState>(DEFAULT_OPTIONS);
-  const [selected, setSelected] = useState<string>("master");
+  const [selected, setSelected] = useState<string>("visual");
 
-  const guestById = useMemo(() => new Map(guests.map(g => [g.id, g])), [guests]);
-  const tableById = useMemo(() => new Map(tables.map(t => [t.id, t])), [tables]);
   const seatedByTable = useMemo(() => {
     const m = new Map<string, number>();
     for (const a of assignments) m.set(a.table_id, (m.get(a.table_id) ?? 0) + 1);
     return m;
   }, [assignments]);
 
-  const masterChartPdf = () => {
-    const doc = new jsPDF();
-    doc.setFontSize(20); doc.text(plan.name, 20, 20);
-    doc.setFontSize(13); doc.text("Seating Chart", 20, 28);
-    doc.setFontSize(11);
-    let y = 40;
-    const sorted = [...assignments].sort((a, b) => {
-      const ga = guestById.get(a.guest_id)?.name ?? "";
-      const gb = guestById.get(b.guest_id)?.name ?? "";
-      return ga.localeCompare(gb);
-    });
-    for (const a of sorted) {
-      const g = guestById.get(a.guest_id); const t = tableById.get(a.table_id);
-      if (!g || !t) continue;
-      if (y > 280) { doc.addPage(); y = 20; }
-      doc.text(`${g.name}`, 20, y);
-      if (opts.showTableNames) doc.text(`${t.name}`, 140, y);
-      y += 7;
-    }
-    doc.save(`${plan.name}-seating-chart.pdf`);
-  };
-
-  const byTablePdf = () => {
-    const doc = new jsPDF();
-    let first = true;
-    for (const t of tables) {
-      if (!first) doc.addPage(); first = false;
-      doc.setFontSize(22); doc.text(t.name, 20, 25);
-      if (opts.showCapacity) {
-        doc.setFontSize(11); doc.text(`${t.shape} · ${t.capacity} seats`, 20, 33);
-      }
-      let y = 50;
-      const seated = assignments.filter(a => a.table_id === t.id);
-      for (const a of seated) {
-        const g = guestById.get(a.guest_id);
-        if (!g) continue;
-        const meal = opts.showDietary && g.meal ? `  —  ${g.meal}` : "";
-        doc.text(`• ${g.name}${meal}`, 25, y);
-        y += 8;
-      }
-    }
-    doc.save(`${plan.name}-by-table.pdf`);
-  };
-
-  const placeCardsPdf = () => {
-    const doc = new jsPDF({ unit: "mm", format: "a4" });
-    const W = 99, H = 67;
-    const cols = 2, rows = 4;
-    let i = 0;
-    for (const a of assignments) {
-      const g = guestById.get(a.guest_id); const t = tableById.get(a.table_id);
-      if (!g || !t) continue;
-      const idx = i % (cols * rows);
-      if (i > 0 && idx === 0) doc.addPage();
-      const col = idx % cols, row = Math.floor(idx / cols);
-      const x = 6 + col * (W + 6); const y = 10 + row * (H + 6);
-      doc.setDrawColor(180); doc.rect(x, y, W, H);
-      doc.setFontSize(20); doc.text(g.name, x + W / 2, y + H / 2 - 4, { align: "center" });
-      if (opts.showTableNames) {
-        doc.setFontSize(11); doc.setTextColor(120); doc.text(t.name, x + W / 2, y + H / 2 + 6, { align: "center" });
-        doc.setTextColor(0);
-      }
-      i++;
-    }
-    doc.save(`${plan.name}-place-cards.pdf`);
-  };
-
-  const csvExport = () => {
-    const rows = [["Name", "Party", "Table", "Meal", "RSVP", "Notes"]];
-    for (const a of assignments) {
-      const g = guestById.get(a.guest_id); const t = tableById.get(a.table_id);
-      if (!g || !t) continue;
-      rows.push([g.name, g.party ?? "", t.name, g.meal ?? "", g.rsvp, g.notes ?? ""]);
-    }
-    const csv = rows.map(r => r.map(c => `"${(c ?? "").toString().replace(/"/g, '""')}"`).join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${plan.name}-assignments.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
   const formats = [
+    {
+      id: "visual",
+      icon: LayoutDashboard,
+      title: "Visual seating chart",
+      desc: "The floor plan, framed for the venue entrance.",
+      size: "A4 landscape · PDF",
+      action: () => exportSeatingChart({
+        planName: plan.name, planCode: plan.code,
+        tables, guests, assignments,
+        showTableNames: opts.showTableNames,
+      }),
+    },
     {
       id: "master",
       icon: FileText,
-      title: "Big seating chart",
-      desc: "An A–Z list of who sits where — for the entrance.",
+      title: "A to Z list",
+      desc: "Alphabetical roster of who sits where.",
       size: "A4 · PDF",
-      action: masterChartPdf,
+      action: () => exportAlphabeticalChart({
+        planName: plan.name, planCode: plan.code,
+        guests, tables, assignments, showDietary: opts.showDietary,
+      }),
     },
     {
       id: "by-table",
       icon: FileText,
-      title: "One page per table",
-      desc: "For your venue or coordinator.",
+      title: "Table sheets",
+      desc: "One designed page per table — for your coordinator.",
       size: "A4 · PDF",
-      action: byTablePdf,
+      action: () => exportByTable({
+        planName: plan.name, planCode: plan.code,
+        guests, tables, assignments, constraints,
+        showCapacity: opts.showCapacity, showDietary: opts.showDietary,
+      }),
     },
     {
       id: "place-cards",
       icon: Printer,
       title: "Place cards",
-      desc: "Eight per A4 sheet, ready to cut and fold.",
-      size: "A4 · 8-up · PDF",
-      action: placeCardsPdf,
+      desc: "Four per sheet, double-sided, ready to fold.",
+      size: "A4 · 4-up · PDF",
+      action: () => exportPlaceCards({
+        planName: plan.name,
+        tables, guests, assignments,
+        showDietary: opts.showDietary,
+      }),
     },
     {
       id: "csv",
       icon: FileDown,
       title: "Spreadsheet",
-      desc: "For the caterer — names, tables, meals.",
+      desc: "Full roster — for the caterer or planner.",
       size: "CSV",
-      action: csvExport,
+      action: () => exportCsv({ planName: plan.name, guests, tables, assignments }),
     },
   ];
 
@@ -193,6 +135,8 @@ export function ExportPanel({ plan, guests, tables, assignments }: Props) {
           </div>
         </div>
 
+        <p className="text-[12px] text-ink-3 leading-snug">{active.desc}</p>
+
         <div>
           <div className="label-mono mb-3">Include</div>
           <div className="space-y-2">
@@ -221,7 +165,7 @@ export function ExportPanel({ plan, guests, tables, assignments }: Props) {
 
         <Button onClick={active.action} className="w-full rounded-full">
           <Download size={14} className="mr-1.5" />
-          Download {active.size.split(" ").pop()}
+          Download {active.title}
         </Button>
       </div>
 
