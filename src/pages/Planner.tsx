@@ -21,19 +21,47 @@ import { Link as LinkIcon, Check, ArrowLeft, Wand2, GitCompareArrows, ShieldAler
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { addRecentPlan } from "@/lib/recentPlans";
+import { useAuth } from "@/hooks/useAuth";
+import { UserMenu } from "@/components/UserMenu";
+import { Eye, Sparkles } from "lucide-react";
 
 const Planner = () => {
   const { code } = useParams();
   const { plan, setPlan, scenarios, scenarioId, setScenarioId, guests, tables, assignments, constraints, loading, notFound, refresh } = usePlanData(code);
+  const { user } = useAuth();
   const [editingName, setEditingName] = useState(false);
   const [autoOpen, setAutoOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [tab, setTab] = useState<string>("seating");
   const [guestsAutoOpen, setGuestsAutoOpen] = useState<"new" | "import" | null>(null);
   const [tablesAutoOpen, setTablesAutoOpen] = useState<"new" | "bulk" | null>(null);
+  const [canEdit, setCanEdit] = useState(false);
+  const [hasOwner, setHasOwner] = useState<boolean | null>(null);
+  const [claiming, setClaiming] = useState(false);
   const onboardingActive = !loading && plan && (guests.length === 0 || tables.length === 0);
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
-  const showOnboarding = onboardingActive && !onboardingDismissed;
+  const showOnboarding = canEdit && onboardingActive && !onboardingDismissed;
+
+  // Determine canEdit + ownership status
+  useEffect(() => {
+    if (!plan) return;
+    (async () => {
+      const { data: owners } = await supabase.from("plan_owners").select("user_id").eq("plan_id", plan.id);
+      const list = owners ?? [];
+      setHasOwner(list.length > 0);
+      setCanEdit(!!user && list.some((o: any) => o.user_id === user.id));
+    })();
+  }, [plan?.id, user?.id]);
+
+  const claim = async () => {
+    if (!user || !plan) return;
+    setClaiming(true);
+    const { error } = await supabase.from("plan_owners").insert({ plan_id: plan.id, user_id: user.id, role: "owner" });
+    setClaiming(false);
+    if (error) { toast.error(error.message); return; }
+    setHasOwner(true); setCanEdit(true);
+    toast.success("This plan is yours now");
+  };
 
   useEffect(() => {
     if (showOnboarding) setTab("seating");
@@ -71,12 +99,12 @@ const Planner = () => {
           <Link to="/" aria-label="Home" className="text-soft hover:text-foreground -ml-1 p-1.5 rounded-md hover:bg-surface-hover">
             <ArrowLeft size={16}/>
           </Link>
-          {editingName ? (
+          {editingName && canEdit ? (
             <Input autoFocus value={plan.name} onChange={e => renamePlan(e.target.value)} onBlur={() => setEditingName(false)} className="h-8 w-64 font-display text-lg border-hairline"/>
           ) : (
-            <button onClick={() => setEditingName(true)} className="group flex items-center gap-1.5 font-display text-lg truncate text-foreground hover:text-primary">
+            <button onClick={() => canEdit && setEditingName(true)} className={`group flex items-center gap-1.5 font-display text-lg truncate text-foreground ${canEdit ? "hover:text-primary" : "cursor-default"}`}>
               <span className="truncate">{plan.name}</span>
-              <Pencil size={12} className="opacity-0 group-hover:opacity-50 transition shrink-0"/>
+              {canEdit && <Pencil size={12} className="opacity-0 group-hover:opacity-50 transition shrink-0"/>}
             </button>
           )}
           <TooltipProvider delayDuration={200}>
@@ -113,15 +141,40 @@ const Planner = () => {
                   </Button>
                 </TooltipTrigger><TooltipContent>Export &amp; print</TooltipContent></Tooltip>
               )}
-              <Button size="sm" onClick={() => setAutoOpen(true)} className="ml-1 h-9 shadow-soft">
-                <Wand2 size={14} className="mr-1.5"/>Auto-seat
-              </Button>
+              {canEdit && (
+                <Button size="sm" onClick={() => setAutoOpen(true)} className="ml-1 h-9 shadow-soft">
+                  <Wand2 size={14} className="mr-1.5"/>Auto-seat
+                </Button>
+              )}
+              <div className="ml-1"><UserMenu/></div>
             </div>
           </TooltipProvider>
         </div>
       </header>
 
       <main className="container py-8 space-y-8">
+        {!canEdit && hasOwner === false && user && (
+          <div className="rounded-2xl border-hairline border bg-card p-4 sm:p-5 flex flex-wrap items-center gap-3 shadow-soft">
+            <Sparkles size={18} className="text-primary"/>
+            <div className="flex-1 min-w-0">
+              <div className="font-display text-base">This plan has no owner yet</div>
+              <div className="text-xs text-soft">Claim it to start editing.</div>
+            </div>
+            <Button onClick={claim} disabled={claiming}>Claim this plan</Button>
+          </div>
+        )}
+        {!canEdit && hasOwner && (
+          <div className="rounded-xl border border-hairline bg-surface/60 px-4 py-2.5 flex items-center gap-2.5 text-sm">
+            <Eye size={14} className="text-soft"/>
+            <span className="text-soft">You're viewing a shared seating chart.</span>
+            {!user && (
+              <Link to={`/auth?next=${encodeURIComponent(window.location.pathname)}`} className="text-primary hover:underline ml-auto">
+                Sign in to edit
+              </Link>
+            )}
+          </div>
+        )}
+
         {showOnboarding ? (
           <OnboardingFlow
             planId={plan.id}
