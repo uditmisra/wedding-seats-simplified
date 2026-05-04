@@ -147,11 +147,11 @@ export function FloorPlan({ tables, assignments, guests, constraints }: Props) {
 }
 
 function tableBox(t: TableDef): { w: number; h: number } {
-  if (t.shape === "round") return { w: 156, h: 156 }; // include seat ring
-  if (t.shape === "square") return { w: 164, h: 164 };
-  if (t.shape === "head") return { w: 200, h: 100 };
-  if (t.shape === "long") return { w: 220, h: 100 };
-  return { w: 180, h: 130 };
+  if (t.shape === "round") return { w: 200, h: 200 };
+  if (t.shape === "square") return { w: 200, h: 200 };
+  if (t.shape === "head") return { w: 220, h: 120 };
+  if (t.shape === "long") return { w: 240, h: 120 };
+  return { w: 200, h: 140 };
 }
 
 function TableDropZone({ tableId, style }: { tableId: string; style: React.CSSProperties }) {
