@@ -57,9 +57,14 @@ export function RoomEditor({ planId, scenarioId, tables, assignments, refresh }:
 
   // On mount (or scenario switch): if we have stashed edits that differ from
   // the saved DB values, flush them so the canvas matches what the user last saw.
+  // Only fires once per scenario (guarded by a ref) and waits for `tables` to load.
+  const flushedFor = useRef<string | null>(null);
   useEffect(() => {
+    if (flushedFor.current === scenarioId) return;
+    if (tables.length === 0) return; // wait until tables have loaded
+    flushedFor.current = scenarioId;
     const entries = Object.entries(localPos);
-    if (entries.length === 0 || tables.length === 0) return;
+    if (entries.length === 0) return;
     const toFlush = entries.filter(([id, p]) => {
       const t = tables.find(x => x.id === id);
       if (!t) return false;
@@ -82,9 +87,8 @@ export function RoomEditor({ planId, scenarioId, tables, assignments, refresh }:
       setLocalPos({});
       refresh();
     })();
-    // Only run when the scenario itself changes — we don't want this firing on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scenarioId]);
+  }, [scenarioId, tables.length]);
 
   // Auto-lay-out tables that are stacked at (0,0)
   useEffect(() => {
