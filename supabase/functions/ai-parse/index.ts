@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -83,11 +84,40 @@ const MAPPING_TOOL = {
 
 const SYSTEM = "You are a friendly wedding planning assistant. Extract structured data carefully and conservatively. If unsure about an optional field, omit it rather than guessing.";
 
+const MAX_BYTES = 64 * 1024; // 64 KB
+const MAX_INPUT_CHARS = 10_000;
+const MAX_HEADERS = 50;
+const MAX_SAMPLES = 5;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { mode, input } = await req.json();
+    // Require authenticated caller to prevent credit-exhaustion abuse
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: claimsData, error: authErr } = await supabase.auth.getClaims(authHeader.replace("Bearer ", ""));
+    if (authErr || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // Enforce request size cap
+    const buf = await req.arrayBuffer();
+    if (buf.byteLength > MAX_BYTES) {
+      return new Response(JSON.stringify({ error: "Payload too large" }), { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    let body: { mode?: string; input?: unknown };
+    try { body = JSON.parse(new TextDecoder().decode(buf)); } catch {
+      return new Response(JSON.stringify({ error: "Invalid JSON" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    const { mode, input } = body;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
@@ -95,14 +125,18 @@ serve(async (req) => {
     let userPrompt: string;
     if (mode === "guests") {
       tool = GUESTS_TOOL;
-      userPrompt = `Extract guests from this text:\n\n${input}`;
+      const safe = String(input ?? "").slice(0, MAX_INPUT_CHARS);
+      userPrompt = `Extract guests from this text:\n\n${safe}`;
     } else if (mode === "tables") {
       tool = TABLES_TOOL;
-      userPrompt = `Extract tables from this description:\n\n${input}`;
+      const safe = String(input ?? "").slice(0, MAX_INPUT_CHARS);
+      userPrompt = `Extract tables from this description:\n\n${safe}`;
     } else if (mode === "mapping") {
       tool = MAPPING_TOOL;
-      const { headers, samples } = input as { headers: string[]; samples: Record<string, unknown>[] };
-      userPrompt = `Headers: ${JSON.stringify(headers)}\n\nFirst rows:\n${JSON.stringify(samples, null, 2)}\n\nReturn a mapping object whose keys are exactly these headers.`;
+      const { headers, samples } = (input ?? {}) as { headers?: string[]; samples?: Record<string, unknown>[] };
+      const safeHeaders = (headers ?? []).slice(0, MAX_HEADERS);
+      const safeSamples = (samples ?? []).slice(0, MAX_SAMPLES);
+      userPrompt = `Headers: ${JSON.stringify(safeHeaders)}\n\nFirst rows:\n${JSON.stringify(safeSamples, null, 2)}\n\nReturn a mapping object whose keys are exactly these headers.`;
     } else {
       return new Response(JSON.stringify({ error: "Invalid mode" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
