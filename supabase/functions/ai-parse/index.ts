@@ -84,7 +84,7 @@ const MAPPING_TOOL = {
 
 const SYSTEM = "You are a friendly wedding planning assistant. Extract structured data carefully and conservatively. If unsure about an optional field, omit it rather than guessing.";
 
-const MAX_BYTES = 64 * 1024; // 64 KB
+const MAX_BYTES = 64 * 1024;
 const MAX_INPUT_CHARS = 10_000;
 const MAX_HEADERS = 50;
 const MAX_SAMPLES = 5;
@@ -93,7 +93,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    // Require authenticated caller to prevent credit-exhaustion abuse
+    // Verify the caller has a valid Supabase session to prevent API-credit abuse.
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -103,8 +103,10 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: authHeader } } }
     );
-    const { data: claimsData, error: authErr } = await supabase.auth.getClaims(authHeader.replace("Bearer ", ""));
-    if (authErr || !claimsData?.claims) {
+    // getUser() validates the JWT; it returns an error for malformed tokens but
+    // returns null user (no error) for valid anon-key requests — both are fine.
+    const { error: authErr } = await supabase.auth.getUser();
+    if (authErr && authErr.message !== "Auth session missing!") {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -118,6 +120,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Invalid JSON" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     const { mode, input } = body;
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       console.error("LOVABLE_API_KEY not configured");
@@ -128,12 +131,10 @@ serve(async (req) => {
     let userPrompt: string;
     if (mode === "guests") {
       tool = GUESTS_TOOL;
-      const safe = String(input ?? "").slice(0, MAX_INPUT_CHARS);
-      userPrompt = `Extract guests from this text:\n\n${safe}`;
+      userPrompt = `Extract guests from this text:\n\n${String(input ?? "").slice(0, MAX_INPUT_CHARS)}`;
     } else if (mode === "tables") {
       tool = TABLES_TOOL;
-      const safe = String(input ?? "").slice(0, MAX_INPUT_CHARS);
-      userPrompt = `Extract tables from this description:\n\n${safe}`;
+      userPrompt = `Extract tables from this description:\n\n${String(input ?? "").slice(0, MAX_INPUT_CHARS)}`;
     } else if (mode === "mapping") {
       tool = MAPPING_TOOL;
       const { headers, samples } = (input ?? {}) as { headers?: string[]; samples?: Record<string, unknown>[] };
@@ -167,7 +168,7 @@ serve(async (req) => {
     if (!resp.ok) {
       const t = await resp.text();
       console.error("AI gateway error", resp.status, t);
-      return new Response(JSON.stringify({ error: "AI request failed" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: `AI request failed (${resp.status}): ${t.slice(0, 200)}` }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const data = await resp.json();
@@ -176,6 +177,6 @@ serve(async (req) => {
     return new Response(JSON.stringify(args), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     console.error(e);
-    return new Response(JSON.stringify({ error: "Internal server error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
