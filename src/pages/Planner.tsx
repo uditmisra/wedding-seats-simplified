@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { usePlanData } from "@/hooks/usePlanData";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +27,7 @@ import { Eye, Sparkles } from "lucide-react";
 
 const Planner = () => {
   const { code } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { plan, setPlan, scenarios, scenarioId, setScenarioId, guests, tables, assignments, constraints, loading, notFound, refresh } = usePlanData(code);
   const { user } = useAuth();
   const [editingName, setEditingName] = useState(false);
@@ -71,6 +72,18 @@ const Planner = () => {
   useEffect(() => {
     if (showOnboarding) setTab("seating");
   }, [showOnboarding]);
+
+  // Auto-claim after returning from auth with ?claim=1
+  useEffect(() => {
+    if (searchParams.get("claim") === "1" && user && plan && hasOwner === false && !canEdit && !claiming) {
+      claim().finally(() => {
+        const next = new URLSearchParams(searchParams);
+        next.delete("claim");
+        setSearchParams(next, { replace: true });
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, plan?.id, hasOwner]);
 
   // Track recently opened plans
   useEffect(() => {
@@ -158,14 +171,24 @@ const Planner = () => {
       </header>
 
       <main className="container py-8 space-y-8">
-        {!canEdit && hasOwner === false && user && (
+        {!canEdit && hasOwner === false && (
           <div className="rounded-2xl border-hairline border bg-card p-4 sm:p-5 flex flex-wrap items-center gap-3 shadow-soft">
             <Sparkles size={18} className="text-primary"/>
             <div className="flex-1 min-w-0">
               <div className="font-display text-base">This plan has no owner yet</div>
-              <div className="text-xs text-soft">Claim it to start editing.</div>
+              <div className="text-xs text-soft">
+                {user ? "Claim it to start editing." : "Sign in or create an account to claim it and start editing."}
+              </div>
             </div>
-            <Button onClick={claim} disabled={claiming}>Claim this plan</Button>
+            {user ? (
+              <Button onClick={claim} disabled={claiming}>Claim this plan</Button>
+            ) : (
+              <Button asChild>
+                <Link to={`/auth?next=${encodeURIComponent(window.location.pathname + "?claim=1")}`}>
+                  Sign in to claim
+                </Link>
+              </Button>
+            )}
           </div>
         )}
         {!canEdit && hasOwner && (
