@@ -5,13 +5,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Plus, RotateCw, Trash2, X, Maximize2 } from "lucide-react";
+import { Plus, RotateCw, Trash2, X, Maximize2, Magnet } from "lucide-react";
+import { Toggle } from "@/components/ui/toggle";
 import type { TableDef, Shape, Assignment } from "@/lib/types";
 import { toast } from "sonner";
 
 const SHAPES: Shape[] = ["round", "rectangle", "square", "long", "head"];
 const CANVAS_W = 1400;
 const CANVAS_H = 900;
+const GRID = 20;            // canvas units
+const SNAP_TOLERANCE = 8;   // canvas units — how close before alignment guide engages
 
 interface Props {
   planId: string;
@@ -28,9 +31,13 @@ interface Props {
 export function RoomEditor({ planId, scenarioId, tables, assignments, refresh }: Props) {
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [drag, setDrag] = useState<{ id: string; mode: "move" | "rotate"; offsetX: number; offsetY: number; startAngle: number; startRot: number } | null>(null);
+  const [drag, setDrag] = useState<{ id: string; mode: "move" | "rotate"; offsetX: number; offsetY: number; startAngle: number; startRot: number; shift: boolean } | null>(null);
   // local positions during drag for snappy feedback
   const [localPos, setLocalPos] = useState<Record<string, { x: number; y: number; rotation: number }>>({});
+  const [snap, setSnap] = useState(true);
+  const [showGrid, setShowGrid] = useState(true);
+  // active alignment guides while dragging — canvas-unit coords
+  const [guides, setGuides] = useState<{ v: number[]; h: number[] }>({ v: [], h: [] });
 
   // Auto-lay-out tables that are stacked at (0,0)
   useEffect(() => {
@@ -65,7 +72,7 @@ export function RoomEditor({ planId, scenarioId, tables, assignments, refresh }:
     const px = (e.clientX - rect.left) / scale;
     const py = (e.clientY - rect.top) / scale;
     const pos = tableAt(t);
-    setDrag({ id: t.id, mode: "move", offsetX: px - pos.x, offsetY: py - pos.y, startAngle: 0, startRot: pos.rotation });
+    setDrag({ id: t.id, mode: "move", offsetX: px - pos.x, offsetY: py - pos.y, startAngle: 0, startRot: pos.rotation, shift: e.shiftKey });
     (e.target as Element).setPointerCapture(e.pointerId);
   };
 
@@ -78,7 +85,7 @@ export function RoomEditor({ planId, scenarioId, tables, assignments, refresh }:
     const py = (e.clientY - rect.top) / scale;
     const pos = tableAt(t);
     const startAngle = Math.atan2(py - pos.y, px - pos.x) * 180 / Math.PI;
-    setDrag({ id: t.id, mode: "rotate", offsetX: 0, offsetY: 0, startAngle, startRot: pos.rotation });
+    setDrag({ id: t.id, mode: "rotate", offsetX: 0, offsetY: 0, startAngle, startRot: pos.rotation, shift: e.shiftKey });
     (e.target as Element).setPointerCapture(e.pointerId);
   };
 
@@ -90,13 +97,41 @@ export function RoomEditor({ planId, scenarioId, tables, assignments, refresh }:
     const py = (e.clientY - rect.top) / scale;
     const t = tables.find(x => x.id === drag.id); if (!t) return;
     const cur = tableAt(t);
+    // Hold Shift to temporarily disable snapping
+    const useSnap = snap && !e.shiftKey;
     if (drag.mode === "move") {
-      const x = clamp(px - drag.offsetX, 60, CANVAS_W - 60);
-      const y = clamp(py - drag.offsetY, 60, CANVAS_H - 60);
+      let x = clamp(px - drag.offsetX, 60, CANVAS_W - 60);
+      let y = clamp(py - drag.offsetY, 60, CANVAS_H - 60);
+      const activeV: number[] = [];
+      const activeH: number[] = [];
+      if (useSnap) {
+        // 1) Alignment to other tables' centers (highest priority)
+        let bestX: { v: number; d: number } | null = null;
+        let bestY: { v: number; d: number } | null = null;
+        for (const other of tables) {
+          if (other.id === drag.id) continue;
+          const op = tableAt(other);
+          const dx = Math.abs(op.x - x);
+          if (dx < SNAP_TOLERANCE && (!bestX || dx < bestX.d)) bestX = { v: op.x, d: dx };
+          const dy = Math.abs(op.y - y);
+          if (dy < SNAP_TOLERANCE && (!bestY || dy < bestY.d)) bestY = { v: op.y, d: dy };
+        }
+        // 2) Canvas center alignment
+        if (Math.abs(CANVAS_W / 2 - x) < SNAP_TOLERANCE && (!bestX || Math.abs(CANVAS_W / 2 - x) < bestX.d)) bestX = { v: CANVAS_W / 2, d: Math.abs(CANVAS_W / 2 - x) };
+        if (Math.abs(CANVAS_H / 2 - y) < SNAP_TOLERANCE && (!bestY || Math.abs(CANVAS_H / 2 - y) < bestY.d)) bestY = { v: CANVAS_H / 2, d: Math.abs(CANVAS_H / 2 - y) };
+
+        if (bestX) { x = bestX.v; activeV.push(bestX.v); }
+        else { x = Math.round(x / GRID) * GRID; }
+        if (bestY) { y = bestY.v; activeH.push(bestY.v); }
+        else { y = Math.round(y / GRID) * GRID; }
+      }
+      setGuides({ v: activeV, h: activeH });
       setLocalPos(p => ({ ...p, [drag.id]: { ...cur, x, y } }));
     } else {
       const angle = Math.atan2(py - cur.y, px - cur.x) * 180 / Math.PI;
-      const rotation = Math.round(((drag.startRot + (angle - drag.startAngle)) % 360 + 360) % 360);
+      let rotation = ((drag.startRot + (angle - drag.startAngle)) % 360 + 360) % 360;
+      if (useSnap) rotation = Math.round(rotation / 15) * 15; // 15° increments
+      else rotation = Math.round(rotation);
       setLocalPos(p => ({ ...p, [drag.id]: { ...cur, rotation } }));
     }
   };
@@ -106,6 +141,7 @@ export function RoomEditor({ planId, scenarioId, tables, assignments, refresh }:
     const id = drag.id;
     const final = localPos[id];
     setDrag(null);
+    setGuides({ v: [], h: [] });
     if (final) {
       await supabase.from("tables_def")
         .update({ x: Math.round(final.x), y: Math.round(final.y), rotation: Math.round(final.rotation) })
@@ -129,11 +165,33 @@ export function RoomEditor({ planId, scenarioId, tables, assignments, refresh }:
   return (
     <div className="grid lg:grid-cols-[1fr_320px] gap-4">
       <div>
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-2 gap-2">
           <div className="text-sm text-muted-foreground">
-            Drag tables to reposition · click a table to edit · use the handle to rotate
+            Drag to move · hold <kbd className="px-1 rounded bg-muted text-[10px]">Shift</kbd> for free placement
           </div>
-          <Button size="sm" onClick={addTable}><Plus size={14} className="mr-1.5"/>Add table</Button>
+          <div className="flex items-center gap-1">
+            <Toggle
+              size="sm"
+              pressed={snap}
+              onPressedChange={setSnap}
+              aria-label="Snap to grid and align"
+              title="Snap to grid and align with other tables"
+              className="h-8 px-2 text-xs"
+            >
+              <Magnet size={13} className="mr-1"/>Snap
+            </Toggle>
+            <Toggle
+              size="sm"
+              pressed={showGrid}
+              onPressedChange={setShowGrid}
+              aria-label="Show grid"
+              title="Show grid"
+              className="h-8 px-2 text-xs"
+            >
+              Grid
+            </Toggle>
+            <Button size="sm" onClick={addTable}><Plus size={14} className="mr-1.5"/>Add table</Button>
+          </div>
         </div>
         <div
           ref={canvasRef}
@@ -144,15 +202,35 @@ export function RoomEditor({ planId, scenarioId, tables, assignments, refresh }:
           className="relative w-full rounded-2xl border border-border/60 overflow-hidden bg-card touch-none select-none"
           style={{ aspectRatio: `${CANVAS_W} / ${CANVAS_H}`, background: "var(--gradient-soft)" }}
         >
-          {/* parquet pattern */}
-          <svg className="absolute inset-0 w-full h-full opacity-[0.05] pointer-events-none" aria-hidden>
+          {/* Background: subtle grid (when enabled) or parquet */}
+          <svg className="absolute inset-0 w-full h-full pointer-events-none" aria-hidden viewBox={`0 0 ${CANVAS_W} ${CANVAS_H}`} preserveAspectRatio="none">
             <defs>
               <pattern id="parquet-edit" width="40" height="40" patternUnits="userSpaceOnUse">
-                <rect width="40" height="40" fill="currentColor"/>
-                <path d="M0 0L40 40M40 0L0 40" stroke="hsl(var(--foreground))" strokeWidth="0.5"/>
+                <rect width="40" height="40" fill="transparent"/>
+                <path d="M0 0L40 40M40 0L0 40" stroke="hsl(var(--foreground))" strokeOpacity="0.05" strokeWidth="0.5"/>
+              </pattern>
+              <pattern id="grid-edit" width={GRID} height={GRID} patternUnits="userSpaceOnUse">
+                <path d={`M ${GRID} 0 L 0 0 0 ${GRID}`} fill="none" stroke="hsl(var(--foreground))" strokeOpacity="0.07" strokeWidth="1"/>
+              </pattern>
+              <pattern id="grid-major" width={GRID * 5} height={GRID * 5} patternUnits="userSpaceOnUse">
+                <path d={`M ${GRID * 5} 0 L 0 0 0 ${GRID * 5}`} fill="none" stroke="hsl(var(--foreground))" strokeOpacity="0.12" strokeWidth="1"/>
               </pattern>
             </defs>
-            <rect width="100%" height="100%" fill="url(#parquet-edit)"/>
+            {showGrid ? (
+              <>
+                <rect width="100%" height="100%" fill="url(#grid-edit)"/>
+                <rect width="100%" height="100%" fill="url(#grid-major)"/>
+              </>
+            ) : (
+              <rect width="100%" height="100%" fill="url(#parquet-edit)"/>
+            )}
+            {/* Alignment guides */}
+            {guides.v.map((x, i) => (
+              <line key={`v${i}`} x1={x} y1={0} x2={x} y2={CANVAS_H} stroke="hsl(var(--primary))" strokeWidth={1.5} strokeDasharray="6 4"/>
+            ))}
+            {guides.h.map((y, i) => (
+              <line key={`h${i}`} x1={0} y1={y} x2={CANVAS_W} y2={y} stroke="hsl(var(--primary))" strokeWidth={1.5} strokeDasharray="6 4"/>
+            ))}
           </svg>
 
           {tables.length === 0 && (
