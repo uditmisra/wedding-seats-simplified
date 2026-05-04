@@ -16,7 +16,7 @@ export function usePlanData(code: string | undefined) {
   const loadAll = useCallback(async (planCode: string, scnId: string | null) => {
     const { data, error } = await supabase.rpc("get_plan_snapshot", { _code: planCode });
     if (error || !data) return;
-    const snap = data as {
+    const snap = data as unknown as {
       scenarios: Scenario[]; guests: Guest[];
       tables: TableDef[]; assignments: Assignment[]; constraints: ConstraintDef[];
     };
@@ -37,7 +37,7 @@ export function usePlanData(code: string | undefined) {
       const { data: snap } = await supabase.rpc("get_plan_snapshot", { _code: code });
       if (!active) return;
       if (!snap) { setNotFound(true); setLoading(false); return; }
-      const s = snap as {
+      const s = snap as unknown as {
         plan: Plan; scenarios: Scenario[]; guests: Guest[];
         tables: TableDef[]; assignments: Assignment[]; constraints: ConstraintDef[];
       };
