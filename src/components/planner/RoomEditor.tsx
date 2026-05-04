@@ -370,6 +370,18 @@ export function RoomEditor({ planId, scenarioId, tables, assignments, refresh }:
 
 function clamp(v: number, lo: number, hi: number) { return Math.min(hi, Math.max(lo, v)); }
 
+/** Axis-aligned bounding-box overlap test with extra clearance padding. */
+function boxesOverlap(
+  a: { x: number; y: number; w: number; h: number },
+  b: { x: number; y: number; w: number; h: number },
+  pad = 0,
+) {
+  return (
+    Math.abs(a.x - b.x) * 2 < a.w + b.w + pad * 2 &&
+    Math.abs(a.y - b.y) * 2 < a.h + b.h + pad * 2
+  );
+}
+
 function tableSize(t: TableDef): { w: number; h: number; rounded: string } {
   if (t.shape === "round") return { w: 130, h: 130, rounded: "rounded-full" };
   if (t.shape === "square") return { w: 120, h: 120, rounded: "rounded-lg" };
@@ -379,12 +391,13 @@ function tableSize(t: TableDef): { w: number; h: number; rounded: string } {
 }
 
 function TableNode({
-  table, pos, seated, selected, onPointerDown, onRotateStart,
+  table, pos, seated, selected, overlap, onPointerDown, onRotateStart,
 }: {
   table: TableDef;
   pos: { x: number; y: number; rotation: number };
   seated: number;
   selected: boolean;
+  overlap: boolean;
   onPointerDown: (e: React.PointerEvent) => void;
   onRotateStart: (e: React.PointerEvent) => void;
 }) {
@@ -406,6 +419,7 @@ function TableNode({
         onPointerDown={onPointerDown}
         className={`relative w-full h-full ${rounded} bg-card shadow-md flex flex-col items-center justify-center cursor-move transition border-2 ${
           selected ? "border-primary ring-4 ring-primary/20"
+          : overlap ? "border-destructive ring-2 ring-destructive/30"
           : over ? "border-warning"
           : "border-border hover:border-primary/40"
         }`}
@@ -417,6 +431,15 @@ function TableNode({
         <div className="text-[10px] text-muted-foreground tracking-wider uppercase mt-0.5">
           {seated} / {table.capacity}
         </div>
+        {overlap && (
+          <div
+            className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center shadow"
+            style={{ transform: `rotate(${-pos.rotation}deg)` }}
+            title="This table overlaps another"
+          >
+            <AlertTriangle size={11}/>
+          </div>
+        )}
       </div>
       {selected && (
         <button
