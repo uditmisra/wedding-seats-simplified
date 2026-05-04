@@ -9,6 +9,7 @@ import { Plus, Trash2, Pencil, Layers } from "lucide-react";
 import type { TableDef, Shape, Assignment } from "@/lib/types";
 import { toast } from "sonner";
 import { SmartTableInput } from "./SmartTableInput";
+import { RoomEditor } from "./RoomEditor";
 
 const SHAPES: Shape[] = ["round", "rectangle", "square", "long", "head"];
 
@@ -26,6 +27,7 @@ export function TablesTab({ planId, scenarioId, tables, assignments, refresh, au
   const [editing, setEditing] = useState<TableDef | "new" | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [showManual, setShowManual] = useState(false);
+  const [view, setView] = useState<"setup" | "room">(tables.length > 0 ? "room" : "setup");
 
   useEffect(() => {
     if (autoOpen === "new") { setShowManual(true); setEditing("new"); onAutoOpenHandled?.(); }
@@ -36,7 +38,24 @@ export function TablesTab({ planId, scenarioId, tables, assignments, refresh, au
 
   return (
     <div className="space-y-4">
-      <SmartTableInput planId={planId} scenarioId={scenarioId} existingCount={tables.length} onDone={refresh}/>
+      <div className="flex justify-end">
+        <div className="inline-flex rounded-full border border-border/60 bg-card p-0.5 text-sm">
+          <button
+            onClick={() => setView("room")}
+            className={`px-3 py-1 rounded-full transition ${view === "room" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+          >Arrange room</button>
+          <button
+            onClick={() => setView("setup")}
+            className={`px-3 py-1 rounded-full transition ${view === "setup" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+          >Quick setup</button>
+        </div>
+      </div>
+
+      {view === "room" ? (
+        <RoomEditor planId={planId} scenarioId={scenarioId} tables={tables} assignments={assignments} refresh={refresh}/>
+      ) : (
+        <>
+          <SmartTableInput planId={planId} scenarioId={scenarioId} existingCount={tables.length} onDone={refresh}/>
 
       {showManual ? (
         <div className="flex flex-wrap gap-2 items-center">
@@ -72,6 +91,8 @@ export function TablesTab({ planId, scenarioId, tables, assignments, refresh, au
           );
         })}
       </div>
+        </>
+      )}
 
       {editing && <TableEditor planId={planId} scenarioId={scenarioId} table={editing === "new" ? null : editing} count={tables.length} onClose={() => { setEditing(null); refresh(); }}/>}
       {bulkOpen && <BulkAddDialog planId={planId} scenarioId={scenarioId} count={tables.length} onClose={() => { setBulkOpen(false); refresh(); }}/>}
