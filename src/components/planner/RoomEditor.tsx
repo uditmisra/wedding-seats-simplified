@@ -33,12 +33,58 @@ export function RoomEditor({ planId, scenarioId, tables, assignments, refresh }:
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [drag, setDrag] = useState<{ id: string; mode: "move" | "rotate"; offsetX: number; offsetY: number; startAngle: number; startRot: number; shift: boolean } | null>(null);
-  // local positions during drag for snappy feedback
-  const [localPos, setLocalPos] = useState<Record<string, { x: number; y: number; rotation: number }>>({});
+  // Pending edits: drag/rotate state that hasn't been committed to the DB yet.
+  // Mirrored to localStorage so a refresh mid-drag never loses the change.
+  const pendingKey = `roomEditor:pending:${scenarioId}`;
+  const [localPos, setLocalPos] = useState<Record<string, { x: number; y: number; rotation: number }>>(() => {
+    if (typeof window === "undefined") return {};
+    try {
+      const raw = localStorage.getItem(`roomEditor:pending:${scenarioId}`);
+      return raw ? JSON.parse(raw) : {};
+    } catch { return {}; }
+  });
   const [snap, setSnap] = useState(true);
   const [showGrid, setShowGrid] = useState(true);
   // active alignment guides while dragging — canvas-unit coords
   const [guides, setGuides] = useState<{ v: number[]; h: number[] }>({ v: [], h: [] });
+
+  // Mirror in-progress edits to localStorage for crash/refresh recovery
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (Object.keys(localPos).length === 0) localStorage.removeItem(pendingKey);
+    else localStorage.setItem(pendingKey, JSON.stringify(localPos));
+  }, [localPos, pendingKey]);
+
+  // On mount (or scenario switch): if we have stashed edits that differ from
+  // the saved DB values, flush them so the canvas matches what the user last saw.
+  useEffect(() => {
+    const entries = Object.entries(localPos);
+    if (entries.length === 0 || tables.length === 0) return;
+    const toFlush = entries.filter(([id, p]) => {
+      const t = tables.find(x => x.id === id);
+      if (!t) return false;
+      return Math.round(t.x) !== Math.round(p.x)
+          || Math.round(t.y) !== Math.round(p.y)
+          || Math.round(t.rotation) !== Math.round(p.rotation);
+    });
+    if (toFlush.length === 0) {
+      // nothing pending — clear the stash
+      setLocalPos({});
+      return;
+    }
+    (async () => {
+      await Promise.all(toFlush.map(([id, p]) =>
+        supabase.from("tables_def")
+          .update({ x: Math.round(p.x), y: Math.round(p.y), rotation: Math.round(p.rotation) })
+          .eq("id", id)
+      ));
+      toast.message(`Restored ${toFlush.length} unsaved table change${toFlush.length === 1 ? "" : "s"}`);
+      setLocalPos({});
+      refresh();
+    })();
+    // Only run when the scenario itself changes — we don't want this firing on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scenarioId]);
 
   // Auto-lay-out tables that are stacked at (0,0)
   useEffect(() => {
