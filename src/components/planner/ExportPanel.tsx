@@ -91,10 +91,10 @@ export function ExportPanel({ plan, guests, tables, assignments }: Props) {
   };
 
   const items = [
-    { icon: FileText, title: "Master seating chart", desc: "Alphabetical guest → table list — print for the entrance.", action: masterChartPdf, label: "Download PDF" },
-    { icon: FileText, title: "By-table list", desc: "One page per table for the venue & coordinator.", action: byTablePdf, label: "Download PDF" },
-    { icon: Printer, title: "Place cards", desc: "8 per A4 sheet, name + table number, ready to fold.", action: placeCardsPdf, label: "Download PDF" },
-    { icon: FileDown, title: "Caterer CSV", desc: "Spreadsheet of final assignments, meals, and dietary notes.", action: csvExport, label: "Download CSV" },
+    { icon: FileText, title: "Big seating chart for the entrance", desc: "An A–Z list of who sits where — print and pop it on an easel by the door.", action: masterChartPdf, label: "Download PDF" },
+    { icon: FileText, title: "One page per table", desc: "Hand to your venue or coordinator so they know who goes where.", action: byTablePdf, label: "Download PDF" },
+    { icon: Printer, title: "Place cards", desc: "Eight per A4 sheet, name and table — ready to cut and fold.", action: placeCardsPdf, label: "Download PDF" },
+    { icon: FileDown, title: "Spreadsheet for the caterer", desc: "Names, tables, meals and dietary notes — straight to your caterer.", action: csvExport, label: "Download CSV" },
   ];
 
   return (
