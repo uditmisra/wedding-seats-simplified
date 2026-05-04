@@ -332,27 +332,6 @@ const Planner = () => {
                   )}
                 </div>
               )}
-              {canEdit && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="inline-flex items-center gap-1 px-2 py-2 text-sm text-ink-3 hover:text-ink">
-                      More <MoreHorizontal size={14} />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-52 rounded-xl border-hairline">
-                    <DropdownMenuItem onClick={() => setTab("compare")}>
-                      <GitCompareArrows size={14} className="mr-2" />Compare layouts
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setTab("constraints")}>
-                      <ShieldAlert size={14} className="mr-2" />Sit-with rules
-                      {constraints.length > 0 && <span className="ml-auto text-xs text-ink-3">{constraints.length}</span>}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setTab("export")}>
-                      <Download size={14} className="mr-2" />Export &amp; print
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
             </div>
           </div>
 
