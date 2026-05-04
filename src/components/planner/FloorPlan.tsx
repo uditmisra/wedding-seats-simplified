@@ -410,7 +410,8 @@ function SeatedChip({ guestId, guest, pinned, swapPreview }: { guestId: string; 
       ref={setNodeRef}
       {...listeners}
       {...attributes}
-      className={`relative w-full h-full rounded-full flex items-center justify-center font-mono text-[10px] font-medium cursor-grab active:cursor-grabbing transition
+      style={{ touchAction: "none" }}
+      className={`relative w-full h-full rounded-full flex items-center justify-center font-mono text-[10px] font-medium cursor-grab active:cursor-grabbing transition-colors duration-150
         ${swapPreview
           ? "ring-2 ring-butter bg-butter/40 text-ink scale-110"
           : "bg-terracotta text-paper ring-1 ring-ink/20 hover:bg-terracotta-2"}
