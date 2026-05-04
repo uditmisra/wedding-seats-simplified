@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,7 @@ import { UserMenu } from "@/components/UserMenu";
 const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [params, setParams] = useSearchParams();
   const [name, setName] = useState("");
   const [openCode, setOpenCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -21,6 +22,22 @@ const Index = () => {
   const [showCodeOpen, setShowCodeOpen] = useState(false);
   const [myPlans, setMyPlans] = useState<{ id: string; code: string; name: string }[]>([]);
   useEffect(() => { setRecents(getRecentPlans()); }, []);
+  useEffect(() => {
+    const presetName = params.get("name");
+    if (presetName) setName(presetName);
+  }, []);
+  // After sign-in redirect with ?create=1, finish creating the plan
+  useEffect(() => {
+    if (user && params.get("create") === "1") {
+      const presetName = params.get("name") ?? "";
+      const next = new URLSearchParams(params); next.delete("create"); next.delete("name");
+      setParams(next, { replace: true });
+      // small delay so name state is in place
+      setName(presetName);
+      setTimeout(() => createPlan(), 0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
   useEffect(() => {
     if (!user) { setMyPlans([]); return; }
     (async () => {
