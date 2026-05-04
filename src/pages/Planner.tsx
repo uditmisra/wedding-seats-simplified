@@ -25,10 +25,10 @@ import { tableConflicts, unmetMustWith } from "@/lib/seating";
 import { useAuth } from "@/hooks/useAuth";
 
 const TAB_DEFS = [
-  { value: "seating", numeral: "I", label: "Seating" },
-  { value: "guests", numeral: "II", label: "Guests" },
-  { value: "tables", numeral: "III", label: "Tables" },
-  { value: "constraints", numeral: "IV", label: "Rules" },
+  { value: "guests", numeral: "I", label: "Guests" },
+  { value: "tables", numeral: "II", label: "Tables" },
+  { value: "constraints", numeral: "III", label: "Rules" },
+  { value: "seating", numeral: "IV", label: "Seating" },
   { value: "compare", numeral: "V", label: "Compare" },
   { value: "export", numeral: "VI", label: "Export" },
 ] as const;
