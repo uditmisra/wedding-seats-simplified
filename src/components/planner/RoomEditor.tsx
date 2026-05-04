@@ -5,10 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Plus, RotateCw, Trash2, X, Maximize2, Magnet, AlertTriangle, Wand2 } from "lucide-react";
-import { Toggle } from "@/components/ui/toggle";
+import { Plus, RotateCw, Trash2, X, Maximize2, AlertTriangle, Wand2 } from "lucide-react";
 import type { TableDef, Shape, Assignment } from "@/lib/types";
 import { toast } from "sonner";
+import { ToolPalette, type RoomTool } from "./room/ToolPalette";
+import { PropertiesPanel } from "./room/PropertiesPanel";
 
 const SHAPES: Shape[] = ["round", "rectangle", "square", "long", "head"];
 const CANVAS_W = 1400;
@@ -45,6 +46,19 @@ export function RoomEditor({ planId, scenarioId, tables, assignments, refresh }:
   });
   const [snap, setSnap] = useState(true);
   const [showGrid, setShowGrid] = useState(true);
+  const [activeTool, setActiveTool] = useState<RoomTool>("wall");
+  const [snapState, setSnapState] = useState({
+    grid: true,
+    edges: true,
+    ninetyDeg: true,
+    otherWalls: false,
+  });
+  // Mirror the design's snap toggles into the existing snap/grid behavior:
+  // grid drives both showGrid and the snap-to-grid edge alignment.
+  useEffect(() => {
+    setSnap(snapState.grid || snapState.edges || snapState.ninetyDeg);
+    setShowGrid(snapState.grid);
+  }, [snapState]);
   // active alignment guides while dragging — canvas-unit coords
   const [guides, setGuides] = useState<{ v: number[]; h: number[] }>({ v: [], h: [] });
 
@@ -285,44 +299,33 @@ export function RoomEditor({ planId, scenarioId, tables, assignments, refresh }:
   };
 
   return (
-    <div className="grid lg:grid-cols-[1fr_320px] gap-4">
-      <div>
-        <div className="flex items-center justify-between mb-2 gap-2">
-          <div className="text-sm text-muted-foreground">
-            Drag to move · hold <kbd className="px-1 rounded bg-muted text-[10px]">Shift</kbd> for free placement
+    <div className="overflow-hidden rounded-2xl border hairline">
+      <div className="grid lg:grid-cols-[230px_1fr_280px]">
+      <ToolPalette
+        activeTool={activeTool}
+        onToolChange={setActiveTool}
+        snap={snapState}
+        onSnapChange={setSnapState}
+      />
+      <div className="p-5">
+        <div className="flex items-center justify-between mb-3 gap-2">
+          <div className="text-[12px] text-ink-3">
+            Drag to move · hold <kbd className="rounded bg-paper-2 px-1 text-[10px] font-mono">Shift</kbd> for free placement
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             {overlaps.ids.size > 0 && (
               <div className="flex items-center gap-1.5 mr-1">
-                <span className="flex items-center gap-1 text-xs font-medium text-destructive bg-destructive/10 border border-destructive/30 rounded-full px-2 py-1">
+                <span className="flex items-center gap-1 rounded-full border border-terracotta/30 bg-terracotta/10 px-2 py-1 text-xs font-medium text-terracotta">
                   <AlertTriangle size={12}/> {overlaps.ids.size} overlapping
                 </span>
-                <Button size="sm" variant="outline" className="h-8 px-2 text-xs" onClick={autoSeparate} title="Nudge overlapping tables apart">
+                <Button size="sm" variant="outline" className="h-8 rounded-full border-hairline px-3 text-xs" onClick={autoSeparate} title="Nudge overlapping tables apart">
                   <Wand2 size={12} className="mr-1"/>Auto-separate
                 </Button>
               </div>
             )}
-            <Toggle
-              size="sm"
-              pressed={snap}
-              onPressedChange={setSnap}
-              aria-label="Snap to grid and align"
-              title="Snap to grid and align with other tables"
-              className="h-8 px-2 text-xs"
-            >
-              <Magnet size={13} className="mr-1"/>Snap
-            </Toggle>
-            <Toggle
-              size="sm"
-              pressed={showGrid}
-              onPressedChange={setShowGrid}
-              aria-label="Show grid"
-              title="Show grid"
-              className="h-8 px-2 text-xs"
-            >
-              Grid
-            </Toggle>
-            <Button size="sm" onClick={addTable}><Plus size={14} className="mr-1.5"/>Add table</Button>
+            <Button size="sm" className="rounded-full" onClick={addTable}>
+              <Plus size={14} className="mr-1.5"/>Add table
+            </Button>
           </div>
         </div>
         <div
@@ -414,6 +417,7 @@ export function RoomEditor({ planId, scenarioId, tables, assignments, refresh }:
         }}
         onClose={() => setSelectedId(null)}
       />
+      </div>
     </div>
   );
 }
