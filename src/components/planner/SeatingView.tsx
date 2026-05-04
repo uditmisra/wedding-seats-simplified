@@ -79,6 +79,13 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
       .sort((a, b) => (a.party ?? "").localeCompare(b.party ?? "") || a.name.localeCompare(b.name));
   }, [guests, assignedMap, search]);
 
+  const allUnassigned = useMemo(
+    () => guests
+      .filter(g => g.rsvp !== "declined" && !assignedMap.has(g.id))
+      .sort((a, b) => (a.party ?? "").localeCompare(b.party ?? "") || a.name.localeCompare(b.name)),
+    [guests, assignedMap],
+  );
+
   const placeGuestAtSeat = async (guestId: string, tableId: string, seatIndex: number | null) => {
     const existing = assignedMap.get(guestId);
     const tbl = tableById.get(tableId); if (!tbl) return;
@@ -203,7 +210,7 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
           <FloorPlan
             tables={tables} assignments={assignments} guests={guests} constraints={constraints} scenarioId={scenarioId}
             onUnassign={handleUnassign} onTogglePin={handleTogglePin} onMoveTo={handleMoveTo} onSwapWith={handleSwap}
-            unassigned={unassigned}
+            unassigned={allUnassigned}
             canEdit={canEdit}
             onAssign={(guestId, tableId, seatIndex) => placeGuestAtSeat(guestId, tableId, seatIndex)}
           />
