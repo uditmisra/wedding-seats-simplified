@@ -4,6 +4,7 @@ import type { Guest, TableDef, Assignment, ConstraintDef } from "@/lib/types";
 import { tableConflicts } from "@/lib/seating";
 import { Plus, Minus, Maximize2, RotateCcw } from "lucide-react";
 import { SeatMenu } from "./SeatMenu";
+import { SeatPicker } from "./SeatPicker";
 
 interface Props {
   tables: TableDef[];
@@ -16,13 +17,16 @@ interface Props {
   onTogglePin?: (a: Assignment) => void;
   onMoveTo?: (a: Assignment, tableId: string) => void;
   onSwapWith?: (a: Assignment, b: Assignment) => void;
+  unassigned?: Guest[];
+  onAssign?: (guestId: string, tableId: string, seatIndex: number) => void;
+  canEdit?: boolean;
 }
 
 const MIN_ZOOM = 0.4;
 const MAX_ZOOM = 2.5;
 
 const noop = () => {};
-export function FloorPlan({ tables, assignments, guests, constraints, highlights, scenarioId, onUnassign = noop, onTogglePin = noop, onMoveTo = noop, onSwapWith = noop }: Props) {
+export function FloorPlan({ tables, assignments, guests, constraints, highlights, scenarioId, onUnassign = noop, onTogglePin = noop, onMoveTo = noop, onSwapWith = noop, unassigned = [], onAssign, canEdit = true }: Props) {
   const guestById = useMemo(() => new Map(guests.map(g => [g.id, g])), [guests]);
 
   // Cell size grows with the largest table on the floor so big tables don't crowd neighbours.
@@ -214,6 +218,10 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
                       onTogglePin={onTogglePin}
                       onMoveTo={onMoveTo}
                       onSwapWith={onSwapWith}
+                      unassigned={unassigned}
+                      constraints={constraints}
+                      onAssign={onAssign}
+                      canEdit={canEdit}
                     />
                   );
                 });
@@ -328,13 +336,18 @@ interface SeatProps {
   onTogglePin: (a: Assignment) => void;
   onMoveTo: (a: Assignment, tableId: string) => void;
   onSwapWith: (a: Assignment, b: Assignment) => void;
+  unassigned: Guest[];
+  constraints: ConstraintDef[];
+  onAssign?: (guestId: string, tableId: string, seatIndex: number) => void;
+  canEdit: boolean;
 }
 
-function Seat({ tableId, seatIndex, x, y, assignment, guest, table, allTables, tableSeated, guestById, onUnassign, onTogglePin, onMoveTo, onSwapWith }: SeatProps) {
+function Seat({ tableId, seatIndex, x, y, assignment, guest, table, allTables, tableSeated, guestById, onUnassign, onTogglePin, onMoveTo, onSwapWith, unassigned, constraints, onAssign, canEdit }: SeatProps) {
   const dropId = `seat:${tableId}:${seatIndex}`;
   const { setNodeRef: dropRef, isOver } = useDroppable({ id: dropId });
   const occupied = !!assignment && !!guest;
   const swapPreview = isOver && occupied;
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   return (
     <div
@@ -354,10 +367,33 @@ function Seat({ tableId, seatIndex, x, y, assignment, guest, table, allTables, t
             swapPreview={swapPreview}
           />
         </SeatMenu>
+      ) : canEdit && onAssign ? (
+        <SeatPicker
+          open={pickerOpen}
+          onOpenChange={setPickerOpen}
+          table={table}
+          seatIndex={seatIndex}
+          tableSeated={tableSeated}
+          unassigned={unassigned}
+          guestById={guestById}
+          constraints={constraints}
+          onPick={(guestId) => { onAssign(guestId, tableId, seatIndex); setPickerOpen(false); }}
+        >
+          <button
+            type="button"
+            onContextMenu={(e) => { e.preventDefault(); setPickerOpen(true); }}
+            className={`w-full h-full rounded-full border transition flex items-center justify-center font-mono text-[9px] text-ink-3 ${
+              isOver ? "bg-terracotta/15 border-terracotta scale-110" : "border-ink/40 bg-paper/60 hover:border-ink/70 hover:bg-paper"
+            }`}
+            aria-label={`Seat ${seatIndex + 1} — empty. Click to assign.`}
+          >
+            {seatIndex + 1}
+          </button>
+        </SeatPicker>
       ) : (
         <div
           className={`w-full h-full rounded-full border transition flex items-center justify-center font-mono text-[9px] text-ink-3 ${
-            isOver ? "bg-terracotta/15 border-terracotta scale-110" : "border-ink/40 bg-paper/60 hover:border-ink/70"
+            isOver ? "bg-terracotta/15 border-terracotta scale-110" : "border-ink/40 bg-paper/60"
           }`}
         >
           {seatIndex + 1}
