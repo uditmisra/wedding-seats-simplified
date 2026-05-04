@@ -268,7 +268,7 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
         </div>
       )}
       <DragOverlay>
-        {activeId ? <GuestPill guest={guestById.get(activeId)!} dragging/> : null}
+        {activeId ? <GuestPill guest={guestById.get(activeId)!} dragging overlay/> : null}
       </DragOverlay>
     </DndContext>
   );
@@ -341,20 +341,36 @@ function UnassignedPanel({ guests, search, setSearch, totalGuests, onAddGuest }:
   );
 }
 
-function GuestPill({ guest, dragging, pinned }: { guest: Guest; dragging?: boolean; pinned?: boolean }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: guest.id });
-  const style = transform ? { transform: `translate(${transform.x}px, ${transform.y}px) rotate(-3deg)` } : undefined;
+function GuestPill({ guest, dragging, pinned, overlay }: { guest: Guest; dragging?: boolean; pinned?: boolean; overlay?: boolean }) {
+  if (overlay) {
+    // Presentation-only copy used inside <DragOverlay/>. No useDraggable hook,
+    // so it doesn't conflict with the original draggable's id.
+    return (
+      <div
+        className="group flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm border border-terracotta/60 bg-paper shadow-elegant cursor-grabbing"
+        style={{ transform: "rotate(-3deg)", willChange: "transform" }}
+      >
+        <div className="min-w-0 flex-1 truncate">
+          <span className="font-medium">{guest.name}</span>
+          {guest.party && <span className="ml-1.5 text-xs text-ink-3">{guest.party}</span>}
+        </div>
+        {guest.meal && <span className="size-1.5 rounded-full bg-terracotta" title={guest.meal} />}
+        {pinned && <Pin size={11} className="text-olive" />}
+      </div>
+    );
+  }
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: guest.id });
   return (
     <div
       ref={setNodeRef}
-      style={style}
       {...listeners}
       {...attributes}
-      className={`group flex cursor-grab items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm transition active:cursor-grabbing
+      className={`group flex cursor-grab items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm active:cursor-grabbing transition-colors
         ${isDragging ? "opacity-30" : ""}
         ${dragging
           ? "border border-terracotta/60 bg-paper shadow-elegant"
           : "hover:bg-paper-2/60"}`}
+      style={{ touchAction: "none" }}
     >
       <div className="min-w-0 flex-1 truncate">
         <span className="font-medium">{guest.name}</span>
