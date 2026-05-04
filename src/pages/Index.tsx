@@ -97,9 +97,9 @@ const Index = () => {
   const openPlan = async () => {
     const c = openCode.trim().toLowerCase();
     if (!c) return;
-    const { data } = await supabase.from("plans").select("code").eq("code", c).maybeSingle();
-    if (!data) { toast.error("No plan found with that code"); return; }
-    navigate(`/plan/${data.code}`);
+    const { data: exists } = await supabase.rpc("validate_plan_code", { _code: c });
+    if (!exists) { toast.error("No plan found with that code"); return; }
+    navigate(`/plan/${c}`);
   };
 
   // Show "Recently opened on this device" plans we don't already own

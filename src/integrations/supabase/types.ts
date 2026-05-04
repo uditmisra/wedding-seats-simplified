@@ -307,6 +307,7 @@ export type Database = {
         Returns: boolean
       }
       plan_has_any_owner: { Args: { _plan_id: string }; Returns: boolean }
+      validate_plan_code: { Args: { _code: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
