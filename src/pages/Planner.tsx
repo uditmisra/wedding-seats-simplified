@@ -15,9 +15,9 @@ import { ConstraintsPanel } from "@/components/planner/ConstraintsPanel";
 import { ExportPanel } from "@/components/planner/ExportPanel";
 import { AutoAssignDialog } from "@/components/planner/AutoAssignDialog";
 import { OnboardingFlow } from "@/components/planner/OnboardingFlow";
-import { ScenarioSwitcher } from "@/components/planner/ScenarioSwitcher";
+import { LayoutTabs } from "@/components/planner/LayoutTabs";
 import { CompareScenarios } from "@/components/planner/CompareScenarios";
-import { Link as LinkIcon, Check, ArrowLeft, Wand2, MoreHorizontal, GitCompareArrows, ShieldAlert, Download, Mail, Bookmark, Heart, Layers, X } from "lucide-react";
+import { Link as LinkIcon, Check, ArrowLeft, Wand2, MoreHorizontal, GitCompareArrows, ShieldAlert, Download, Mail, Bookmark, Heart } from "lucide-react";
 import { toast } from "sonner";
 import { addRecentPlan } from "@/lib/recentPlans";
 
@@ -33,16 +33,6 @@ const Planner = () => {
   const onboardingActive = !loading && plan && (guests.length === 0 || tables.length === 0);
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
   const showOnboarding = onboardingActive && !onboardingDismissed;
-  const [layoutsHintDismissed, setLayoutsHintDismissed] = useState<boolean>(() => {
-    if (typeof window === "undefined") return true;
-    return localStorage.getItem("seatly-layouts-hint-dismissed") === "1";
-  });
-  const showLayoutsHint =
-    !showOnboarding && scenarios.length === 1 && tables.length >= 2 && !layoutsHintDismissed;
-  const dismissLayoutsHint = () => {
-    localStorage.setItem("seatly-layouts-hint-dismissed", "1");
-    setLayoutsHintDismissed(true);
-  };
 
   useEffect(() => {
     if (showOnboarding) setTab("seating");
@@ -84,17 +74,6 @@ const Planner = () => {
             <button onClick={() => setEditingName(true)} className="font-display text-xl truncate hover:underline underline-offset-4 decoration-primary/40">{plan.name}</button>
           )}
           <div className="ml-auto flex items-center gap-2">
-            {scenarioId && (
-              <ScenarioSwitcher
-                planId={plan.id}
-                scenarios={scenarios}
-                scenarioId={scenarioId}
-                setScenarioId={setScenarioId}
-                tables={tables}
-                assignments={assignments}
-                refresh={refresh}
-              />
-            )}
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="ghost" size="sm" title="Save and share this plan">
@@ -148,17 +127,16 @@ const Planner = () => {
           <StatsBar guests={guests} tables={tables} assignments={assignments} constraints={constraints}/>
         )}
 
-        {showLayoutsHint && (
-          <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 flex items-start gap-3 text-sm">
-            <Layers size={16} className="text-primary mt-0.5 shrink-0"/>
-            <div className="flex-1">
-              <span className="font-medium">Not sure about the room setup?</span>{" "}
-              <span className="text-muted-foreground">Try a second layout side-by-side — rounds vs long tables, or with the sweetheart table moved. Use the <em className="not-italic font-medium">Layout</em> menu in the top right.</span>
-            </div>
-            <button onClick={dismissLayoutsHint} className="text-muted-foreground hover:text-foreground p-1 -m-1" aria-label="Dismiss">
-              <X size={14}/>
-            </button>
-          </div>
+        {!showOnboarding && scenarioId && (
+          <LayoutTabs
+            planId={plan.id}
+            scenarios={scenarios}
+            scenarioId={scenarioId}
+            setScenarioId={setScenarioId}
+            tables={tables}
+            assignments={assignments}
+            refresh={refresh}
+          />
         )}
 
         <Tabs value={tab} onValueChange={setTab}>
