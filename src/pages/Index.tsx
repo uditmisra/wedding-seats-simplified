@@ -8,24 +8,45 @@ import { generatePlanCode } from "@/lib/planCode";
 import { toast } from "sonner";
 import { ArrowRight, ArrowUpRight, X } from "lucide-react";
 import { getRecentPlans, removeRecentPlan, type RecentPlan } from "@/lib/recentPlans";
+import { useAuth } from "@/hooks/useAuth";
+import { UserMenu } from "@/components/UserMenu";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [name, setName] = useState("");
   const [openCode, setOpenCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [recents, setRecents] = useState<RecentPlan[]>([]);
   const [showCodeOpen, setShowCodeOpen] = useState(false);
+  const [myPlans, setMyPlans] = useState<{ id: string; code: string; name: string }[]>([]);
   useEffect(() => { setRecents(getRecentPlans()); }, []);
+  useEffect(() => {
+    if (!user) { setMyPlans([]); return; }
+    (async () => {
+      const { data } = await supabase
+        .from("plan_owners")
+        .select("plan_id, plans:plan_id(id, code, name)")
+        .eq("user_id", user.id);
+      const list = (data ?? []).map((r: any) => r.plans).filter(Boolean);
+      setMyPlans(list);
+    })();
+  }, [user]);
 
   const createPlan = async () => {
+    if (!user) {
+      navigate(`/auth?next=${encodeURIComponent("/?create=1&name=" + encodeURIComponent(name))}`);
+      return;
+    }
     setLoading(true);
     const code = generatePlanCode();
     const { data, error } = await supabase
       .from("plans").insert({ code, name: name.trim() || "Our Wedding" })
       .select().single();
+    if (error || !data) { setLoading(false); toast.error("Could not create plan"); return; }
+    const { error: ownErr } = await supabase.from("plan_owners").insert({ plan_id: data.id, user_id: user.id, role: "owner" });
     setLoading(false);
-    if (error || !data) { toast.error("Could not create plan"); return; }
+    if (ownErr) { toast.error("Plan created but ownership failed"); }
     navigate(`/plan/${data.code}`);
   };
 
@@ -44,6 +65,7 @@ const Index = () => {
           <Mark/>
           <span className="font-display text-lg tracking-tight">Seatly</span>
         </div>
+        <div className="ml-auto"><UserMenu/></div>
       </header>
 
       <main className="container pt-12 md:pt-20 pb-20">
@@ -101,6 +123,23 @@ const Index = () => {
                         aria-label="Remove from recents"
                       >
                         <X size={12}/>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {user && myPlans.length > 0 && (
+              <div className="rounded-2xl border-hairline border bg-card/50 p-4">
+                <div className="text-xs uppercase tracking-wider text-soft mb-2 px-1">My plans</div>
+                <ul className="space-y-0.5">
+                  {myPlans.map(p => (
+                    <li key={p.id}>
+                      <button onClick={() => navigate(`/plan/${p.code}`)} className="w-full text-left px-2.5 py-2 flex items-center gap-2.5 rounded-lg hover:bg-surface-hover transition">
+                        <span className="w-2 h-2 rounded-full bg-primary shrink-0"/>
+                        <span className="font-medium truncate text-sm">{p.name}</span>
+                        <ArrowUpRight size={13} className="opacity-50 ml-auto shrink-0"/>
                       </button>
                     </li>
                   ))}
