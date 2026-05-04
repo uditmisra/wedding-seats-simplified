@@ -29,8 +29,8 @@ export function StatsBar({ guests, tables, assignments, constraints }: Props) {
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-2">
           <span className="font-display text-2xl">{seated}</span>
-          <span className="text-muted-foreground text-sm">of {total} guests seated</span>
-          {done && <span className="ml-auto text-sm text-primary inline-flex items-center gap-1"><CheckCircle2 size={14}/>All set</span>}
+          <span className="text-muted-foreground text-sm">of {total} guests have a seat</span>
+          {done && <span className="ml-auto text-sm text-primary inline-flex items-center gap-1"><CheckCircle2 size={14}/>Everyone's seated 🎉</span>}
         </div>
         <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
           <div className="h-full bg-primary transition-all duration-500" style={{ width: `${pct}%` }}/>
@@ -38,7 +38,7 @@ export function StatsBar({ guests, tables, assignments, constraints }: Props) {
       </div>
       {conflicts > 0 && (
         <div className="flex items-center gap-1.5 text-sm text-destructive whitespace-nowrap">
-          <AlertTriangle size={14}/>{conflicts} to review
+          <AlertTriangle size={14}/>{conflicts} thing{conflicts === 1 ? "" : "s"} to look at
         </div>
       )}
     </div>

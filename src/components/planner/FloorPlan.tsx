@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
 import type { Guest, TableDef, Assignment, ConstraintDef } from "@/lib/types";
 import { tableConflicts } from "@/lib/seating";
 
@@ -41,7 +42,7 @@ export function FloorPlan({ tables, assignments, guests, constraints }: Props) {
 
       {tables.length === 0 ? (
         <div className="relative p-16 text-center text-muted-foreground">
-          Add some tables to see the floor plan come to life.
+          Add a few tables and your room will come to life here.
         </div>
       ) : (
         <div className="relative w-full overflow-x-auto">
@@ -83,6 +84,46 @@ export function FloorPlan({ tables, assignments, guests, constraints }: Props) {
             })}
           </svg>
 
+          {/* Drag-and-drop overlay layer aligned to the SVG via percentages */}
+          <div className="absolute inset-0 pointer-events-none">
+            {tables.map((t, i) => {
+              const col = i % cols;
+              const row = Math.floor(i / cols);
+              const cx = col * cellW + cellW / 2;
+              const cy = row * cellH + cellH / 2;
+              const { w: tw, h: th } = tableBox(t);
+              const left = ((cx - tw / 2) / width) * 100;
+              const top = ((cy - th / 2) / height) * 100;
+              const w = (tw / width) * 100;
+              const h = (th / height) * 100;
+              return (
+                <TableDropZone
+                  key={t.id}
+                  tableId={t.id}
+                  style={{ left: `${left}%`, top: `${top}%`, width: `${w}%`, height: `${h}%` }}
+                />
+              );
+            })}
+            {/* Draggable seat handles for assigned guests */}
+            {tables.map((t, i) => {
+              const col = i % cols;
+              const row = Math.floor(i / cols);
+              const cx = col * cellW + cellW / 2;
+              const cy = row * cellH + cellH / 2;
+              const seats = computeSeats(t, cx, cy);
+              const seated = assignments.filter(a => a.table_id === t.id);
+              return seated.map((a, si) => {
+                const s = seats[si];
+                if (!s) return null;
+                const left = (s.x / width) * 100;
+                const top = (s.y / height) * 100;
+                return (
+                  <SeatDragHandle key={a.id} guestId={a.guest_id} style={{ left: `${left}%`, top: `${top}%` }}/>
+                );
+              });
+            })}
+          </div>
+
           {hover && (
             <div
               className="pointer-events-none absolute z-10 bg-foreground text-background text-xs rounded-md px-2 py-1 shadow-lg whitespace-nowrap"
@@ -101,6 +142,39 @@ export function FloorPlan({ tables, assignments, guests, constraints }: Props) {
         </div>
       )}
     </div>
+  );
+}
+
+function tableBox(t: TableDef): { w: number; h: number } {
+  if (t.shape === "round") return { w: 200, h: 200 };
+  if (t.shape === "square") return { w: 200, h: 200 };
+  if (t.shape === "head") return { w: 220, h: 120 };
+  if (t.shape === "long") return { w: 240, h: 120 };
+  return { w: 200, h: 140 };
+}
+
+function TableDropZone({ tableId, style }: { tableId: string; style: React.CSSProperties }) {
+  const { setNodeRef, isOver } = useDroppable({ id: tableId });
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`absolute rounded-2xl pointer-events-auto transition ${isOver ? "ring-4 ring-primary/60 bg-primary/5" : ""}`}
+    />
+  );
+}
+
+function SeatDragHandle({ guestId, style }: { guestId: string; style: React.CSSProperties }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: guestId });
+  return (
+    <button
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      style={{ ...style, transform: "translate(-50%, -50%)" }}
+      className={`absolute w-6 h-6 rounded-full pointer-events-auto cursor-grab active:cursor-grabbing ${isDragging ? "opacity-30" : "opacity-0 hover:opacity-20 hover:bg-primary"}`}
+      aria-label="Drag guest"
+    />
   );
 }
 

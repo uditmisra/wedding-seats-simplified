@@ -24,7 +24,7 @@ export function OnboardingFlow({ planId, scenarioId, guestCount, tableCount, onI
   const steps = [
     { n: 1 as Step, label: "Guests", icon: Users, done: guestCount > 0 },
     { n: 2 as Step, label: "Tables", icon: LayoutGrid, done: tableCount > 0 },
-    { n: 3 as Step, label: "Seat them", icon: Wand2, done: false },
+        { n: 3 as Step, label: "Seat everyone", icon: Wand2, done: false },
   ];
 
   return (
@@ -88,7 +88,7 @@ export function OnboardingFlow({ planId, scenarioId, guestCount, tableCount, onI
             <h2 className="font-display text-2xl md:text-3xl">You're ready 🎉</h2>
             <p className="text-muted-foreground mt-1">
               {guestCount > 0 && tableCount > 0
-                ? `${guestCount} guests, ${tableCount} tables. Let AI do a first pass.`
+                ? `${guestCount} guests, ${tableCount} tables. Want us to take a first pass?`
                 : "Add guests and tables first, then come back."}
             </p>
           </div>
@@ -100,16 +100,16 @@ export function OnboardingFlow({ planId, scenarioId, guestCount, tableCount, onI
               className="text-left rounded-xl border border-border/60 hover:border-primary/60 disabled:opacity-50 disabled:hover:border-border/60 transition p-5 bg-background/50"
             >
               <Wand2 className="text-primary" size={22}/>
-              <div className="font-display text-lg mt-2">Auto-assign seats</div>
-              <div className="text-sm text-muted-foreground mt-1">Group parties together, respect must-sit-with rules, fill tables evenly.</div>
+              <div className="font-display text-lg mt-2">Seat them for me</div>
+              <div className="text-sm text-muted-foreground mt-1">Keeps families together, honours your sit-with rules, fills tables evenly.</div>
             </button>
             <button
               onClick={onFinish}
               className="text-left rounded-xl border border-border/60 hover:border-primary/60 transition p-5 bg-background/50"
             >
               <LayoutGrid className="text-primary" size={22}/>
-              <div className="font-display text-lg mt-2">Open seating chart</div>
-              <div className="text-sm text-muted-foreground mt-1">Drag and drop guests onto tables yourself.</div>
+              <div className="font-display text-lg mt-2">I'll seat them myself</div>
+              <div className="text-sm text-muted-foreground mt-1">Drag and drop guests onto tables — your call.</div>
             </button>
           </div>
         </div>

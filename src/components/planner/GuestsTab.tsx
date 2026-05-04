@@ -15,6 +15,7 @@ import type { Guest, RSVP } from "@/lib/types";
 import { downloadGuestTemplate } from "@/lib/template";
 import { SmartGuestInput } from "./SmartGuestInput";
 import { ChevronDown } from "lucide-react";
+import { Combobox } from "@/components/ui/combobox";
 
 interface Props {
   planId: string;
@@ -231,7 +232,7 @@ export function GuestsTab({ planId, guests, refresh, autoOpen, onAutoOpenHandled
         </table>
       </div>
 
-      {editing && <GuestEditor planId={planId} guest={editing === "new" ? null : editing} onClose={() => { setEditing(null); refresh(); }}/>}
+      {editing && <GuestEditor planId={planId} guests={guests} guest={editing === "new" ? null : editing} onClose={() => { setEditing(null); refresh(); }}/>}
 
       <Dialog open={!!importRows} onOpenChange={(o) => !o && setImportRows(null)}>
         <DialogContent className="max-w-2xl">
@@ -280,9 +281,12 @@ function RsvpBadge({ rsvp }: { rsvp: RSVP }) {
   return <span className={`text-xs px-2 py-0.5 rounded-full border ${map[rsvp]}`}>{rsvp}</span>;
 }
 
-function GuestEditor({ planId, guest, onClose }: { planId: string; guest: Guest | null; onClose: () => void }) {
+function GuestEditor({ planId, guests, guest, onClose }: { planId: string; guests: Guest[]; guest: Guest | null; onClose: () => void }) {
   const [form, setForm] = useState<Partial<Guest>>(guest ?? { rsvp: "pending", is_kid: false });
   const [showMore, setShowMore] = useState(!!guest);
+  const partySuggestions = useMemo(() => guests.map(g => g.party ?? "").filter(Boolean) as string[], [guests]);
+  const mealSuggestions = useMemo(() => guests.map(g => g.meal ?? "").filter(Boolean) as string[], [guests]);
+  const sideSuggestions = useMemo(() => guests.map(g => g.side ?? "").filter(Boolean) as string[], [guests]);
   const save = async () => {
     if (!form.name?.trim()) { toast.error("Name required"); return; }
     if (guest) {
@@ -305,8 +309,14 @@ function GuestEditor({ planId, guest, onClose }: { planId: string; guest: Guest 
           ) : (
             <>
               <div className="grid grid-cols-2 gap-3">
-                <div><Label>Party / group</Label><Input value={form.party ?? ""} onChange={e => setForm({ ...form, party: e.target.value })}/></div>
-                <div><Label>Side</Label><Input value={form.side ?? ""} onChange={e => setForm({ ...form, side: e.target.value })}/></div>
+                <div>
+                  <Label>Party / group</Label>
+                  <Combobox value={form.party ?? ""} onChange={v => setForm({ ...form, party: v })} suggestions={partySuggestions} placeholder="e.g. Doe family"/>
+                </div>
+                <div>
+                  <Label>Side</Label>
+                  <Combobox value={form.side ?? ""} onChange={v => setForm({ ...form, side: v })} suggestions={sideSuggestions} placeholder="e.g. Bride"/>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -316,7 +326,10 @@ function GuestEditor({ planId, guest, onClose }: { planId: string; guest: Guest 
                     <SelectContent>{RSVPS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
-                <div><Label>Meal</Label><Input value={form.meal ?? ""} onChange={e => setForm({ ...form, meal: e.target.value })}/></div>
+                <div>
+                  <Label>Meal</Label>
+                  <Combobox value={form.meal ?? ""} onChange={v => setForm({ ...form, meal: v })} suggestions={mealSuggestions} placeholder="e.g. Vegetarian"/>
+                </div>
               </div>
               <div><Label>Accessibility</Label><Input placeholder="wheelchair, hearing-aid…" value={form.accessibility ?? ""} onChange={e => setForm({ ...form, accessibility: e.target.value })}/></div>
               <div><Label>Notes</Label><Textarea rows={2} value={form.notes ?? ""} onChange={e => setForm({ ...form, notes: e.target.value })}/></div>
