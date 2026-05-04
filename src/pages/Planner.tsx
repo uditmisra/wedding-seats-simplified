@@ -28,6 +28,9 @@ const TAB_DEFS = [
   { value: "seating", numeral: "I", label: "Seating" },
   { value: "guests", numeral: "II", label: "Guests" },
   { value: "tables", numeral: "III", label: "Tables" },
+  { value: "constraints", numeral: "IV", label: "Rules" },
+  { value: "compare", numeral: "V", label: "Compare" },
+  { value: "export", numeral: "VI", label: "Export" },
 ] as const;
 
 const Planner = () => {
@@ -145,7 +148,9 @@ const Planner = () => {
 
   const goImport = () => { setGuestsAutoOpen("import"); setTab("guests"); setOnboardingDismissed(true); };
 
-  const visibleTabs = canEdit ? TAB_DEFS : TAB_DEFS.filter(t => t.value === "seating");
+  // Always show all tabs so visitors can browse the plan; edit-gated UI inside
+  // each tab still prevents anonymous changes (and RLS blocks server-side).
+  const visibleTabs = TAB_DEFS;
 
   return (
     <div className="paper-grain min-h-screen">
