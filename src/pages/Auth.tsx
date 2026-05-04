@@ -89,18 +89,18 @@ export default function Auth() {
         <div className="grid items-start gap-12 pt-6 md:grid-cols-12 md:gap-16 md:pt-16">
           {/* Left — editorial framing */}
           <div className="md:col-span-6">
-            <div className="label-mono mb-7">A quiet sign-in</div>
+            <div className="label-mono mb-7">Sign in</div>
             <h1 className="m-0 font-display text-[44px] leading-[1.05] tracking-[-0.02em] sm:text-[56px]">
-              Save your plans to <span className="font-display-italic">your</span> corner.
+              Pick up where you <span className="font-display-italic">left off.</span>
             </h1>
             <p className="mt-6 max-w-md text-base leading-relaxed text-ink-2 md:text-[17px]">
-              One place for every plan you&apos;ve started — laptop, phone, and the people you&apos;ve invited
-              to help.
+              We save your plan so you can edit on your phone in bed at 11 pm — and again
+              at the venue walkthrough on Saturday.
             </p>
             <ul className="mt-8 space-y-3 text-[14px] text-ink-2">
-              <Bullet>Every plan, one quiet place.</Bullet>
-              <Bullet>Edits sync between devices.</Bullet>
-              <Bullet>Collaborators with names, not strangers.</Bullet>
+              <Bullet>One plan, every device.</Bullet>
+              <Bullet>Invite your fiancé, your mom, your maid-of-honor.</Bullet>
+              <Bullet>Close the laptop. Your work is safe.</Bullet>
             </ul>
           </div>
 

@@ -63,14 +63,14 @@ export function OnboardingFlow({ planId, scenarioId, guestCount, tableCount, onI
         <div className="space-y-4">
           <div>
             <h2 className="font-display text-2xl md:text-[32px]">
-              Who&apos;s <span className="font-display-italic">coming?</span>
+              Add your <span className="font-display-italic">guests.</span>
             </h2>
-            <p className="mt-1 text-ink-3">Paste or type names. We&apos;ll structure the rest.</p>
+            <p className="mt-1 text-ink-3">Paste names from your save-the-date list, type them in, or drop a spreadsheet.</p>
           </div>
           <SmartGuestInput planId={planId} onDone={refresh} />
 
           <div className="flex flex-wrap items-center gap-2 border-t hairline pt-3">
-            <span className="text-xs text-ink-3">Or you have a spreadsheet?</span>
+            <span className="text-xs text-ink-3">Have a spreadsheet?</span>
             <Button variant="outline" size="sm" className="rounded-full border-hairline" onClick={onImport}>
               <Upload size={14} className="mr-1.5" />Import CSV / Excel
             </Button>
@@ -85,9 +85,9 @@ export function OnboardingFlow({ planId, scenarioId, guestCount, tableCount, onI
         <div className="space-y-4">
           <div>
             <h2 className="font-display text-2xl md:text-[32px]">
-              Set up your <span className="font-display-italic">room.</span>
+              Set up the <span className="font-display-italic">room.</span>
             </h2>
-            <p className="mt-1 text-ink-3">Try &ldquo;10 rounds of 8 plus a head table for 6&rdquo; — we&apos;ll lay it out.</p>
+            <p className="mt-1 text-ink-3">Type how the room looks — &ldquo;10 round tables of 8, plus a head table for 6&rdquo; — we&apos;ll lay it out.</p>
           </div>
           <SmartTableInput planId={planId} scenarioId={scenarioId} existingCount={tableCount} onDone={refresh} />
         </div>
@@ -97,11 +97,11 @@ export function OnboardingFlow({ planId, scenarioId, guestCount, tableCount, onI
         <div className="space-y-4">
           <div>
             <h2 className="font-display text-2xl md:text-[32px]">
-              You&apos;re <span className="font-display-italic">ready.</span>
+              Time to <span className="font-display-italic">seat them.</span>
             </h2>
             <p className="mt-1 text-ink-3">
               {guestCount > 0 && tableCount > 0
-                ? `${guestCount} guests, ${tableCount} tables. Should we take a first pass at it?`
+                ? `${guestCount} guests, ${tableCount} tables. Want a first draft in a few seconds?`
                 : "Add guests and tables first — then come back to seat them."}
             </p>
           </div>
@@ -113,16 +113,16 @@ export function OnboardingFlow({ planId, scenarioId, guestCount, tableCount, onI
               className="rounded-xl border hairline bg-paper-2/40 p-5 text-left transition hover:border-terracotta/60 disabled:opacity-50 disabled:hover:border-hairline"
             >
               <Wand2 className="text-terracotta" size={22} />
-              <div className="mt-2 font-display text-lg">Seat them for me</div>
-              <div className="mt-1 text-sm text-ink-3">Keeps families together, honours your sit-with rules, fills tables evenly.</div>
+              <div className="mt-2 font-display text-lg">Do a first pass for me</div>
+              <div className="mt-1 text-sm text-ink-3">Groups families together, keeps the people who shouldn&apos;t sit near each other apart, fills tables evenly.</div>
             </button>
             <button
               onClick={onFinish}
               className="rounded-xl border hairline bg-paper-2/40 p-5 text-left transition hover:border-terracotta/60"
             >
               <LayoutGrid className="text-olive" size={22} />
-              <div className="mt-2 font-display text-lg">I&apos;ll seat them myself</div>
-              <div className="mt-1 text-sm text-ink-3">Drag and drop. Take your time.</div>
+              <div className="mt-2 font-display text-lg">I&apos;ll do it myself</div>
+              <div className="mt-1 text-sm text-ink-3">Drag and drop guests onto tables. Take your time.</div>
             </button>
           </div>
         </div>

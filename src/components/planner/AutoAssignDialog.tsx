@@ -67,16 +67,16 @@ export function AutoAssignDialog({ planId, scenarioId, guests, tables, assignmen
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
-        <DialogHeader><DialogTitle className="flex items-center gap-2"><Sparkles size={18} className="text-primary"/>Seat them for me</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle className="flex items-center gap-2"><Sparkles size={18} className="text-primary"/>Do a first pass for me</DialogTitle></DialogHeader>
         <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">We'll seat your attending guests together by group, respect any "sit with / not with" rules you've set, and keep tables within their seat count.</p>
-          <label className="flex items-center gap-2 text-sm"><Checkbox checked={includeMaybe} onCheckedChange={v => setIncludeMaybe(!!v)}/>Save a seat for "maybe" guests too</label>
-          <label className="flex items-center gap-2 text-sm"><Checkbox checked={keepExisting} onCheckedChange={v => setKeepExisting(!!v)}/>Keep the seats I've already arranged</label>
-          <Button variant="outline" onClick={compute} className="w-full">Show me a preview</Button>
+          <p className="text-sm text-muted-foreground">Seatly groups attending guests by family or party, keeps anyone you&apos;ve marked as &ldquo;not near&rdquo; apart, and never overflows a table. You&apos;ll preview before anything moves.</p>
+          <label className="flex items-center gap-2 text-sm"><Checkbox checked={includeMaybe} onCheckedChange={v => setIncludeMaybe(!!v)}/>Save a seat for the maybes too</label>
+          <label className="flex items-center gap-2 text-sm"><Checkbox checked={keepExisting} onCheckedChange={v => setKeepExisting(!!v)}/>Keep guests I&apos;ve already placed</label>
+          <Button variant="outline" onClick={compute} className="w-full">Preview the seating</Button>
           {preview && (
             <div className="rounded-lg border border-border/60 p-3 text-sm">
-              <div className="font-medium">Here's how it would look</div>
-              <div className="text-muted-foreground">Seats {seatedNow} of {eligible} guests coming, across {tables.length} tables.</div>
+              <div className="font-medium">Here&apos;s the draft</div>
+              <div className="text-muted-foreground">Seats {seatedNow} of {eligible} attending guests, across {tables.length} tables.</div>
             </div>
           )}
         </div>

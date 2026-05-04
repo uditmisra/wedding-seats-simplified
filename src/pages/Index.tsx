@@ -141,17 +141,17 @@ const Index = () => {
           <div className="md:col-span-7">
             <div className="label-mono mb-7">A wedding seating planner</div>
             <h1 className="m-0 font-display text-[56px] leading-[1.0] tracking-[-0.03em] sm:text-7xl xl:text-[92px]">
-              Where everyone<br />
-              <span className="font-display-italic">finally</span> sits.
+              Your seating chart,<br />
+              <span className="font-display-italic">without</span> the spreadsheet.
             </h1>
             <p className="mt-7 max-w-md text-base leading-relaxed text-ink-2 md:text-[19px] md:leading-[1.55]">
-              Drag guests onto tables. Settle every awkward pairing. Share the link with
-              your mother‑in‑law.
+              Drag guests onto tables. Keep your divorced parents apart. Share one link
+              with whoever&apos;s helping. You&apos;ll be done in an afternoon — not a weekend.
             </p>
 
             {/* CTA card */}
             <div className="mt-10 max-w-lg rounded-2xl border hairline bg-card/80 p-5 shadow-soft">
-              <Label htmlFor="name" className="label-mono">What should we call it?</Label>
+              <Label htmlFor="name" className="label-mono">Name your plan</Label>
               <div className="mt-2 flex flex-col gap-2 sm:flex-row">
                 <Input
                   id="name"
@@ -165,19 +165,19 @@ const Index = () => {
                   disabled={loading}
                   className="h-12 rounded-full px-6 text-[15px] shadow-soft"
                 >
-                  Start your plan
+                  Start your seating chart
                   <span className="ml-1 font-display-italic">→</span>
                 </Button>
               </div>
               <p className="mt-3 text-[11px] uppercase tracking-[0.12em] text-ink-3">
-                <span className="font-mono">·</span> {user ? "Free. Save and share with one link." : "Free. We'll save it to your account so you can find it later."}
+                <span className="font-mono">·</span> Free. Save it once — pick it up on your phone in bed.
               </p>
             </div>
 
             <div className="mt-4 max-w-lg">
               {showCodeOpen ? (
                 <div className="rounded-xl border hairline bg-card p-3">
-                  <Label className="label-mono">Paste it below</Label>
+                  <Label className="label-mono">Paste the plan code</Label>
                   <div className="mt-2 flex gap-2">
                     <Input
                       value={openCode}
@@ -194,7 +194,7 @@ const Index = () => {
                   onClick={() => setShowCodeOpen(true)}
                   className="text-sm text-ink-3 underline-offset-4 hover:text-ink hover:underline"
                 >
-                  Got a code from someone&apos;s plan?
+                  Helping someone with theirs?
                 </button>
               )}
             </div>
@@ -213,9 +213,9 @@ const Index = () => {
         <section id="promise" className="mt-32 border-t hairline pt-14">
           <div className="grid gap-12 md:grid-cols-3 md:gap-14">
             {[
-              { n: "01", t: "Drag, don't spreadsheet.", d: "A canvas you can touch — tables, chairs, a dance floor. Move guests like place cards on a real plan." },
-              { n: "02", t: "Constraints, gently solved.", d: "Tell Seatly who must sit together — and who absolutely must not. Auto-assign respects every line." },
-              { n: "03", t: "Share a link, that's it.", d: "Send the URL to whoever's helping. Edit together. Change your mind, often." },
+              { n: "01", t: "Drag, don't spreadsheet.", d: "No more Excel. No more sticky notes on the dining-room table. A real canvas — tables, chairs, a dance floor — where you move guests like place cards." },
+              { n: "02", t: "The awkward pairings, sorted.", d: "Tell us who can't sit near whom — divorced parents, the cousins who don't speak. Auto-assign respects every line." },
+              { n: "03", t: "Everyone helps, from one link.", d: "Send the URL to your fiancé, your mom, your maid-of-honor. Edit together. Change your mind, often." },
             ].map(c => (
               <article key={c.n}>
                 <div className="mb-4 font-mono text-[11px] uppercase tracking-[0.12em] text-terracotta">{c.n}</div>

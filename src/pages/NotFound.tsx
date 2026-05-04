@@ -11,13 +11,12 @@ const NotFound = () => {
   return (
     <div className="paper-grain flex min-h-screen items-center justify-center px-6">
       <div className="max-w-md text-center">
-        <div className="label-mono mb-4 text-terracotta">404 · Off the map</div>
+        <div className="label-mono mb-4 text-terracotta">404</div>
         <h1 className="m-0 font-display text-[44px] leading-[1.05] tracking-[-0.02em] sm:text-[56px]">
-          That page <span className="font-display-italic">isn&apos;t here.</span>
+          We can&apos;t find <span className="font-display-italic">that page.</span>
         </h1>
         <p className="mx-auto mt-4 max-w-sm text-[15px] text-ink-2">
-          Maybe a typo, maybe a plan that&apos;s been deleted. Either way, the way back is
-          short.
+          Probably a typo in the URL, or a plan that got deleted. Head home and start fresh.
         </p>
         <Link
           to="/"

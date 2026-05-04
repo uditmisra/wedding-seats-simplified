@@ -26,12 +26,12 @@ export function EmptyCanvas({ onAddTables, onAddGuests }: Props) {
 
         {/* Prompt */}
         <div className="relative mx-auto flex max-w-md flex-col items-center px-6 py-16 text-center sm:py-24">
-          <div className="label-mono text-terracotta">Blank plan · Let&apos;s begin</div>
+          <div className="label-mono text-terracotta">Empty canvas</div>
           <h2 className="m-0 mt-4 font-display text-[44px] leading-[1.05] tracking-[-0.02em] sm:text-[56px]">
-            Where do we <span className="font-display-italic">begin?</span>
+            Start with the <span className="font-display-italic">tables.</span>
           </h2>
           <p className="m-0 mt-4 max-w-sm text-[15px] leading-[1.55] text-ink-2">
-            Add a few tables, then drag your guests onto them. Or start by importing a guest list — Seatly will catch up.
+            Add a few tables, then drag your guests onto them. Already have a guest list? Import it and we&apos;ll catch up.
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-2">
             <Button onClick={onAddTables} className="h-11 rounded-full px-5">
@@ -43,7 +43,7 @@ export function EmptyCanvas({ onAddTables, onAddGuests }: Props) {
             </Button>
           </div>
           <p className="mt-6 font-display-italic text-[13px] text-ink-3">
-            A blank plan should still feel intentional.
+            Easier to drag than to type from scratch.
           </p>
         </div>
       </div>

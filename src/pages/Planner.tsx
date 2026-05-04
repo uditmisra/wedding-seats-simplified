@@ -233,10 +233,12 @@ const Planner = () => {
             <Sparkles size={18} className="text-terracotta" />
             <div className="min-w-0 flex-1">
               <div className="font-display text-[18px] leading-tight">
-                Nobody owns this plan <span className="font-display-italic">yet.</span>
+                This plan needs an <span className="font-display-italic">owner.</span>
               </div>
               <div className="text-[12px] text-ink-3">
-                {user ? "Claim it and it's yours to edit." : "Sign in to claim it — anyone with the link can still view."}
+                {user
+                  ? "Claim it and only you can edit. Anyone with the link can still view."
+                  : "Sign in to claim it — only you'll be able to edit. Anyone with the link can still view."}
               </div>
             </div>
             {user ? (
@@ -258,14 +260,14 @@ const Planner = () => {
           <div className="flex flex-wrap items-center gap-2.5 rounded-xl border hairline bg-paper-2/60 px-4 py-2.5 text-[13px]">
             <Eye size={14} className="text-ink-3" />
             <span className="text-ink-2">
-              You&apos;re a <span className="font-display-italic">guest</span> at this plan — looking, not editing.
+              <span className="font-display-italic">View only.</span> Ask the owner if you need to edit.
             </span>
             {!user && (
               <Link
                 to={`/auth?next=${encodeURIComponent(window.location.pathname)}`}
                 className="ml-auto text-terracotta hover:underline"
               >
-                Sign in to edit
+                Start your own plan
               </Link>
             )}
           </div>
