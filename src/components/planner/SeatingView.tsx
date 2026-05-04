@@ -203,6 +203,9 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
           <FloorPlan
             tables={tables} assignments={assignments} guests={guests} constraints={constraints} scenarioId={scenarioId}
             onUnassign={handleUnassign} onTogglePin={handleTogglePin} onMoveTo={handleMoveTo} onSwapWith={handleSwap}
+            unassigned={unassigned}
+            canEdit={canEdit}
+            onAssign={(guestId, tableId, seatIndex) => placeGuestAtSeat(guestId, tableId, seatIndex)}
           />
           {isBelowLg && (
             <UnassignedDrawerTrigger count={unassigned.length}>
