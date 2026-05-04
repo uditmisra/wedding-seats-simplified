@@ -1,14 +1,16 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DndContext, useDraggable, useDroppable, DragOverlay, type DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { supabase } from "@/integrations/supabase/client";
 import type { Guest, TableDef, Assignment, ConstraintDef } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Pin, X, LayoutGrid, UserPlus } from "lucide-react";
+import { Search, Pin, UserPlus, X } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { tableConflicts } from "@/lib/seating";
 import { FloorPlan } from "./FloorPlan";
+import { SeatMenu } from "./SeatMenu";
 import { LayoutDashboard, List as ListIcon } from "lucide-react";
+import { toast } from "sonner";
 
 interface Props {
   planId: string;
@@ -22,6 +24,12 @@ interface Props {
   onGoToTables?: () => void;
 }
 
+function firstFreeSeat(table: TableDef, seated: Assignment[], excludeId?: string): number | null {
+  const taken = new Set(seated.filter(a => a.id !== excludeId && a.seat_index != null).map(a => a.seat_index!));
+  for (let i = 0; i < table.capacity; i++) if (!taken.has(i)) return i;
+  return null;
+}
+
 export function SeatingView({ planId, scenarioId, guests, tables, assignments, constraints, refresh, onGoToGuests, onGoToTables }: Props) {
   const [search, setSearch] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -30,6 +38,33 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
 
   const assignedMap = useMemo(() => new Map(assignments.map(a => [a.guest_id, a])), [assignments]);
   const guestById = useMemo(() => new Map(guests.map(g => [g.id, g])), [guests]);
+  const tableById = useMemo(() => new Map(tables.map(t => [t.id, t])), [tables]);
+
+  // Lazy backfill: assign seat_index to legacy rows missing one
+  useEffect(() => {
+    const orphans = assignments.filter(a => a.seat_index == null);
+    if (orphans.length === 0) return;
+    const updates: { id: string; seat_index: number }[] = [];
+    const byTable = new Map<string, Assignment[]>();
+    assignments.forEach(a => {
+      if (!byTable.has(a.table_id)) byTable.set(a.table_id, []);
+      byTable.get(a.table_id)!.push(a);
+    });
+    for (const a of orphans) {
+      const tbl = tableById.get(a.table_id); if (!tbl) continue;
+      const seated = byTable.get(a.table_id) ?? [];
+      const idx = firstFreeSeat(tbl, seated.filter(x => x.id !== a.id && x.seat_index != null));
+      if (idx != null) {
+        updates.push({ id: a.id, seat_index: idx });
+        a.seat_index = idx; // mutate locally so subsequent loops see it
+      }
+    }
+    if (updates.length) {
+      Promise.all(updates.map(u => supabase.from("assignments").update({ seat_index: u.seat_index }).eq("id", u.id)))
+        .then(() => refresh());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scenarioId]);
 
   const unassigned = useMemo(() => {
     const q = search.toLowerCase();
@@ -39,27 +74,86 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
       .sort((a, b) => (a.party ?? "").localeCompare(b.party ?? "") || a.name.localeCompare(b.name));
   }, [guests, assignedMap, search]);
 
+  const placeGuestAtSeat = async (guestId: string, tableId: string, seatIndex: number | null) => {
+    const existing = assignedMap.get(guestId);
+    const tbl = tableById.get(tableId); if (!tbl) return;
+    const tableSeated = assignments.filter(a => a.table_id === tableId);
+
+    // Resolve seat index when only table provided
+    let targetIdx = seatIndex;
+    if (targetIdx == null) targetIdx = firstFreeSeat(tbl, tableSeated, existing?.id);
+
+    // Detect occupant of the target seat (if any)
+    const occupant = targetIdx != null
+      ? tableSeated.find(a => a.seat_index === targetIdx && a.guest_id !== guestId)
+      : undefined;
+
+    const ops: PromiseLike<unknown>[] = [];
+
+    if (occupant) {
+      // SWAP: occupant takes guest's previous (table_id, seat_index), or becomes unassigned
+      if (existing) {
+        ops.push(supabase.from("assignments").update({
+          table_id: existing.table_id, seat_index: existing.seat_index,
+        }).eq("id", occupant.id));
+      } else {
+        ops.push(supabase.from("assignments").delete().eq("id", occupant.id));
+      }
+    }
+
+    if (existing) {
+      ops.push(supabase.from("assignments").update({
+        table_id: tableId, seat_index: targetIdx,
+      }).eq("id", existing.id));
+    } else {
+      ops.push(supabase.from("assignments").insert({
+        plan_id: planId, scenario_id: scenarioId, guest_id: guestId, table_id: tableId, seat_index: targetIdx,
+      }));
+    }
+
+    const results = await Promise.all(ops);
+    if (results.some((r: any) => r?.error)) toast.error("Couldn't update seating");
+    refresh();
+  };
+
   const onDragEnd = async (e: DragEndEvent) => {
     setActiveId(null);
     const guestId = String(e.active.id);
     const overId = e.over?.id ? String(e.over.id) : null;
     if (!overId) return;
     if (overId === "__unassign__") {
-      await supabase.from("assignments").delete().eq("guest_id", guestId);
+      await supabase.from("assignments").delete().eq("guest_id", guestId).eq("scenario_id", scenarioId);
       refresh(); return;
     }
-    // overId is table id
-    const existing = assignedMap.get(guestId);
-    if (existing) {
-      await supabase.from("assignments").update({ table_id: overId }).eq("id", existing.id);
-    } else {
-      await supabase.from("assignments").insert({ plan_id: planId, scenario_id: scenarioId, guest_id: guestId, table_id: overId });
+    if (overId.startsWith("seat:")) {
+      const [, tid, idxStr] = overId.split(":");
+      await placeGuestAtSeat(guestId, tid, parseInt(idxStr, 10));
+    } else if (overId.startsWith("table:")) {
+      const tid = overId.slice("table:".length);
+      await placeGuestAtSeat(guestId, tid, null);
     }
-    refresh();
   };
 
-  const togglePin = async (a: Assignment) => {
+  const handleUnassign = async (a: Assignment) => {
+    await supabase.from("assignments").delete().eq("id", a.id);
+    refresh();
+  };
+  const handleTogglePin = async (a: Assignment) => {
     await supabase.from("assignments").update({ pinned: !a.pinned }).eq("id", a.id);
+    refresh();
+  };
+  const handleMoveTo = async (a: Assignment, targetTableId: string) => {
+    const tbl = tableById.get(targetTableId); if (!tbl) return;
+    const seated = assignments.filter(x => x.table_id === targetTableId);
+    const idx = firstFreeSeat(tbl, seated);
+    await supabase.from("assignments").update({ table_id: targetTableId, seat_index: idx }).eq("id", a.id);
+    refresh();
+  };
+  const handleSwap = async (a: Assignment, b: Assignment) => {
+    await Promise.all([
+      supabase.from("assignments").update({ table_id: b.table_id, seat_index: b.seat_index }).eq("id", a.id),
+      supabase.from("assignments").update({ table_id: a.table_id, seat_index: a.seat_index }).eq("id", b.id),
+    ]);
     refresh();
   };
 
@@ -69,18 +163,14 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
         <div className="flex justify-end mb-4">
           <div className="inline-flex rounded-lg border-hairline border bg-card p-0.5">
             <Tooltip><TooltipTrigger asChild>
-              <button
-                onClick={() => setView("floor")}
-                aria-label="Floor plan view"
-                className={`p-1.5 rounded-md transition ${view === "floor" ? "bg-primary text-primary-foreground" : "text-soft hover:text-foreground"}`}
-              ><LayoutDashboard size={15}/></button>
+              <button onClick={() => setView("floor")} aria-label="Floor plan view"
+                className={`p-1.5 rounded-md transition ${view === "floor" ? "bg-primary text-primary-foreground" : "text-soft hover:text-foreground"}`}>
+                <LayoutDashboard size={15}/></button>
             </TooltipTrigger><TooltipContent>Floor plan</TooltipContent></Tooltip>
             <Tooltip><TooltipTrigger asChild>
-              <button
-                onClick={() => setView("list")}
-                aria-label="List view"
-                className={`p-1.5 rounded-md transition ${view === "list" ? "bg-primary text-primary-foreground" : "text-soft hover:text-foreground"}`}
-              ><ListIcon size={15}/></button>
+              <button onClick={() => setView("list")} aria-label="List view"
+                className={`p-1.5 rounded-md transition ${view === "list" ? "bg-primary text-primary-foreground" : "text-soft hover:text-foreground"}`}>
+                <ListIcon size={15}/></button>
             </TooltipTrigger><TooltipContent>List view</TooltipContent></Tooltip>
           </div>
         </div>
@@ -89,28 +179,34 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
       {view === "floor" ? (
         <div className="grid lg:grid-cols-[280px_1fr] gap-6">
           <UnassignedPanel guests={unassigned} search={search} setSearch={setSearch} totalGuests={guests.length} onAddGuest={onGoToGuests}/>
-          <FloorPlan tables={tables} assignments={assignments} guests={guests} constraints={constraints} scenarioId={scenarioId}/>
+          <FloorPlan
+            tables={tables} assignments={assignments} guests={guests} constraints={constraints} scenarioId={scenarioId}
+            onUnassign={handleUnassign} onTogglePin={handleTogglePin} onMoveTo={handleMoveTo} onSwapWith={handleSwap}
+          />
         </div>
       ) : (
-      <div className="grid lg:grid-cols-[280px_1fr] gap-6">
-        <UnassignedPanel guests={unassigned} search={search} setSearch={setSearch} totalGuests={guests.length} onAddGuest={onGoToGuests}/>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-          {tables.length === 0 && (
-            <div className="col-span-full rounded-2xl border border-dashed hairline bg-surface/50 p-12 text-center">
-              <LayoutGrid className="mx-auto text-soft" size={24}/>
-              <div className="font-display text-lg mt-4">No tables yet</div>
-              <Button onClick={onGoToTables}>Add tables</Button>
-            </div>
-          )}
-          {tables.map(t => {
-            const seated = assignments.filter(a => a.table_id === t.id);
-            const conflicts = tableConflicts(t.id, assignments, constraints);
-            return (
-              <TableCard key={t.id} table={t} seated={seated} guestById={guestById} hasConflict={conflicts.length > 0} onTogglePin={togglePin}/>
-            );
-          })}
+        <div className="grid lg:grid-cols-[280px_1fr] gap-6">
+          <UnassignedPanel guests={unassigned} search={search} setSearch={setSearch} totalGuests={guests.length} onAddGuest={onGoToGuests}/>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            {tables.length === 0 && (
+              <div className="col-span-full rounded-2xl border border-dashed hairline bg-surface/50 p-12 text-center">
+                <div className="font-display text-lg mt-4">No tables yet</div>
+                <Button onClick={onGoToTables}>Add tables</Button>
+              </div>
+            )}
+            {tables.map(t => {
+              const seated = assignments.filter(a => a.table_id === t.id);
+              const conflicts = tableConflicts(t.id, assignments, constraints);
+              return (
+                <TableCard
+                  key={t.id} table={t} seated={seated} guestById={guestById} tables={tables}
+                  hasConflict={conflicts.length > 0}
+                  onUnassign={handleUnassign} onTogglePin={handleTogglePin} onMoveTo={handleMoveTo} onSwapWith={handleSwap}
+                />
+              );
+            })}
+          </div>
         </div>
-      </div>
       )}
       <DragOverlay>
         {activeId ? <GuestPill guest={guestById.get(activeId)!} dragging/> : null}
@@ -145,7 +241,7 @@ function UnassignedPanel({ guests, search, setSearch, totalGuests, onAddGuest }:
   );
 }
 
-function GuestPill({ guest, dragging, pinned, onTogglePin }: { guest: Guest; dragging?: boolean; pinned?: boolean; onTogglePin?: () => void }) {
+function GuestPill({ guest, dragging, pinned }: { guest: Guest; dragging?: boolean; pinned?: boolean }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: guest.id });
   const style = transform ? { transform: `translate(${transform.x}px, ${transform.y}px)` } : undefined;
   return (
@@ -157,22 +253,56 @@ function GuestPill({ guest, dragging, pinned, onTogglePin }: { guest: Guest; dra
         {guest.party && <span className="text-soft text-xs ml-1.5">{guest.party}</span>}
       </div>
       {guest.meal && <span className="w-1.5 h-1.5 rounded-full bg-accent" title={guest.meal}/>}
-      {onTogglePin && (
-        <button onClick={(e) => { e.stopPropagation(); onTogglePin(); }} className={`opacity-0 group-hover:opacity-100 ${pinned ? "opacity-100 text-primary" : "text-soft"}`}>
-          <Pin size={12}/>
-        </button>
-      )}
+      {pinned && <Pin size={11} className="text-primary"/>}
     </div>
   );
 }
 
-function TableCard({ table, seated, guestById, hasConflict, onTogglePin }: {
-  table: TableDef; seated: Assignment[]; guestById: Map<string, Guest>; hasConflict: boolean; onTogglePin: (a: Assignment) => void;
+function SeatRow({ table, seatIndex, assignment, guest, allTables, tableSeated, guestById, onUnassign, onTogglePin, onMoveTo, onSwapWith }: {
+  table: TableDef; seatIndex: number; assignment?: Assignment; guest?: Guest;
+  allTables: TableDef[]; tableSeated: Assignment[]; guestById: Map<string, Guest>;
+  onUnassign: (a: Assignment) => void;
+  onTogglePin: (a: Assignment) => void;
+  onMoveTo: (a: Assignment, tableId: string) => void;
+  onSwapWith: (a: Assignment, b: Assignment) => void;
 }) {
-  const { setNodeRef, isOver } = useDroppable({ id: table.id });
+  const { setNodeRef, isOver } = useDroppable({ id: `seat:${table.id}:${seatIndex}` });
+  const occupied = !!assignment && !!guest;
+  return (
+    <div ref={setNodeRef}
+      className={`flex items-center gap-2 rounded-lg transition px-1
+        ${isOver ? (occupied ? "bg-warning/10 ring-1 ring-warning/40" : "bg-primary/10 ring-1 ring-primary/40") : ""}`}>
+      <span className="w-5 text-[10px] text-soft tabular-nums text-center">{seatIndex + 1}</span>
+      <div className="flex-1 min-w-0">
+        {occupied ? (
+          <SeatMenu
+            assignment={assignment!} guest={guest!} table={table}
+            allTables={allTables} tableSeated={tableSeated} guestById={guestById}
+            onUnassign={onUnassign} onTogglePin={onTogglePin} onMoveTo={onMoveTo} onSwapWith={onSwapWith}
+          >
+            <div><GuestPill guest={guest!} pinned={assignment!.pinned}/></div>
+          </SeatMenu>
+        ) : (
+          <div className="h-7 rounded-lg border border-dashed hairline"/>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TableCard({ table, seated, guestById, tables, hasConflict, onUnassign, onTogglePin, onMoveTo, onSwapWith }: {
+  table: TableDef; seated: Assignment[]; guestById: Map<string, Guest>; tables: TableDef[]; hasConflict: boolean;
+  onUnassign: (a: Assignment) => void;
+  onTogglePin: (a: Assignment) => void;
+  onMoveTo: (a: Assignment, tableId: string) => void;
+  onSwapWith: (a: Assignment, b: Assignment) => void;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: `table:${table.id}` });
   const over = seated.length > table.capacity;
-  const empties = Math.max(0, table.capacity - seated.length);
   const fillRatio = Math.min(1, seated.length / Math.max(1, table.capacity));
+  const seatMap = new Map<number, Assignment>();
+  seated.forEach(a => { if (a.seat_index != null) seatMap.set(a.seat_index, a); });
+  const overflow = seated.filter(a => a.seat_index == null || a.seat_index >= table.capacity);
   return (
     <div ref={setNodeRef}
       className={`rounded-2xl border bg-card p-4 transition
@@ -183,14 +313,24 @@ function TableCard({ table, seated, guestById, hasConflict, onTogglePin }: {
       </div>
       {hasConflict && <div className="text-xs text-destructive mb-2 flex items-center gap-1"><X size={12}/>Conflict at this table</div>}
       <div className="space-y-1">
-        {seated.map(a => {
-          const g = guestById.get(a.guest_id);
-          if (!g) return null;
-          return <GuestPill key={a.id} guest={g} pinned={a.pinned} onTogglePin={() => onTogglePin(a)}/>;
+        {Array.from({ length: table.capacity }).map((_, i) => {
+          const a = seatMap.get(i);
+          const g = a ? guestById.get(a.guest_id) : undefined;
+          return (
+            <SeatRow key={i} table={table} seatIndex={i} assignment={a} guest={g}
+              allTables={tables} tableSeated={seated} guestById={guestById}
+              onUnassign={onUnassign} onTogglePin={onTogglePin} onMoveTo={onMoveTo} onSwapWith={onSwapWith}/>
+          );
         })}
-        {Array.from({ length: empties }).map((_, i) => (
-          <div key={i} className="h-7 rounded-lg border border-dashed hairline"/>
-        ))}
+        {overflow.length > 0 && (
+          <div className="pt-2 mt-2 border-t hairline">
+            <div className="text-[10px] uppercase tracking-wider text-soft mb-1">Unseated at this table</div>
+            {overflow.map(a => {
+              const g = guestById.get(a.guest_id); if (!g) return null;
+              return <GuestPill key={a.id} guest={g} pinned={a.pinned}/>;
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
