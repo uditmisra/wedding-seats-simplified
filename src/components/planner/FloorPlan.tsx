@@ -382,7 +382,7 @@ function Seat({ tableId, seatIndex, x, y, assignment, guest, table, allTables, t
           <button
             type="button"
             onContextMenu={(e) => { e.preventDefault(); setPickerOpen(true); }}
-            className={`w-full h-full rounded-full border transition flex items-center justify-center font-mono text-[9px] text-ink-3 ${
+            className={`w-full h-full rounded-full border transition-[transform,background-color,border-color] duration-100 flex items-center justify-center font-mono text-[9px] text-ink-3 ${
               isOver ? "bg-terracotta/15 border-terracotta scale-110" : "border-ink/40 bg-paper/60 hover:border-ink/70 hover:bg-paper"
             }`}
             aria-label={`Seat ${seatIndex + 1} — empty. Click to assign.`}
@@ -392,7 +392,7 @@ function Seat({ tableId, seatIndex, x, y, assignment, guest, table, allTables, t
         </SeatPicker>
       ) : (
         <div
-          className={`w-full h-full rounded-full border transition flex items-center justify-center font-mono text-[9px] text-ink-3 ${
+          className={`w-full h-full rounded-full border transition-[transform,background-color,border-color] duration-100 flex items-center justify-center font-mono text-[9px] text-ink-3 ${
             isOver ? "bg-terracotta/15 border-terracotta scale-110" : "border-ink/40 bg-paper/60"
           }`}
         >
