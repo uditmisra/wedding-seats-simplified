@@ -4,13 +4,15 @@ import { PaperTable } from "@/components/PaperTable";
 interface Props {
   onAddTables: () => void;
   onAddGuests: () => void;
+  onLoadSample?: () => void;
 }
 
 /**
  * Editorial empty state for the seating canvas. Ghost dashed tables behind a
- * centered prompt — "a blank plan should still feel intentional".
+ * centered prompt — design-faithful copy: lead with guests-first ("an empty
+ * room, ready for everyone"), CTAs add guests primary / sample plan ghost.
  */
-export function EmptyCanvas({ onAddTables, onAddGuests }: Props) {
+export function EmptyCanvas({ onAddTables, onAddGuests, onLoadSample }: Props) {
   return (
     <div className="paper-grain relative overflow-hidden rounded-2xl border hairline">
       <div className="relative" style={{ minHeight: 480 }}>
@@ -26,24 +28,30 @@ export function EmptyCanvas({ onAddTables, onAddGuests }: Props) {
 
         {/* Prompt */}
         <div className="relative mx-auto flex max-w-md flex-col items-center px-6 py-16 text-center sm:py-24">
-          <div className="label-mono text-terracotta">Empty canvas</div>
-          <h2 className="m-0 mt-4 font-display text-[44px] leading-[1.05] tracking-[-0.02em] sm:text-[56px]">
-            Start with the <span className="font-display-italic">tables.</span>
+          <div className="label-mono text-terracotta">Blank plan · Let&apos;s begin</div>
+          <h2 className="m-0 mt-4 font-display text-[44px] leading-[1.0] tracking-[-0.025em] sm:text-[56px]">
+            An empty room,<br />ready for <span className="font-display-italic">everyone.</span>
           </h2>
           <p className="m-0 mt-4 max-w-sm text-[15px] leading-[1.55] text-ink-2">
-            Add a few tables, then drag your guests onto them. Already have a guest list? Import it and we&apos;ll catch up.
+            Start by adding guests — paste from a spreadsheet, type a few names, or drop a list and we&apos;ll figure it out.
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-2">
-            <Button onClick={onAddTables} className="h-11 rounded-full px-5">
-              Add tables
+            <Button onClick={onAddGuests} className="h-11 rounded-full px-5">
+              + Add guests
               <span className="ml-1 font-display-italic">→</span>
             </Button>
-            <Button onClick={onAddGuests} variant="outline" className="h-11 rounded-full border-hairline px-5">
-              Import guests
-            </Button>
+            {onLoadSample ? (
+              <Button onClick={onLoadSample} variant="outline" className="h-11 rounded-full border-hairline px-5">
+                Use a sample plan
+              </Button>
+            ) : (
+              <Button onClick={onAddTables} variant="outline" className="h-11 rounded-full border-hairline px-5">
+                Add tables instead
+              </Button>
+            )}
           </div>
-          <p className="mt-6 font-display-italic text-[13px] text-ink-3">
-            Easier to drag than to type from scratch.
+          <p className="mt-6 font-display-italic text-[14px] text-ink-3">
+            There&apos;s no wrong way to start. Most couples begin with parents.
           </p>
         </div>
       </div>

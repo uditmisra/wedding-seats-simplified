@@ -170,6 +170,9 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
                 </filter>
               </defs>
 
+              {/* Room geometry — outline, fixtures, compass, annotation */}
+              <RoomGeometry width={width} height={height} />
+
               {layout.map(({ t, i, cx, cy, dims: d }) => {
                 const seated = assignments.filter(a => a.table_id === t.id);
                 const conflict = tableConflicts(t.id, assignments, constraints).length > 0;
@@ -251,9 +254,10 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
         </div>
 
         <div className="absolute bottom-3 left-3 flex gap-3 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-3 bg-paper/85 backdrop-blur rounded-full px-3 py-1.5 border hairline">
-          <span className="flex items-center gap-1"><Dot color="hsl(var(--terracotta))"/>seated</span>
-          <span className="flex items-center gap-1"><Dot color="hsl(var(--ink-4))"/>empty</span>
-          <span className="flex items-center gap-1"><Dot color="hsl(var(--rose))"/>conflict</span>
+          <span className="flex items-center gap-1.5"><Dot color="hsl(var(--olive))" filled/>full</span>
+          <span className="flex items-center gap-1.5"><Dot color="hsl(var(--terracotta))" filled/>seating</span>
+          <span className="flex items-center gap-1.5"><Dot color="hsl(var(--rose))" filled/>conflict</span>
+          <span className="flex items-center gap-1.5"><Dot color="hsl(var(--ink-4))"/>open</span>
         </div>
       </div>
     </div>
@@ -424,8 +428,133 @@ function SeatedChip({ guestId, guest, pinned, swapPreview }: { guestId: string; 
   );
 }
 
-function Dot({ color }: { color: string }) {
-  return <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: color }}/>;
+function Dot({ color, filled = true }: { color: string; filled?: boolean }) {
+  return (
+    <span
+      className="inline-block w-1.5 h-1.5 rounded-full"
+      style={filled
+        ? { background: color }
+        : { background: "transparent", border: `1px solid ${color}` }}
+    />
+  );
+}
+
+/**
+ * Decorative room geometry — outline, fixtures (dance floor / DJ / bar / entry),
+ * a hand-written annotation, and a compass. None of this is in the data model;
+ * it grounds the floor-plan metaphor visually. Positions are relative to the
+ * laid-out table grid.
+ */
+function RoomGeometry({ width, height }: { width: number; height: number }) {
+  // Insets so the room outline frames the tables with breathing room.
+  const padX = 60, padTop = 80, padBottom = 100;
+  const x = padX, y = padTop;
+  const w = Math.max(200, width - padX * 2);
+  const h = Math.max(200, height - padTop - padBottom);
+
+  // Fixture placements relative to the room rect.
+  const danceX = x + w - 160, danceY = y + h - 200, danceW = 130, danceH = 180;
+  const djX = x + w - 90, djY = y + 24, djW = 70, djH = 36;
+  const barX = x + 30, barY = y + h - 60, barW = 130, barH = 36;
+  const entryX = x + w / 2 - 50, entryY = y - 8, entryW = 100, entryH = 16;
+
+  return (
+    <g pointerEvents="none">
+      {/* Room outline */}
+      <rect
+        x={x} y={y} width={w} height={h}
+        fill="none"
+        stroke="hsl(var(--ink))"
+        strokeWidth={1.2}
+        opacity={0.6}
+      />
+
+      {/* Entry */}
+      <rect x={entryX} y={entryY} width={entryW} height={entryH}
+        fill="hsl(var(--paper))" stroke="hsl(var(--ink))" strokeWidth={1} opacity={0.85} />
+      <text x={entryX + entryW / 2} y={entryY + entryH - 5}
+        textAnchor="middle"
+        fontFamily='"Geist Mono", monospace'
+        fontSize={9}
+        letterSpacing="0.16em"
+        fill="hsl(var(--ink-2))">ENTRY</text>
+
+      {/* DJ booth */}
+      <rect x={djX} y={djY} width={djW} height={djH}
+        fill="hsl(var(--paper-2))" stroke="hsl(var(--ink))" strokeWidth={0.8} />
+      <text x={djX + djW / 2} y={djY + djH / 2 + 3}
+        textAnchor="middle"
+        fontFamily='"Geist Mono", monospace'
+        fontSize={9}
+        letterSpacing="0.18em"
+        fill="hsl(var(--ink-2))">DJ</text>
+
+      {/* Bar */}
+      <rect x={barX} y={barY} width={barW} height={barH}
+        fill="hsl(var(--paper-2))" stroke="hsl(var(--ink))" strokeWidth={0.8} />
+      <text x={barX + barW / 2} y={barY + barH / 2 + 4}
+        textAnchor="middle"
+        fontFamily="Newsreader, serif"
+        fontStyle="italic"
+        fontSize={13}
+        fill="hsl(var(--ink-2))">bar</text>
+
+      {/* Dance floor */}
+      <rect
+        x={danceX} y={danceY} width={danceW} height={danceH}
+        fill="hsl(var(--terracotta) / 0.06)"
+        stroke="hsl(var(--terracotta))"
+        strokeWidth={1}
+        strokeDasharray="4 4"
+      />
+      <text
+        x={danceX + danceW / 2}
+        y={danceY + danceH / 2 + 6}
+        textAnchor="middle"
+        fontFamily="Newsreader, serif"
+        fontStyle="italic"
+        fontSize={14}
+        fill="hsl(var(--terracotta))"
+      >dance floor</text>
+
+      {/* Compass — top-right of the room */}
+      <g transform={`translate(${x + w - 30}, ${y + 28})`}>
+        <circle r={14} fill="none" stroke="hsl(var(--ink-3))" strokeWidth={0.6} />
+        <path d="M 0 -11 L 3 4 L 0 0 L -3 4 Z" fill="hsl(var(--ink))" />
+        <text y={-17} textAnchor="middle"
+          fontFamily='"Geist Mono", monospace'
+          fontSize={9} fill="hsl(var(--ink-3))">N</text>
+      </g>
+
+      {/* Hand-written annotation */}
+      <g transform={`translate(${x + w - 220}, ${y + 90}) rotate(-3)`}>
+        <text
+          fontFamily="Newsreader, serif"
+          fontStyle="italic"
+          fontSize={14}
+          fill="hsl(var(--terracotta))"
+          opacity={0.85}
+        >
+          <tspan x={0} dy={0}>let&apos;s keep the college tables</tspan>
+          <tspan x={0} dy={18}>close to the bar</tspan>
+        </text>
+        <path
+          d="M -10 30 Q 20 50, 60 65"
+          stroke="hsl(var(--terracotta))"
+          fill="none"
+          strokeWidth={1}
+          opacity={0.7}
+        />
+        <path
+          d="M 54 60 L 60 65 L 53 68"
+          stroke="hsl(var(--terracotta))"
+          fill="none"
+          strokeWidth={1}
+          opacity={0.7}
+        />
+      </g>
+    </g>
+  );
 }
 
 interface ShapeProps {

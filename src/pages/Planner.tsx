@@ -135,6 +135,12 @@ const Planner = () => {
   const seatedPct = totalExpected ? Math.min(100, Math.round((seatedCount / totalExpected) * 100)) : 0;
 
   const planCode = plan.code.toUpperCase();
+  const planInitials = plan.name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(w => w[0]?.toUpperCase() ?? "")
+    .join("") || "MJ";
 
   const copyLink = async () => {
     await navigator.clipboard.writeText(window.location.href);
@@ -157,9 +163,9 @@ const Planner = () => {
       {/* Editorial header */}
       <header className="sticky top-0 z-30 border-b hairline bg-paper/85 backdrop-blur-md">
         <div className="container flex h-16 items-center gap-6">
-          <Link to="/" aria-label="Home" className="flex items-baseline gap-1.5">
+          <Link to="/" aria-label="Home" className="flex items-baseline gap-[3px]">
             <span className="font-display text-[18px]">Seatly</span>
-            <span className="inline-block size-1 rounded-full bg-terracotta" aria-hidden />
+            <span className="inline-block h-1 w-1 -translate-y-px rounded-full bg-terracotta" aria-hidden />
           </Link>
           <span className="hidden h-5 w-px bg-hairline sm:block" aria-hidden />
           <div className="min-w-0 flex-1">
@@ -186,12 +192,13 @@ const Planner = () => {
           </div>
           <TooltipProvider delayDuration={200}>
             <div className="flex items-center gap-2">
+              <span className="hidden font-mono text-[11px] text-ink-3 sm:inline">Saved · just now</span>
               <Popover>
                 <PopoverTrigger asChild>
                   <Tooltip><TooltipTrigger asChild>
                     <button
                       type="button"
-                      className="hidden rounded-full border hairline px-3 py-1.5 text-[12px] text-ink-2 hover:bg-paper-2 sm:inline-flex"
+                      className="rounded-full border hairline px-3 py-1.5 text-[12px] text-ink-2 hover:bg-paper-2 inline-flex"
                       aria-label="Share plan"
                     >
                       Share link <span className="ml-1 font-display-italic text-terracotta">↗</span>
@@ -220,6 +227,12 @@ const Planner = () => {
                   <Wand2 size={14} className="mr-1.5" />Auto-seat
                 </Button>
               )}
+              <span
+                aria-hidden
+                className="hidden size-7 items-center justify-center rounded-full bg-olive font-mono text-[11px] font-medium text-paper sm:inline-flex"
+              >
+                {planInitials}
+              </span>
               <UserMenu />
             </div>
           </TooltipProvider>
@@ -299,7 +312,7 @@ const Planner = () => {
         )}
 
         <Tabs value={tab} onValueChange={setTab}>
-          <div className="flex items-end justify-between gap-3 border-b hairline">
+          <div className="flex items-end justify-between gap-3 border-b hairline bg-white/30 px-4 -mx-4 rounded-t-md">
             <TabsList className="h-auto gap-7 rounded-none bg-transparent p-0">
               {visibleTabs.map(t => {
                 const count = t.value === "guests" ? guests.length : t.value === "tables" ? tables.length : undefined;
@@ -400,7 +413,7 @@ function ChapterTab({
   return (
     <TabsTrigger
       value={value}
-      className="group relative h-auto rounded-none border-0 bg-transparent px-0 pb-3 pt-3 text-sm font-medium text-ink-3 transition-colors data-[state=active]:bg-transparent data-[state=active]:text-ink data-[state=active]:shadow-none data-[state=active]:after:absolute data-[state=active]:after:inset-x-0 data-[state=active]:after:-bottom-px data-[state=active]:after:h-px data-[state=active]:after:bg-ink"
+      className="group relative h-auto rounded-none border-0 bg-transparent px-0 pb-3 pt-3 text-sm font-normal text-ink-3 transition-colors data-[state=active]:bg-transparent data-[state=active]:font-medium data-[state=active]:text-ink data-[state=active]:shadow-none data-[state=active]:after:absolute data-[state=active]:after:inset-x-0 data-[state=active]:after:-bottom-px data-[state=active]:after:h-px data-[state=active]:after:bg-ink"
     >
       <span className="flex items-baseline gap-1.5">
         <span className="font-display-italic text-[13px] text-ink-3 transition-colors group-data-[state=active]:text-terracotta">

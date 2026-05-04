@@ -112,8 +112,8 @@ export default function Auth() {
               ) : (
                 <>
                   <div className="mb-6">
-                    <h2 className="m-0 font-display text-[22px] leading-tight">Sign in</h2>
-                    <p className="mt-1 text-[13px] text-ink-3">
+                    <h2 className="m-0 font-display text-[34px] leading-tight">Sign in</h2>
+                    <p className="mt-2 text-[13px] text-ink-3">
                       Google, or an email and a password.
                     </p>
                   </div>
@@ -123,7 +123,7 @@ export default function Auth() {
                     variant="outline"
                     onClick={signInWithGoogle}
                     disabled={busy}
-                    className="h-11 w-full rounded-full border-hairline bg-paper text-[14px] hover:bg-paper-2"
+                    className="h-11 w-full rounded-[10px] border-hairline bg-paper px-4 text-[14px] hover:bg-paper-2"
                   >
                     {busy ? <Loader2 size={14} className="mr-2 animate-spin" /> : <GoogleGlyph />}
                     Continue with Google
@@ -131,7 +131,7 @@ export default function Auth() {
 
                   <div className="my-5 flex items-center gap-3">
                     <span className="h-px flex-1 bg-hairline" />
-                    <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-3">or</span>
+                    <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-ink-3">or</span>
                     <span className="h-px flex-1 bg-hairline" />
                   </div>
 
@@ -205,7 +205,7 @@ function LinkSent({ email, onChangeEmail }: { email: string; onChangeEmail: () =
       <div className="mx-auto mb-5 inline-flex size-16 items-center justify-center rounded-full bg-paper-2">
         <Mail size={22} className="text-terracotta" />
       </div>
-      <h2 className="m-0 font-display text-[22px] leading-tight">
+      <h2 className="m-0 font-display text-[28px] leading-tight">
         Check your <span className="font-display-italic">inbox.</span>
       </h2>
       <p className="mx-auto mt-2 max-w-xs text-[14px] text-ink-2">
@@ -237,7 +237,7 @@ const Field = forwardRef<
       required
       autoFocus={autoFocus}
       minLength={minLength}
-      className="h-11 rounded-full border-hairline bg-transparent px-4"
+      className="h-11 rounded-[10px] border-hairline bg-paper px-4 placeholder:italic"
     />
     {hint && <div className="font-mono text-[11px] text-ink-3">{hint}</div>}
   </div>

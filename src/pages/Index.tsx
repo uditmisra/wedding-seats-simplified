@@ -137,10 +137,10 @@ const Index = () => {
 
       <main className="container pb-24">
         {/* Hero */}
-        <section className="grid items-center gap-12 pt-10 md:grid-cols-12 md:gap-16 md:pt-20">
-          <div className="md:col-span-7">
+        <section className="grid items-center gap-12 pt-10 md:grid-cols-[1.1fr_1fr] md:gap-16 md:pt-20">
+          <div>
             <div className="label-mono mb-7">A wedding seating planner</div>
-            <h1 className="m-0 font-display text-[56px] leading-[1.0] tracking-[-0.03em] sm:text-7xl xl:text-[92px]">
+            <h1 className="m-0 font-display text-[56px] leading-[0.98] tracking-[-0.03em] sm:text-7xl xl:text-[92px]">
               Your seating chart,<br />
               <span className="font-display-italic">without</span> the spreadsheet.
             </h1>
@@ -201,7 +201,7 @@ const Index = () => {
           </div>
 
           {/* Hero vignette — paper floor plan */}
-          <div className="relative md:col-span-5 md:h-[540px]">
+          <div className="relative md:h-[540px]">
             <FloorPlanVignette />
             <div className="absolute -bottom-3 left-6 rounded-full border hairline bg-paper px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.08em] text-ink-3">
               Plan · Draft · 142 Guests · 17 Tables
@@ -230,7 +230,7 @@ const Index = () => {
         {user && myPlans.length > 0 && (
           <section id="yours" className="mt-24">
             <div className="mb-7 flex items-baseline justify-between">
-              <h2 className="m-0 font-display text-3xl md:text-4xl">
+              <h2 className="m-0 font-display text-3xl md:text-[36px]">
                 Your <span className="font-display-italic">plans</span>
               </h2>
               <span className="label-mono">{myPlans.length} plan{myPlans.length === 1 ? "" : "s"}</span>
@@ -247,7 +247,7 @@ const Index = () => {
         {orphanRecents.length > 0 && (
           <section id="recents" className={user ? "mt-12" : "mt-24"}>
             <div className="mb-7 flex items-baseline justify-between">
-              <h2 className="m-0 font-display text-2xl md:text-3xl">
+              <h2 className="m-0 font-display text-2xl md:text-[36px]">
                 Recently <span className="font-display-italic">opened</span>
               </h2>
               <span className="label-mono">on this device</span>
@@ -284,7 +284,7 @@ function PlanCard({
   return (
     <Link
       to={`/plan/${code}`}
-      className="group relative block rounded-xl border hairline bg-card/40 p-5 transition hover:bg-card/80 hover:shadow-soft"
+      className="group relative block rounded-xl border hairline bg-white/40 p-5 transition hover:bg-white/70 hover:shadow-soft"
     >
       <div className="label-mono mb-3.5 truncate">{code.toUpperCase()}</div>
       <div className="mb-1 truncate font-display text-[22px] leading-[1.1]">{name}</div>

@@ -378,7 +378,7 @@ export function GuestsTab({ planId, guests, refresh, autoOpen, onAutoOpenHandled
             </div>
 
             <div className="mt-4 overflow-auto">
-              <div className="grid grid-cols-[1.4fr_1.4fr_90px_70px_70px] gap-2 border-b hairline px-3 py-2">
+              <div className="grid grid-cols-[1.2fr_1.4fr_90px_60px_70px] gap-2 border-b hairline px-3 py-2">
                 <span className="label-mono">Name</span>
                 <span className="label-mono">Party</span>
                 <span className="label-mono">RSVP</span>
@@ -411,11 +411,11 @@ export function GuestsTab({ planId, guests, refresh, autoOpen, onAutoOpenHandled
                     <button
                       key={g.id}
                       onClick={() => setSelectedId(g.id)}
-                      className={`grid w-full grid-cols-[1.4fr_1.4fr_90px_70px_70px] items-center gap-2 border-b border-hairline-2 px-3 py-3 text-left text-[14px] transition hover:bg-paper-2/60 ${isSelected ? "bg-terracotta/5" : ""}`}
+                      className={`grid w-full grid-cols-[1.2fr_1.4fr_90px_60px_70px] items-center gap-2 border-b border-hairline-2 px-3 py-3 text-left text-[14px] transition hover:bg-paper-2/60 ${isSelected ? "bg-terracotta/5" : ""}`}
                     >
                       <span className="flex min-w-0 items-center gap-2.5 truncate">
                         <span
-                          className="inline-flex size-7 shrink-0 items-center justify-center rounded-full font-mono text-[10px] font-medium text-paper"
+                          className="inline-flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full font-mono text-[10px] font-medium text-paper"
                           style={{ background: avatarFor(g.name) }}
                           aria-hidden
                         >
