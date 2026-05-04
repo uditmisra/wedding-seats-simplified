@@ -50,8 +50,12 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
   const guestById = useMemo(() => new Map(guests.map(g => [g.id, g])), [guests]);
   const tableById = useMemo(() => new Map(tables.map(t => [t.id, t])), [tables]);
 
-  // Lazy backfill: assign seat_index to legacy rows missing one
+  // Lazy backfill: assign seat_index to legacy rows missing one. Owners only —
+  // viewers can't UPDATE under RLS, and the previous version mutated assignment
+  // objects in place + called refresh() unconditionally, which made seats
+  // appear filled for a frame then snap back to empty (the "vanish" bug).
   useEffect(() => {
+    if (!canEdit) return;
     const orphans = assignments.filter(a => a.seat_index == null);
     if (orphans.length === 0) return;
     const updates: { id: string; seat_index: number }[] = [];
@@ -69,12 +73,20 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
         a.seat_index = idx; // mutate locally so subsequent loops see it
       }
     }
-    if (updates.length) {
-      Promise.all(updates.map(u => supabase.from("assignments").update({ seat_index: u.seat_index }).eq("id", u.id)))
-        .then(() => refresh());
-    }
+    if (updates.length === 0) return;
+    Promise.all(
+      updates.map(u =>
+        supabase.from("assignments").update({ seat_index: u.seat_index }).eq("id", u.id),
+      ),
+    ).then(results => {
+      // Only refresh if every update actually persisted. If any failed (e.g.
+      // a transient RLS edge case), leave the locally-mutated state alone so
+      // the UI doesn't snap back to "unseated".
+      const allOk = results.every(r => !r.error);
+      if (allOk) refresh();
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scenarioId]);
+  }, [scenarioId, canEdit]);
 
   const unassigned = useMemo(() => {
     const q = search.toLowerCase();
