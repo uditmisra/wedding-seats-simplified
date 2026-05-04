@@ -17,7 +17,8 @@ import { AutoAssignDialog } from "@/components/planner/AutoAssignDialog";
 import { OnboardingFlow } from "@/components/planner/OnboardingFlow";
 import { LayoutTabs } from "@/components/planner/LayoutTabs";
 import { CompareScenarios } from "@/components/planner/CompareScenarios";
-import { Link as LinkIcon, Check, ArrowLeft, Wand2, MoreHorizontal, GitCompareArrows, ShieldAlert, Download, Mail, Bookmark, Heart } from "lucide-react";
+import { Link as LinkIcon, Check, ArrowLeft, Wand2, GitCompareArrows, ShieldAlert, Download, Mail, Bookmark, Share2, MoreHorizontal, Pencil } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { addRecentPlan } from "@/lib/recentPlans";
 
@@ -43,7 +44,7 @@ const Planner = () => {
     if (plan) addRecentPlan({ code: plan.code, name: plan.name, openedAt: Date.now() });
   }, [plan?.id, plan?.name]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading…</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center text-muted-foreground text-sm">Loading…</div>;
   if (notFound || !plan) return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-3">
       <p>Plan not found.</p>
@@ -64,54 +65,63 @@ const Planner = () => {
   const goImport = () => { setGuestsAutoOpen("import"); setTab("guests"); setOnboardingDismissed(true); };
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--gradient-soft)" }}>
-      <header className="border-b border-border/60 bg-background/70 backdrop-blur sticky top-0 z-30">
-        <div className="container py-3 flex items-center gap-3">
-          <Link to="/" aria-label="Home" className="text-muted-foreground hover:text-foreground"><ArrowLeft size={16}/></Link>
+    <div className="min-h-screen bg-background">
+      <header className="border-b hairline bg-background/85 backdrop-blur-md sticky top-0 z-30">
+        <div className="container h-14 flex items-center gap-3">
+          <Link to="/" aria-label="Home" className="text-soft hover:text-foreground -ml-1 p-1.5 rounded-md hover:bg-surface-hover">
+            <ArrowLeft size={16}/>
+          </Link>
           {editingName ? (
-            <Input autoFocus value={plan.name} onChange={e => renamePlan(e.target.value)} onBlur={() => setEditingName(false)} className="h-8 w-64 font-display text-lg"/>
+            <Input autoFocus value={plan.name} onChange={e => renamePlan(e.target.value)} onBlur={() => setEditingName(false)} className="h-8 w-64 font-display text-lg border-hairline"/>
           ) : (
-            <button onClick={() => setEditingName(true)} className="font-display text-xl truncate hover:underline underline-offset-4 decoration-primary/40">{plan.name}</button>
+            <button onClick={() => setEditingName(true)} className="group flex items-center gap-1.5 font-display text-lg truncate text-foreground hover:text-primary">
+              <span className="truncate">{plan.name}</span>
+              <Pencil size={12} className="opacity-0 group-hover:opacity-50 transition shrink-0"/>
+            </button>
           )}
-          <div className="ml-auto flex items-center gap-2">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="ghost" size="sm" title="Save and share this plan">
-                  <Heart size={14} className="mr-1.5"/>Save & share
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent align="end" className="w-80">
-                <div className="space-y-3">
-                  <div>
-                    <div className="font-display text-base">You're all set</div>
-                    <p className="text-xs text-muted-foreground mt-1">Your plan saves automatically. Bookmark this page or send the link to yourself so you can pop back in anytime.</p>
+          <TooltipProvider delayDuration={200}>
+            <div className="ml-auto flex items-center gap-1">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Tooltip><TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 text-soft hover:text-foreground" aria-label="Share plan">
+                      <Share2 size={15}/>
+                    </Button>
+                  </TooltipTrigger><TooltipContent>Share this plan</TooltipContent></Tooltip>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-72 p-4 rounded-xl shadow-elegant border-hairline">
+                  <div className="space-y-2.5">
+                    <Button variant="outline" size="sm" className="w-full justify-start font-normal" onClick={copyLink}>
+                      {copied ? <Check size={14} className="mr-2 text-sage"/> : <LinkIcon size={14} className="mr-2"/>}
+                      {copied ? "Link copied" : "Copy link"}
+                    </Button>
+                    <Button asChild variant="outline" size="sm" className="w-full justify-start font-normal">
+                      <a href={`mailto:?subject=${encodeURIComponent(`Our seating plan: ${plan.name}`)}&body=${encodeURIComponent(`${typeof window !== "undefined" ? window.location.href : ""}`)}`}>
+                        <Mail size={14} className="mr-2"/>Email yourself
+                      </a>
+                    </Button>
+                    <div className="text-xs text-soft flex items-center gap-1.5 pt-2 border-t hairline">
+                      <Bookmark size={11}/> Press ⌘+D to bookmark
+                    </div>
                   </div>
-                  <Button variant="outline" size="sm" className="w-full justify-start" onClick={copyLink}>
-                    {copied ? <Check size={14} className="mr-2"/> : <LinkIcon size={14} className="mr-2"/>}
-                    {copied ? "Link copied" : "Copy link"}
+                </PopoverContent>
+              </Popover>
+              {assignments.length > 0 && (
+                <Tooltip><TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-9 w-9 text-soft hover:text-foreground" onClick={() => setTab("export")} aria-label="Export">
+                    <Download size={15}/>
                   </Button>
-                  <Button asChild variant="outline" size="sm" className="w-full justify-start">
-                    <a href={`mailto:?subject=${encodeURIComponent(`Our seating plan: ${plan.name}`)}&body=${encodeURIComponent(`Here's the link to our seating plan — open it any time:\n\n${typeof window !== "undefined" ? window.location.href : ""}`)}`}>
-                      <Mail size={14} className="mr-2"/>Email me the link
-                    </a>
-                  </Button>
-                  <div className="text-xs text-muted-foreground flex items-center gap-1.5 pt-1 border-t border-border/40">
-                    <Bookmark size={12}/> Tip: press ⌘+D (or Ctrl+D) to bookmark this page.
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-            {assignments.length > 0 && (
-              <Button variant="ghost" size="sm" onClick={() => setTab("export")} title="Print place cards, seating charts and more">
-                <Download size={14} className="mr-1.5"/>Export
+                </TooltipTrigger><TooltipContent>Export &amp; print</TooltipContent></Tooltip>
+              )}
+              <Button size="sm" onClick={() => setAutoOpen(true)} className="ml-1 h-9 shadow-soft">
+                <Wand2 size={14} className="mr-1.5"/>Auto-seat
               </Button>
-            )}
-            <Button size="sm" onClick={() => setAutoOpen(true)} className="shadow-sm"><Wand2 size={14} className="mr-1.5"/>Seat them for me</Button>
-          </div>
+            </div>
+          </TooltipProvider>
         </div>
       </header>
 
-      <main className="container py-6 space-y-6">
+      <main className="container py-8 space-y-8">
         {showOnboarding ? (
           <OnboardingFlow
             planId={plan.id}
@@ -140,25 +150,25 @@ const Planner = () => {
         )}
 
         <Tabs value={tab} onValueChange={setTab}>
-          <div className="flex items-center justify-between gap-2">
-            <TabsList className="bg-card/60 border border-border/60 h-11">
-              <TabsTrigger value="seating">Seating</TabsTrigger>
-              <TabsTrigger value="guests">Guests <span className="ml-1.5 text-xs text-muted-foreground">{guests.length}</span></TabsTrigger>
-              <TabsTrigger value="tables">Tables <span className="ml-1.5 text-xs text-muted-foreground">{tables.length}</span></TabsTrigger>
+          <div className="flex items-center justify-between gap-2 border-b hairline">
+            <TabsList className="bg-transparent h-auto p-0 gap-6 rounded-none">
+              <UnderlineTab value="seating" label="Seating"/>
+              <UnderlineTab value="guests" label="Guests" count={guests.length}/>
+              <UnderlineTab value="tables" label="Tables" count={tables.length}/>
             </TabsList>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-11 w-11 p-0" aria-label="More">
-                  <MoreHorizontal size={18}/>
-                </Button>
+                <button className="text-sm text-soft hover:text-foreground inline-flex items-center gap-1 px-2 py-2.5">
+                  More <MoreHorizontal size={14}/>
+                </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuContent align="end" className="w-52 rounded-xl border-hairline">
                 <DropdownMenuItem onClick={() => setTab("compare")}>
                   <GitCompareArrows size={14} className="mr-2"/>Compare layouts
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setTab("constraints")}>
                   <ShieldAlert size={14} className="mr-2"/>Sit-with rules
-                  {constraints.length > 0 && <span className="ml-auto text-xs text-muted-foreground">{constraints.length}</span>}
+                  {constraints.length > 0 && <span className="ml-auto text-xs text-soft">{constraints.length}</span>}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setTab("export")}>
                   <Download size={14} className="mr-2"/>Export &amp; print
@@ -167,23 +177,23 @@ const Planner = () => {
             </DropdownMenu>
           </div>
 
-          <TabsContent value="seating" className="mt-4">
+          <TabsContent value="seating" className="mt-6 animate-tab-in">
             <SeatingView planId={plan.id} scenarioId={scenarioId ?? ""} guests={guests} tables={tables} assignments={assignments} constraints={constraints} refresh={refresh}
               onGoToGuests={() => setTab("guests")} onGoToTables={() => setTab("tables")}/>
           </TabsContent>
-          <TabsContent value="guests" className="mt-4">
+          <TabsContent value="guests" className="mt-6 animate-tab-in">
             <GuestsTab planId={plan.id} guests={guests} refresh={refresh} autoOpen={guestsAutoOpen} onAutoOpenHandled={() => setGuestsAutoOpen(null)}/>
           </TabsContent>
-          <TabsContent value="tables" className="mt-4">
+          <TabsContent value="tables" className="mt-6 animate-tab-in">
             <TablesTab planId={plan.id} scenarioId={scenarioId ?? ""} tables={tables} assignments={assignments} refresh={refresh} autoOpen={tablesAutoOpen} onAutoOpenHandled={() => setTablesAutoOpen(null)}/>
           </TabsContent>
-          <TabsContent value="compare" className="mt-4">
+          <TabsContent value="compare" className="mt-6 animate-tab-in">
             <CompareScenarios scenarios={scenarios} currentScenarioId={scenarioId} currentTables={tables} currentAssignments={assignments} guests={guests} constraints={constraints}/>
           </TabsContent>
-          <TabsContent value="constraints" className="mt-4">
+          <TabsContent value="constraints" className="mt-6 animate-tab-in">
             <ConstraintsPanel planId={plan.id} guests={guests} constraints={constraints} refresh={refresh}/>
           </TabsContent>
-          <TabsContent value="export" className="mt-4">
+          <TabsContent value="export" className="mt-6 animate-tab-in">
             <ExportPanel plan={plan} guests={guests} tables={tables} assignments={assignments}/>
           </TabsContent>
         </Tabs>
@@ -197,3 +207,17 @@ const Planner = () => {
 };
 
 export default Planner;
+
+function UnderlineTab({ value, label, count }: { value: string; label: string; count?: number }) {
+  return (
+    <TabsTrigger
+      value={value}
+      className="relative bg-transparent rounded-none border-0 px-0 pt-2 pb-3 h-auto text-sm font-medium text-soft data-[state=active]:text-foreground data-[state=active]:shadow-none data-[state=active]:after:absolute data-[state=active]:after:left-0 data-[state=active]:after:right-0 data-[state=active]:after:-bottom-px data-[state=active]:after:h-0.5 data-[state=active]:after:bg-primary"
+    >
+      {label}
+      {count !== undefined && (
+        <span className="ml-1.5 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-surface text-[10px] font-medium text-soft tabular-nums">{count}</span>
+      )}
+    </TabsTrigger>
+  );
+}

@@ -5,6 +5,7 @@ import type { Guest, TableDef, Assignment, ConstraintDef } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Pin, X, LayoutGrid, UserPlus } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { tableConflicts } from "@/lib/seating";
 import { FloorPlan } from "./FloorPlan";
 import { LayoutDashboard, List as ListIcon } from "lucide-react";
@@ -64,37 +65,40 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
 
   return (
     <DndContext sensors={sensors} onDragStart={e => setActiveId(String(e.active.id))} onDragEnd={onDragEnd}>
-      <div className="flex justify-end mb-3">
-        <div className="inline-flex rounded-full border border-border/60 bg-card p-0.5 text-sm">
-          <button
-            onClick={() => setView("list")}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-full transition ${view === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-          >
-            <ListIcon size={14}/> List
-          </button>
-          <button
-            onClick={() => setView("floor")}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-full transition ${view === "floor" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-          >
-            <LayoutDashboard size={14}/> Floor plan
-          </button>
+      <TooltipProvider delayDuration={200}>
+        <div className="flex justify-end mb-4">
+          <div className="inline-flex rounded-lg border-hairline border bg-card p-0.5">
+            <Tooltip><TooltipTrigger asChild>
+              <button
+                onClick={() => setView("floor")}
+                aria-label="Floor plan view"
+                className={`p-1.5 rounded-md transition ${view === "floor" ? "bg-primary text-primary-foreground" : "text-soft hover:text-foreground"}`}
+              ><LayoutDashboard size={15}/></button>
+            </TooltipTrigger><TooltipContent>Floor plan</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger asChild>
+              <button
+                onClick={() => setView("list")}
+                aria-label="List view"
+                className={`p-1.5 rounded-md transition ${view === "list" ? "bg-primary text-primary-foreground" : "text-soft hover:text-foreground"}`}
+              ><ListIcon size={15}/></button>
+            </TooltipTrigger><TooltipContent>List view</TooltipContent></Tooltip>
+          </div>
         </div>
-      </div>
+      </TooltipProvider>
 
       {view === "floor" ? (
-        <div className="grid lg:grid-cols-[280px_1fr] gap-4">
+        <div className="grid lg:grid-cols-[280px_1fr] gap-6">
           <UnassignedPanel guests={unassigned} search={search} setSearch={setSearch} totalGuests={guests.length} onAddGuest={onGoToGuests}/>
           <FloorPlan tables={tables} assignments={assignments} guests={guests} constraints={constraints}/>
         </div>
       ) : (
-      <div className="grid lg:grid-cols-[280px_1fr] gap-4">
+      <div className="grid lg:grid-cols-[280px_1fr] gap-6">
         <UnassignedPanel guests={unassigned} search={search} setSearch={setSearch} totalGuests={guests.length} onAddGuest={onGoToGuests}/>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {tables.length === 0 && (
-            <div className="col-span-full rounded-xl border border-dashed border-border bg-card/50 p-10 text-center">
-              <LayoutGrid className="mx-auto text-muted-foreground" size={28}/>
-              <div className="font-display text-lg mt-3">No tables yet</div>
-              <div className="text-sm text-muted-foreground mt-1 mb-4">Set up your reception tables before assigning seats.</div>
+            <div className="col-span-full rounded-2xl border border-dashed hairline bg-surface/50 p-12 text-center">
+              <LayoutGrid className="mx-auto text-soft" size={24}/>
+              <div className="font-display text-lg mt-4">No tables yet</div>
               <Button onClick={onGoToTables}>Add tables</Button>
             </div>
           )}
@@ -118,22 +122,24 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
 function UnassignedPanel({ guests, search, setSearch, totalGuests, onAddGuest }: { guests: Guest[]; search: string; setSearch: (s: string) => void; totalGuests: number; onAddGuest?: () => void }) {
   const { setNodeRef, isOver } = useDroppable({ id: "__unassign__" });
   return (
-    <div ref={setNodeRef} className={`rounded-xl border bg-card p-3 lg:sticky lg:top-4 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto ${isOver ? "border-primary" : "border-border/60"}`}>
-      <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Unassigned ({guests.length})</div>
-      <div className="relative mb-2">
-        <Search className="absolute left-2.5 top-2.5 text-muted-foreground" size={14}/>
-        <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search…" className="pl-8 h-8 text-sm"/>
+    <div ref={setNodeRef} className={`rounded-2xl border bg-card p-4 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto transition ${isOver ? "border-primary ring-2 ring-primary/20" : "hairline"}`}>
+      <div className="flex items-baseline justify-between mb-3 px-1">
+        <h3 className="font-display text-base">Guests to seat</h3>
+        <span className="text-xs text-soft tabular-nums">{guests.length}</span>
+      </div>
+      <div className="relative mb-3 border-b hairline">
+        <Search className="absolute left-1 top-2 text-soft" size={13}/>
+        <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search" className="pl-6 h-8 text-sm border-0 rounded-none focus-visible:ring-0 bg-transparent"/>
       </div>
       <div className="space-y-1">
         {guests.map(g => <GuestPill key={g.id} guest={g}/>)}
         {guests.length === 0 && totalGuests === 0 && (
-          <div className="text-center py-4">
-            <UserPlus className="mx-auto text-muted-foreground mb-2" size={20}/>
-            <div className="text-xs text-muted-foreground mb-2">No guests yet</div>
+          <div className="text-center py-6">
+            <UserPlus className="mx-auto text-soft mb-2" size={18}/>
             <Button size="sm" variant="outline" onClick={onAddGuest}>Add guests</Button>
           </div>
         )}
-        {guests.length === 0 && totalGuests > 0 && <div className="text-xs text-muted-foreground py-4 text-center">All seated 🎉</div>}
+        {guests.length === 0 && totalGuests > 0 && <div className="text-xs text-soft py-6 text-center">All seated</div>}
       </div>
     </div>
   );
@@ -144,15 +150,15 @@ function GuestPill({ guest, dragging, pinned, onTogglePin }: { guest: Guest; dra
   const style = transform ? { transform: `translate(${transform.x}px, ${transform.y}px)` } : undefined;
   return (
     <div ref={setNodeRef} style={style} {...listeners} {...attributes}
-      className={`group flex items-center gap-2 px-2 py-1.5 rounded-lg border bg-background text-sm cursor-grab active:cursor-grabbing
-        ${isDragging ? "opacity-30" : ""} ${dragging ? "shadow-lg border-primary" : "border-border/60 hover:border-primary/40"}`}>
+      className={`group flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-sm cursor-grab active:cursor-grabbing transition
+        ${isDragging ? "opacity-30" : ""} ${dragging ? "shadow-elegant bg-card ring-1 ring-primary/40" : "hover:bg-surface-hover"}`}>
       <div className="flex-1 min-w-0 truncate">
         <span className="font-medium">{guest.name}</span>
-        {guest.party && <span className="text-muted-foreground text-xs ml-1.5">· {guest.party}</span>}
+        {guest.party && <span className="text-soft text-xs ml-1.5">{guest.party}</span>}
       </div>
-      {guest.meal && <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{guest.meal}</span>}
+      {guest.meal && <span className="w-1.5 h-1.5 rounded-full bg-accent" title={guest.meal}/>}
       {onTogglePin && (
-        <button onClick={(e) => { e.stopPropagation(); onTogglePin(); }} className={`opacity-0 group-hover:opacity-100 ${pinned ? "opacity-100 text-primary" : "text-muted-foreground"}`}>
+        <button onClick={(e) => { e.stopPropagation(); onTogglePin(); }} className={`opacity-0 group-hover:opacity-100 ${pinned ? "opacity-100 text-primary" : "text-soft"}`}>
           <Pin size={12}/>
         </button>
       )}
@@ -166,15 +172,16 @@ function TableCard({ table, seated, guestById, hasConflict, onTogglePin }: {
   const { setNodeRef, isOver } = useDroppable({ id: table.id });
   const over = seated.length > table.capacity;
   const empties = Math.max(0, table.capacity - seated.length);
+  const fillRatio = Math.min(1, seated.length / Math.max(1, table.capacity));
   return (
     <div ref={setNodeRef}
-      className={`rounded-xl border bg-card p-3 transition
-        ${isOver ? "border-primary ring-2 ring-primary/20" : hasConflict ? "border-destructive/60" : over ? "border-warning/60" : "border-border/60"}`}>
-      <div className="flex items-baseline justify-between mb-2">
-        <div className="font-display text-lg">{table.name}</div>
-        <div className="text-xs text-muted-foreground">{seated.length}/{table.capacity} · {table.shape}</div>
+      className={`rounded-2xl border bg-card p-4 transition
+        ${isOver ? "border-primary ring-2 ring-primary/20" : hasConflict ? "border-destructive/60" : over ? "border-warning/60" : "hairline"}`}>
+      <div className="flex items-center justify-between mb-3">
+        <div className="font-display text-lg leading-tight">{table.name}</div>
+        <CapacityRing seated={seated.length} capacity={table.capacity} ratio={fillRatio} over={over}/>
       </div>
-      {hasConflict && <div className="text-xs text-destructive mb-2 flex items-center gap-1"><X size={12}/>Two guests here shouldn't sit together</div>}
+      {hasConflict && <div className="text-xs text-destructive mb-2 flex items-center gap-1"><X size={12}/>Conflict at this table</div>}
       <div className="space-y-1">
         {seated.map(a => {
           const g = guestById.get(a.guest_id);
@@ -182,9 +189,26 @@ function TableCard({ table, seated, guestById, hasConflict, onTogglePin }: {
           return <GuestPill key={a.id} guest={g} pinned={a.pinned} onTogglePin={() => onTogglePin(a)}/>;
         })}
         {Array.from({ length: empties }).map((_, i) => (
-          <div key={i} className="text-xs text-muted-foreground/60 px-2 py-1.5 rounded-lg border border-dashed border-border/50">open seat</div>
+          <div key={i} className="h-7 rounded-lg border border-dashed hairline"/>
         ))}
       </div>
+    </div>
+  );
+}
+
+function CapacityRing({ seated, capacity, ratio, over }: { seated: number; capacity: number; ratio: number; over: boolean }) {
+  const r = 13;
+  const c = 2 * Math.PI * r;
+  return (
+    <div className="relative w-9 h-9 shrink-0" title={`${seated} / ${capacity} seated`}>
+      <svg viewBox="0 0 32 32" className="w-full h-full -rotate-90">
+        <circle cx="16" cy="16" r={r} fill="none" stroke="hsl(var(--hairline))" strokeWidth="2"/>
+        <circle cx="16" cy="16" r={r} fill="none"
+          stroke={over ? "hsl(var(--warning))" : "hsl(var(--primary))"}
+          strokeWidth="2" strokeLinecap="round"
+          strokeDasharray={`${c * ratio} ${c}`}/>
+      </svg>
+      <span className="absolute inset-0 flex items-center justify-center text-[10px] font-medium tabular-nums text-soft">{seated}/{capacity}</span>
     </div>
   );
 }
