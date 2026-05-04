@@ -13,21 +13,20 @@ export function usePlanData(code: string | undefined) {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
-  const loadAll = useCallback(async (planId: string, scnId: string | null) => {
-    const tablesQ = supabase.from("tables_def").select("*").eq("plan_id", planId).order("name");
-    const assignsQ = supabase.from("assignments").select("*").eq("plan_id", planId);
-    const [g, s, t, a, c] = await Promise.all([
-      supabase.from("guests").select("*").eq("plan_id", planId).order("name"),
-      supabase.from("scenarios").select("*").eq("plan_id", planId).order("created_at"),
-      scnId ? tablesQ.eq("scenario_id", scnId) : tablesQ,
-      scnId ? assignsQ.eq("scenario_id", scnId) : assignsQ,
-      supabase.from("constraints_def").select("*").eq("plan_id", planId),
-    ]);
-    setGuests((g.data ?? []) as Guest[]);
-    setScenarios((s.data ?? []) as Scenario[]);
-    setTables((t.data ?? []) as TableDef[]);
-    setAssignments((a.data ?? []) as Assignment[]);
-    setConstraints((c.data ?? []) as ConstraintDef[]);
+  const loadAll = useCallback(async (planCode: string, scnId: string | null) => {
+    const { data, error } = await supabase.rpc("get_plan_snapshot", { _code: planCode });
+    if (error || !data) return;
+    const snap = data as {
+      scenarios: Scenario[]; guests: Guest[];
+      tables: TableDef[]; assignments: Assignment[]; constraints: ConstraintDef[];
+    };
+    setGuests(snap.guests ?? []);
+    setScenarios(snap.scenarios ?? []);
+    const tables = snap.tables ?? [];
+    const assigns = snap.assignments ?? [];
+    setTables(scnId ? tables.filter(t => t.scenario_id === scnId) : tables);
+    setAssignments(scnId ? assigns.filter(a => a.scenario_id === scnId) : assigns);
+    setConstraints(snap.constraints ?? []);
   }, []);
 
   useEffect(() => {
@@ -35,24 +34,33 @@ export function usePlanData(code: string | undefined) {
     let active = true;
     (async () => {
       setLoading(true);
-      const { data } = await supabase.from("plans").select("*").eq("code", code).maybeSingle();
+      const { data: snap } = await supabase.rpc("get_plan_snapshot", { _code: code });
       if (!active) return;
-      if (!data) { setNotFound(true); setLoading(false); return; }
-      setPlan(data as Plan);
-      // Pick last-active scenario (persisted), else default, else first
-      const { data: scns } = await supabase.from("scenarios").select("*").eq("plan_id", data.id).order("created_at");
-      const list = scns ?? [];
-      const stored = typeof window !== "undefined" ? localStorage.getItem(`plan:${data.id}:activeScenario`) : null;
+      if (!snap) { setNotFound(true); setLoading(false); return; }
+      const s = snap as {
+        plan: Plan; scenarios: Scenario[]; guests: Guest[];
+        tables: TableDef[]; assignments: Assignment[]; constraints: ConstraintDef[];
+      };
+      setPlan(s.plan);
+      const list = s.scenarios ?? [];
+      const stored = typeof window !== "undefined" ? localStorage.getItem(`plan:${s.plan.id}:activeScenario`) : null;
       let chosen =
-        (stored && list.find(s => s.id === stored)) ||
-        list.find(s => s.is_default) ||
+        (stored && list.find(x => x.id === stored)) ||
+        list.find(x => x.is_default) ||
         list[0];
       if (!chosen) {
-        const { data: created } = await supabase.from("scenarios").insert({ plan_id: data.id, name: "Default", is_default: true }).select().single();
+        const { data: created } = await supabase.from("scenarios").insert({ plan_id: s.plan.id, name: "Default", is_default: true }).select().single();
         chosen = created as Scenario;
       }
       setScenarioIdState(chosen?.id ?? null);
-      await loadAll(data.id, chosen?.id ?? null);
+      // Hydrate from snapshot we already have
+      setScenarios(list);
+      setGuests(s.guests ?? []);
+      const tables = s.tables ?? [];
+      const assigns = s.assignments ?? [];
+      setTables(chosen?.id ? tables.filter(t => t.scenario_id === chosen!.id) : tables);
+      setAssignments(chosen?.id ? assigns.filter(a => a.scenario_id === chosen!.id) : assigns);
+      setConstraints(s.constraints ?? []);
       setLoading(false);
     })();
     return () => { active = false; };
@@ -60,8 +68,8 @@ export function usePlanData(code: string | undefined) {
 
   // Realtime: subscribe to changes for this plan
   useEffect(() => {
-    if (!plan) return;
-    const reload = () => loadAll(plan.id, scenarioId);
+    if (!plan || !code) return;
+    const reload = () => loadAll(code, scenarioId);
     const ch = supabase
       .channel(`plan-${plan.id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "guests", filter: `plan_id=eq.${plan.id}` }, reload)
@@ -71,20 +79,20 @@ export function usePlanData(code: string | undefined) {
       .on("postgres_changes", { event: "*", schema: "public", table: "scenarios", filter: `plan_id=eq.${plan.id}` }, reload)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [plan, scenarioId, loadAll]);
+  }, [plan, code, scenarioId, loadAll]);
 
-  const refresh = useCallback(() => { if (plan) return loadAll(plan.id, scenarioId); }, [plan, scenarioId, loadAll]);
+  const refresh = useCallback(() => { if (code) return loadAll(code, scenarioId); }, [code, scenarioId, loadAll]);
 
   const setScenarioId = useCallback((id: string | null) => {
     setScenarioIdState(id);
-    if (plan) {
+    if (plan && code) {
       if (typeof window !== "undefined") {
         if (id) localStorage.setItem(`plan:${plan.id}:activeScenario`, id);
         else localStorage.removeItem(`plan:${plan.id}:activeScenario`);
       }
-      loadAll(plan.id, id);
+      loadAll(code, id);
     }
-  }, [plan, loadAll]);
+  }, [plan, code, loadAll]);
 
   return { plan, setPlan, scenarios, scenarioId, setScenarioId, guests, tables, assignments, constraints, loading, notFound, refresh };
 }
