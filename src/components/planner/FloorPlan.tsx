@@ -8,13 +8,15 @@ interface Props {
   assignments: Assignment[];
   guests: Guest[];
   constraints: ConstraintDef[];
+  /** Optional per-table diff highlight color: 'added' | 'removed' | 'changed' */
+  highlights?: Map<string, "added" | "removed" | "changed">;
 }
 
 /**
  * A top-down SVG "floor plan" view: tables drawn to scale with seats
  * arranged around them. Hover any seat to see who's sitting there.
  */
-export function FloorPlan({ tables, assignments, guests, constraints }: Props) {
+export function FloorPlan({ tables, assignments, guests, constraints, highlights }: Props) {
   const guestById = useMemo(() => new Map(guests.map(g => [g.id, g])), [guests]);
   const [hover, setHover] = useState<{ x: number; y: number; text: string } | null>(null);
 
@@ -79,6 +81,7 @@ export function FloorPlan({ tables, assignments, guests, constraints }: Props) {
                   conflict={conflict}
                   over={over}
                   onHover={setHover}
+                  diff={highlights?.get(t.id) ?? null}
                 />
               );
             })}
@@ -190,26 +193,33 @@ interface ShapeProps {
   conflict: boolean;
   over: boolean;
   onHover: (h: { x: number; y: number; text: string } | null) => void;
+  diff?: "added" | "removed" | "changed" | null;
 }
 
-function TableShape({ table, cx, cy, seated, guestById, conflict, over, onHover }: ShapeProps) {
-  const stroke = conflict ? "hsl(var(--destructive))" : over ? "hsl(var(--warning))" : "hsl(var(--border))";
-  const strokeWidth = conflict || over ? 2 : 1;
+function TableShape({ table, cx, cy, seated, guestById, conflict, over, onHover, diff }: ShapeProps) {
+  const diffColor =
+    diff === "added" ? "hsl(var(--sage))" :
+    diff === "removed" ? "hsl(var(--muted-foreground))" :
+    diff === "changed" ? "hsl(var(--primary))" :
+    null;
+  const stroke = diffColor ?? (conflict ? "hsl(var(--destructive))" : over ? "hsl(var(--warning))" : "hsl(var(--border))");
+  const strokeWidth = diffColor ? 3 : (conflict || over ? 2 : 1);
+  const dash = diff === "removed" ? "6 4" : undefined;
 
   // Determine shape geometry + seat positions
   const seats = computeSeats(table, cx, cy);
 
   let shape: JSX.Element;
   if (table.shape === "round") {
-    shape = <circle cx={cx} cy={cy} r={60} fill="url(#tableSheen)" stroke={stroke} strokeWidth={strokeWidth} filter="url(#tableShadow)"/>;
+    shape = <circle cx={cx} cy={cy} r={60} fill="url(#tableSheen)" stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} filter="url(#tableShadow)"/>;
   } else if (table.shape === "square") {
-    shape = <rect x={cx - 55} y={cy - 55} width={110} height={110} rx={8} fill="url(#tableSheen)" stroke={stroke} strokeWidth={strokeWidth} filter="url(#tableShadow)"/>;
+    shape = <rect x={cx - 55} y={cy - 55} width={110} height={110} rx={8} fill="url(#tableSheen)" stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} filter="url(#tableShadow)"/>;
   } else if (table.shape === "head") {
-    shape = <rect x={cx - 90} y={cy - 32} width={180} height={64} rx={10} fill="url(#tableSheen)" stroke={stroke} strokeWidth={strokeWidth} filter="url(#tableShadow)"/>;
+    shape = <rect x={cx - 90} y={cy - 32} width={180} height={64} rx={10} fill="url(#tableSheen)" stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} filter="url(#tableShadow)"/>;
   } else if (table.shape === "long") {
-    shape = <rect x={cx - 100} y={cy - 30} width={200} height={60} rx={6} fill="url(#tableSheen)" stroke={stroke} strokeWidth={strokeWidth} filter="url(#tableShadow)"/>;
+    shape = <rect x={cx - 100} y={cy - 30} width={200} height={60} rx={6} fill="url(#tableSheen)" stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} filter="url(#tableShadow)"/>;
   } else { // rectangle
-    shape = <rect x={cx - 80} y={cy - 45} width={160} height={90} rx={6} fill="url(#tableSheen)" stroke={stroke} strokeWidth={strokeWidth} filter="url(#tableShadow)"/>;
+    shape = <rect x={cx - 80} y={cy - 45} width={160} height={90} rx={6} fill="url(#tableSheen)" stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} filter="url(#tableShadow)"/>;
   }
 
   const fillRatio = Math.min(1, seated.length / Math.max(1, table.capacity));
