@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { forwardRef, useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Mail, ArrowLeft } from "lucide-react";
@@ -26,11 +27,12 @@ export default function Auth() {
   const signInWithGoogle = async () => {
     setBusy(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: `${window.location.origin}${next}` },
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: `${window.location.origin}${next}`,
       });
-      if (error) throw error;
+      if (result.error) throw new Error(result.error.message ?? "Google sign-in failed");
+      if (result.redirected) return;
+      navigate(next, { replace: true });
     } catch (e: any) {
       toast.error(e.message ?? "Couldn't sign in with Google");
       setBusy(false);
@@ -128,15 +130,16 @@ export default function Auth() {
   );
 }
 
-function Field({ id, type, label, value, onChange, autoFocus, minLength, hint }: { id: string; type: string; label: string; value: string; onChange: (v: string) => void; autoFocus?: boolean; minLength?: number; hint?: string }) {
-  return (
+const Field = forwardRef<HTMLInputElement, { id: string; type: string; label: string; value: string; onChange: (v: string) => void; autoFocus?: boolean; minLength?: number; hint?: string }>(
+  ({ id, type, label, value, onChange, autoFocus, minLength, hint }, ref) => (
     <div className="space-y-1.5">
       <Label htmlFor={id} className="text-xs text-soft font-normal">{label}</Label>
-      <Input id={id} type={type} value={value} onChange={e => onChange(e.target.value)} required autoFocus={autoFocus} minLength={minLength} className="h-11 border-hairline"/>
+      <Input ref={ref} id={id} type={type} value={value} onChange={e => onChange(e.target.value)} required autoFocus={autoFocus} minLength={minLength} className="h-11 border-hairline"/>
       {hint && <div className="text-[11px] text-soft">{hint}</div>}
     </div>
-  );
-}
+  )
+);
+Field.displayName = "Field";
 
 function GoogleMark() {
   return (
