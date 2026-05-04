@@ -12,16 +12,17 @@ interface Props {
   constraints: ConstraintDef[];
   highlights?: Map<string, "added" | "removed" | "changed">;
   scenarioId?: string;
-  onUnassign: (a: Assignment) => void;
-  onTogglePin: (a: Assignment) => void;
-  onMoveTo: (a: Assignment, tableId: string) => void;
-  onSwapWith: (a: Assignment, b: Assignment) => void;
+  onUnassign?: (a: Assignment) => void;
+  onTogglePin?: (a: Assignment) => void;
+  onMoveTo?: (a: Assignment, tableId: string) => void;
+  onSwapWith?: (a: Assignment, b: Assignment) => void;
 }
 
 const MIN_ZOOM = 0.4;
 const MAX_ZOOM = 2.5;
 
-export function FloorPlan({ tables, assignments, guests, constraints, highlights, scenarioId, onUnassign, onTogglePin, onMoveTo, onSwapWith }: Props) {
+const noop = () => {};
+export function FloorPlan({ tables, assignments, guests, constraints, highlights, scenarioId, onUnassign = noop, onTogglePin = noop, onMoveTo = noop, onSwapWith = noop }: Props) {
   const guestById = useMemo(() => new Map(guests.map(g => [g.id, g])), [guests]);
 
   const cellW = 280;
