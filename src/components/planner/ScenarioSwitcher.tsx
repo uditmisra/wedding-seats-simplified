@@ -92,31 +92,44 @@ export function ScenarioSwitcher({ planId, scenarios, scenarioId, setScenarioId,
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-1.5">
-            <Layers size={14}/>
-            <span className="max-w-[140px] truncate">{current?.name ?? "Scenario"}</span>
-            {current?.is_default && <Star size={11} className="text-primary fill-primary"/>}
-            <ChevronDown size={14}/>
+          <Button variant="outline" size="sm" className="gap-1.5 h-9 pl-2.5 pr-2 border-dashed hover:border-solid hover:border-primary/50 transition">
+            <Layers size={14} className="text-primary"/>
+            <span className="text-muted-foreground text-xs hidden sm:inline">Layout:</span>
+            <span className="max-w-[140px] truncate font-medium">{current?.name ?? "Default"}</span>
+            {scenarios.length > 1 && <span className="text-xs text-muted-foreground">({scenarios.length})</span>}
+            <ChevronDown size={14} className="opacity-60"/>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-64">
-          <DropdownMenuLabel className="text-xs">Scenarios</DropdownMenuLabel>
+        <DropdownMenuContent align="end" className="w-72">
+          <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+            Try out different room setups — switch between them anytime.
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator/>
           {scenarios.map(s => (
             <DropdownMenuItem key={s.id} onClick={() => setScenarioId(s.id)} className="flex items-center gap-2">
-              {s.id === scenarioId ? <Check size={14}/> : <span className="w-3.5"/>}
+              {s.id === scenarioId ? <Check size={14} className="text-primary"/> : <span className="w-3.5"/>}
               <span className="flex-1 truncate">{s.name}</span>
               {s.is_default && <Star size={11} className="text-primary fill-primary"/>}
             </DropdownMenuItem>
           ))}
           <DropdownMenuSeparator/>
-          <DropdownMenuItem onClick={() => startCreate("new")}><Plus size={14} className="mr-1.5"/>New scenario</DropdownMenuItem>
-          <DropdownMenuItem disabled={!current} onClick={() => startCreate("duplicate")}><Copy size={14} className="mr-1.5"/>Duplicate current</DropdownMenuItem>
-          <DropdownMenuItem disabled={!current} onClick={startRename}><Pencil size={14} className="mr-1.5"/>Rename</DropdownMenuItem>
-          {current && !current.is_default && (
-            <DropdownMenuItem onClick={() => setDefault(current)}><Star size={14} className="mr-1.5"/>Set as default</DropdownMenuItem>
-          )}
+          <DropdownMenuItem onClick={() => startCreate("duplicate")} disabled={!current}>
+            <Copy size={14} className="mr-2"/>Try another layout (copy this one)
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => startCreate("new")}>
+            <Plus size={14} className="mr-2"/>Start a fresh layout
+          </DropdownMenuItem>
           {current && (
-            <DropdownMenuItem onClick={() => remove(current)} className="text-destructive"><Trash2 size={14} className="mr-1.5"/>Delete</DropdownMenuItem>
+            <>
+              <DropdownMenuSeparator/>
+              <DropdownMenuItem onClick={startRename}><Pencil size={14} className="mr-2"/>Rename "{current.name}"</DropdownMenuItem>
+              {!current.is_default && (
+                <DropdownMenuItem onClick={() => setDefault(current)}><Star size={14} className="mr-2"/>Make this the main one</DropdownMenuItem>
+              )}
+              {scenarios.length > 1 && (
+                <DropdownMenuItem onClick={() => remove(current)} className="text-destructive"><Trash2 size={14} className="mr-2"/>Delete this layout</DropdownMenuItem>
+              )}
+            </>
           )}
         </DropdownMenuContent>
       </DropdownMenu>
