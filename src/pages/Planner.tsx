@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { StatsBar } from "@/components/planner/StatsBar";
 import { GuestsTab } from "@/components/planner/GuestsTab";
@@ -16,7 +17,7 @@ import { AutoAssignDialog } from "@/components/planner/AutoAssignDialog";
 import { OnboardingFlow } from "@/components/planner/OnboardingFlow";
 import { ScenarioSwitcher } from "@/components/planner/ScenarioSwitcher";
 import { CompareScenarios } from "@/components/planner/CompareScenarios";
-import { Link as LinkIcon, Check, ArrowLeft, Wand2, MoreHorizontal, GitCompareArrows, ShieldAlert, Download } from "lucide-react";
+import { Link as LinkIcon, Check, ArrowLeft, Wand2, MoreHorizontal, GitCompareArrows, ShieldAlert, Download, Mail, Bookmark, Heart } from "lucide-react";
 import { toast } from "sonner";
 import { addRecentPlan } from "@/lib/recentPlans";
 
@@ -84,10 +85,39 @@ const Planner = () => {
                 refresh={refresh}
               />
             )}
-            <Button variant="ghost" size="sm" onClick={copyLink} title="Share link with your co-planner">
-              {copied ? <><Check size={14} className="mr-1"/>Copied</> : <><LinkIcon size={14} className="mr-1"/>Share</>}
-            </Button>
-            <Button size="sm" onClick={() => setAutoOpen(true)} className="shadow-sm"><Wand2 size={14} className="mr-1.5"/>Auto-seat</Button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="sm" title="Save and share this plan">
+                  <Heart size={14} className="mr-1.5"/>Save & share
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-80">
+                <div className="space-y-3">
+                  <div>
+                    <div className="font-display text-base">You're all set</div>
+                    <p className="text-xs text-muted-foreground mt-1">Your plan saves automatically. Bookmark this page or send the link to yourself so you can pop back in anytime.</p>
+                  </div>
+                  <Button variant="outline" size="sm" className="w-full justify-start" onClick={copyLink}>
+                    {copied ? <Check size={14} className="mr-2"/> : <LinkIcon size={14} className="mr-2"/>}
+                    {copied ? "Link copied" : "Copy link"}
+                  </Button>
+                  <Button asChild variant="outline" size="sm" className="w-full justify-start">
+                    <a href={`mailto:?subject=${encodeURIComponent(`Our seating plan: ${plan.name}`)}&body=${encodeURIComponent(`Here's the link to our seating plan — open it any time:\n\n${typeof window !== "undefined" ? window.location.href : ""}`)}`}>
+                      <Mail size={14} className="mr-2"/>Email me the link
+                    </a>
+                  </Button>
+                  <div className="text-xs text-muted-foreground flex items-center gap-1.5 pt-1 border-t border-border/40">
+                    <Bookmark size={12}/> Tip: press ⌘+D (or Ctrl+D) to bookmark this page.
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+            {assignments.length > 0 && (
+              <Button variant="ghost" size="sm" onClick={() => setTab("export")} title="Print place cards, seating charts and more">
+                <Download size={14} className="mr-1.5"/>Export
+              </Button>
+            )}
+            <Button size="sm" onClick={() => setAutoOpen(true)} className="shadow-sm"><Wand2 size={14} className="mr-1.5"/>Seat them for me</Button>
           </div>
         </div>
       </header>
@@ -126,11 +156,11 @@ const Planner = () => {
                   <GitCompareArrows size={14} className="mr-2"/>Compare layouts
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setTab("constraints")}>
-                  <ShieldAlert size={14} className="mr-2"/>Constraints
+                  <ShieldAlert size={14} className="mr-2"/>Sit-with rules
                   {constraints.length > 0 && <span className="ml-auto text-xs text-muted-foreground">{constraints.length}</span>}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setTab("export")}>
-                  <Download size={14} className="mr-2"/>Export & print
+                  <Download size={14} className="mr-2"/>Export &amp; print
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
