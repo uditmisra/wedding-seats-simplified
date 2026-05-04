@@ -21,14 +21,16 @@ export function SeatMenu({ children, assignment, guest, table, allTables, tableS
   const [open, setOpen] = useState(false);
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger asChild>
-        <span
-          onContextMenu={(e) => { e.preventDefault(); setOpen(true); }}
-          style={{ display: "contents" }}
-        >
-          {children}
-        </span>
-      </DropdownMenuTrigger>
+      {/* Hidden trigger so Radix has an anchor for positioning the menu,
+          but it never receives the chip's pointer events (which would
+          otherwise block dnd-kit's PointerSensor from starting a drag). */}
+      <DropdownMenuTrigger className="sr-only" aria-hidden tabIndex={-1} />
+      <span
+        onContextMenu={(e) => { e.preventDefault(); setOpen(true); }}
+        style={{ display: "contents" }}
+      >
+        {children}
+      </span>
       <DropdownMenuContent className="w-52">
         <div className="px-2 py-1.5 text-xs text-muted-foreground truncate">{guest.name} · {table.name}</div>
         <DropdownMenuSeparator/>
