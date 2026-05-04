@@ -1,70 +1,99 @@
+## Goals
 
-# Calm the planner
+Make the planner feel human. Five threads:
+1. Smart dropdowns for repeated fields (party / meal / side)
+2. Effortless save & return (no codes to memorize)
+3. Friendly UX copy throughout — no engineer-speak
+4. Surface Export so couples can find it
+5. Drag-and-drop on the floor plan, not just the list
 
-The app today asks a stressed couple to scan a lot at once: 4 stat cards, 6 equal-weight tabs, 5 buttons in the header, two ways to add tables side by side, a list view that hides the prettier floor plan. None of these are *wrong*, but together they read as a tool, not a companion.
+---
 
-This plan removes weight without removing capability. Nothing is deleted — secondary surfaces just step back so the primary moment (seeing your guests land at tables) can breathe.
+## 1. Smart "learn-as-you-go" fields
 
-## Principles
+A reusable `<Combobox>` (Popover + Command, both already installed) that suggests existing values from the current guest list, with usage counts, and lets the couple pick or type a new one.
 
-- **One thing at a time.** Each screen should answer one question.
-- **Quiet the happy path.** Warnings only appear when something is wrong.
-- **Show the delight first.** The floor plan is the payoff; lead with it.
-- **Restraint over rework.** Keep all features; only re-rank them.
+Apply to **GuestEditor** in `GuestsTab.tsx` for **Party / group**, **Meal**, and **Side** (RSVP stays a Select — already a dropdown).
 
-## Changes
+Files: new `src/components/ui/combobox.tsx`; edit `src/components/planner/GuestsTab.tsx`.
 
-### 1. Planner header — softer, fewer chrome elements
-- Remove the small `code: luna-meadow-4821` text (lives in the URL and in Share).
-- Drop the standalone `Sparkles` mark; the wedding name *is* the brand here.
-- Demote **Share** to a ghost button. Keep **Auto-seat** as the only filled CTA — it's the magic moment.
-- Scenario switcher stays, but visually grouped with Share so it reads as "plan settings" rather than another action.
+---
 
-### 2. Tabs — 3 primary, the rest in a "More" menu
-Today: `Seating · Guests · Tables · Compare · Constraints · Export` (all equal).
-After: `Seating · Guests · Tables` + a `…` menu containing `Compare layouts`, `Constraints`, `Export & print`.
-Counts move to a muted suffix (`Guests 84`) instead of parenthesized (`Guests (84)`) — less visual noise, same info.
+## 2. Effortless save & return
 
-### 3. Stats — one progress strip, not four cards
-Replace the 4-card grid (Attending / Seated / Meals / Conflicts) with a single rounded strip:
+We already store recents in `localStorage`; lean on it.
 
-```text
- 62 of 84 guests seated  ████████████░░░░  74%        ⚠ 2 to review
-```
+**Home (`src/pages/Index.tsx`):**
+- If recents exist, show "Pick up where you left off" at the top of the right column with one-click open.
+- Demote the "open by code" input to a small "have a code from your partner?" link that reveals the input.
 
-- The headline number is the one that matters: *how close are we to done*.
-- Meals move into the Export tab (where the caterer info lives anyway).
-- Conflicts only render when > 0 — the happy path stays silent.
-- When everything is seated and conflict-free, the right side shows a quiet `✓ All set`.
+**Planner header (`src/pages/Planner.tsx`):**
+- Replace the lone "Share" button with a **Save & share** popover:
+  - Reassurance line: "Saved automatically. Bookmark this page or send the link to yourself so you can pop back in anytime."
+  - Copy link
+  - Email link to me / partner (mailto with prefilled subject + body)
 
-### 4. Seating — open straight to the floor plan
-The floor plan is the most delightful surface in the app. Default the view to **Floor plan**; the List/Floor toggle stays for power users but becomes a subtle pill in the corner instead of competing for attention.
+No backend changes. No accounts.
 
-### 5. Guests tab — collapse the toolbar
-- Hide the **RSVP filter** until the guest list has more than ~15 entries (early on it's just clutter).
-- Move the **Template** download into the Import dialog as a small link ("Don't have a spreadsheet? Download our template") — it doesn't need top-level real estate.
-- Keep **Search**, **Import**, **Add guest** visible. That's it.
+---
 
-### 6. Tables tab — one way in, manual as a fallback
-Today shows both the AI smart input *and* "Or set up manually: Add table / Bulk add" right below.
-After: lead with just the smart input. Below it, a single muted link: **"Prefer to add them manually?"** that reveals the Add / Bulk buttons inline. Same features, less to read on first glance.
+## 3. Friendly copy pass
 
-### 7. Onboarding — trim copy, remove duplicate skip rails
-- Each step keeps one short sentence (drop the second explainer line where present).
-- Remove the redundant "Skip for now" / "Back" pair on every step; rely on the clickable progress pills at the top.
-- Step 3 keeps the two delightful cards (Auto-assign / Open chart) — these are good as-is.
+Rewrites (sample, not exhaustive — done in one pass):
+
+| Where | From | To |
+|---|---|---|
+| AutoAssignDialog | "Compute preview" | "Show me a preview" |
+| AutoAssignDialog | "Groups guests by party, honors must / must-not constraints, and fills tables to capacity." | "We'll seat your attending guests together by group, respect any 'sit with / not with' rules you've set, and keep tables within capacity." |
+| AutoAssignDialog | "Apply" | "Looks good — seat them" |
+| AutoAssignDialog | "Keep existing assignments (only fill empty seats)" | "Keep the seats I've already arranged" |
+| AutoAssignDialog | "Include 'maybe' RSVPs" | "Save a seat for 'maybe' guests too" |
+| Planner header | "Auto-seat" | "Seat them for me" |
+| TableCard | "Has conflicting guests" | "Two guests here shouldn't sit together" |
+| TableCard | "empty" placeholder | "open seat" |
+| StatsBar | (any "expected" / "eligible" wording) | "guests coming" |
+| Onboarding | technical phrasing | warm, second-person voice |
+| Empty states (FloorPlan, SeatingView, GuestsTab) | review for engineer-speak |
+
+Files: `AutoAssignDialog.tsx`, `Planner.tsx`, `SeatingView.tsx`, `StatsBar.tsx`, `OnboardingFlow.tsx`, `FloorPlan.tsx`, `GuestsTab.tsx`, `TablesTab.tsx`.
+
+---
+
+## 4. Make Export discoverable
+
+Today Export is buried in the "More" dropdown — invisible right when the couple is ready to print place cards.
+
+- Add an **Export** button (icon + label) directly to the Planner header, next to "Seat them for me", visible whenever there's at least one assignment.
+- Keep it in the "More" menu too as a fallback.
+- Soften the ExportPanel headings ("Master seating chart" → "Big seating chart for the entrance", etc.).
+
+Files: `Planner.tsx`, `ExportPanel.tsx`.
+
+---
+
+## 5. Drag-and-drop in the floor plan
+
+Currently `FloorPlan.tsx` is pure SVG — it doesn't register as a dnd-kit droppable, and seats aren't drop targets, so dragging from the unassigned panel into the floor plan does nothing.
+
+Plan:
+- Wrap each table's `<g>` in a positioned HTML overlay (absolute-positioned div on top of the SVG) registered as a `useDroppable` with `id={table.id}` — same id space the list view uses, so the existing `onDragEnd` in `SeatingView` keeps working with zero changes.
+- Add a hover/over highlight (ring + scale) when `isOver` is true.
+- Allow dragging seated guests **off** a table in the floor plan: each occupied seat becomes a small `useDraggable` with `id={guest.id}`, mirroring the list-view GuestPill behavior. Dragging onto another table reassigns; dragging onto the unassigned panel removes them.
+- Keep tooltips and the SVG visuals intact — overlays sit on top, transparent except on hover.
+
+This means the same drag interactions work identically in both views.
+
+Files: edit `src/components/planner/FloorPlan.tsx` (accept optional droppable/draggable wiring + an overlay layer); minor prop additions in `SeatingView.tsx` to pass through.
+
+---
 
 ## Out of scope
-- No data model changes.
-- No copy rewrites beyond trimming.
-- No new colors, fonts, or motion. The existing sage/aubergine palette and `--shadow-elegant` already feel warm; we're just letting them show.
+- Accounts / login (would break the "no logins, no fuss" promise)
+- Server-side "my plans" list
+- Locking party / meal / side to fixed enums
+- Re-arranging which seat a guest sits in within a table (still auto-ordered)
 
-## Files touched (presentation only)
-- `src/pages/Planner.tsx` — header trim, tabs collapse + "More" menu
-- `src/components/planner/StatsBar.tsx` — replace grid with single progress strip
-- `src/components/planner/SeatingView.tsx` — default view = floor plan, quieter toggle
-- `src/components/planner/GuestsTab.tsx` — conditional filter, fold Template into Import dialog
-- `src/components/planner/TablesTab.tsx` — hide manual controls behind a disclosure
-- `src/components/planner/OnboardingFlow.tsx` — copy + nav trim
-
-No backend, no schema, no business logic. If something here lands wrong we can revert any single file without affecting the others.
+## Technical notes
+- Combobox is built on existing `popover` + `command` shadcn primitives.
+- Floor-plan dnd uses an HTML overlay rather than SVG droppables because dnd-kit's collision detection works on DOM rects — much more reliable than instrumenting `<g>` elements.
+- All copy changes are presentation-only — no logic touched.
