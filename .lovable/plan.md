@@ -1,100 +1,85 @@
-## Goal
+## What's there now
 
-Add authentication so couples can sign in to own and edit their wedding plans, while keeping the existing share links useful as **read-only** views for guests, family, and vendors.
+- Empty seats on the floor plan are drop targets only. Clicking does nothing — you can drag a guest from the unassigned panel onto a seat, but you can't tap a seat to pick a person.
+- Right-click on an *occupied* seat opens a menu (pin, move, swap, remove). Empty seats have no menu at all.
+- The unassigned panel lives off to the side, which is fine for sweeping work but slow when you've zoomed into one table.
 
-## Sharing model
+## What we'll build
 
-- **Owners** (signed-in creators + invited collaborators) — full edit access.
-- **Public link visitors** — read-only seating chart. They see the floor plan, table assignments, and printable view, but cannot drag, edit, add/remove guests/tables/constraints, or run auto-assign.
-- **Existing orphaned plans** — when a signed-in user opens an unowned plan via its link, a banner offers "Claim this plan" → assigns ownership to them.
+A click-to-assign popover anchored to any empty seat. Tapping the numbered seat opens a compact card that shows recommended guests first, a search box, and a couple of useful filters. Picking someone seats them in that exact seat (with the same swap/move plumbing the drag flow already uses).
 
-## Auth methods
+### The card
 
-- **Email + password** (with email verification on by default).
-- **Google sign-in** via Lovable Cloud's managed OAuth.
+```text
+┌─ Seat 3 · T2 · College ──────────── ✕ ┐
+│ [🔍 Search guests…                 ]  │
+│                                       │
+│ Filters: [All] [Bride] [Groom] [Kids] │
+│          [V] [GF] [Accessibility]     │
+│                                       │
+│ RECOMMENDED                           │
+│ ● Gabriela Reyes      College · Bride │
+│   ↳ must sit with Benjamin (here)     │
+│ ● Felix Andersson     College · Groom │
+│   ↳ same party as 3 others here       │
+│                                       │
+│ ALL UNASSIGNED (12)                   │
+│ ○ Camila Vargas       Work · Groom GF │
+│ ○ Hiroki Tanaka       Work · Bride    │
+│ … scrollable                          │
+│                                       │
+│ ⚠ Felix can't sit with Hiroki (here)  │
+└───────────────────────────────────────┘
+```
 
-## What changes
+### Recommendation logic (in priority order)
 
-### 1. Database (migration)
+1. **Must-sit-with** a guest already at this table (`constraints.kind = "with"`).
+2. **Same party** as the majority of guests already at this table.
+3. **Same side** (bride/groom) as the table's lean.
+4. **Kids** if the table already has a kid.
+5. Everyone else, alphabetised — but anyone with a `not_with` conflict against someone seated here is **dimmed and shows a warning chip**, not hidden (user can override).
 
-- New table `plan_owners`:
-  - `plan_id uuid` (FK to `plans.id`, cascade delete)
-  - `user_id uuid` (auth.users id)
-  - `role text` — `"owner"` or `"editor"`
-  - `created_at timestamptz`
-  - Unique on `(plan_id, user_id)`.
-- New security-definer function `public.is_plan_editor(_plan_id uuid, _user_id uuid)` returning bool — checks whether `_user_id` has any row in `plan_owners` for `_plan_id`. Used by every RLS policy below.
-- New helper `public.plan_has_any_owner(_plan_id uuid)` returning bool — used by the claim flow.
-- Replace the existing wide-open "public all …" policies on `plans`, `scenarios`, `tables_def`, `assignments`, `constraints_def`, `guests` with:
-  - **SELECT** — `true` (anyone with the plan code can read).
-  - **INSERT/UPDATE/DELETE** — `auth.uid() IS NOT NULL AND public.is_plan_editor(plan_id, auth.uid())`.
-- `plans` INSERT — allow when `auth.uid() IS NOT NULL` (so a signed-in user can create a new plan; we then write a `plan_owners` row in the same client transaction).
-- `plan_owners` policies:
-  - SELECT — only rows where `user_id = auth.uid()` (so a user can list "my plans").
-  - INSERT — allowed when (a) the user is already an editor of the plan, **or** (b) the plan has no owners yet (claim flow), **or** (c) the inserter is creating a row for themselves immediately after creating the plan.
-  - DELETE — only by an editor of the plan.
+Capacity full → card opens in "swap" mode: the recommended list shows current seat occupants you'd be replacing.
 
-### 2. New `/auth` route
+### Filters
 
-- Dedicated page at `/auth` with two tabs: **Sign in** / **Create account**.
-- Both tabs include a "Continue with Google" button at the top.
-- Email + password form below. On sign-up, send verification email (default Lovable behaviour). Show a clear "Check your inbox" state.
-- After successful auth, redirect to `?next=` if present, otherwise to `/`.
-- Forgot-password link → triggers `resetPasswordForEmail` and a `/reset-password` page with a "set new password" form.
+Compact chip row with single-select category + multi-select tags:
+- **Side**: All · Bride · Groom · Either
+- **Group**: Adults · Kids
+- **Diet**: V · GF · Accessibility (any)
+- **Party**: free text already covered by search
 
-### 3. Auth context + session listener
+### Search
 
-- New `src/hooks/useAuth.tsx` provider:
-  - Sets up `supabase.auth.onAuthStateChange` *first*, then calls `getSession()` (per Supabase rules).
-  - Exposes `{ session, user, loading, signOut }`.
-- Wrap `<App>` with the provider in `src/App.tsx`.
+Matches name, party, and notes. Debounced 80ms. Up arrow / down arrow to move through the list, Enter to seat the highlighted guest.
 
-### 4. Landing page (`src/pages/Index.tsx`)
+### Interaction
 
-- Header: when signed out → "Sign in" link. When signed in → avatar/email + "Sign out".
-- "Create a new plan" CTA:
-  - Signed in → goes straight to plan creation (and writes `plan_owners` row for the new plan).
-  - Signed out → routes to `/auth?next=/...` and creates the plan after sign-in.
-- "Recent plans" stays as a localStorage list (shareable codes), but signed-in users also see a **"My plans"** section fetched from `plan_owners` joined to `plans`.
+- **Single click on empty seat** → opens the popover (Radix Popover anchored to the seat).
+- **Drag still works** — popover only opens on a clean click, not a drag start.
+- **Right-click on empty seat** → same popover (kept consistent with occupied-seat menu).
+- **Click on occupied seat** → keep current behavior (drag to move). Right-click still opens the existing edit menu.
+- **Mobile**: popover becomes a bottom sheet using the existing `Drawer` component, same content.
+- **Esc** closes; clicking outside closes; selecting a guest closes and toasts "Maya seated at T1 · Family · Seat 3".
 
-### 5. Planner page (`src/pages/Planner.tsx`)
+### Edge cases
 
-- On mount, compute `canEdit = user && isPlanEditor(planId, user.id)` (single RPC or query against `plan_owners`).
-- Pass `canEdit` down through `LayoutTabs`, `SeatingView`, `GuestsTab`, `TablesTab`, `ConstraintsPanel`, `RoomEditor`, `AutoAssignDialog`, `ExportPanel`, `CompareScenarios`.
-- When `canEdit` is false:
-  - All drag handles disabled; seat menus removed; inputs become readonly; "Add", "Save", "Delete", "Auto-assign" buttons hidden.
-  - A subtle ribbon at the top of the planner: "You're viewing a shared seating chart. **Sign in to edit.**" (link → `/auth?next=current-url`).
-- Header gets an avatar/sign-out menu mirroring the landing page.
+- **No unassigned guests left** → popover shows "Everyone's seated" with a button to swap from another table.
+- **Already-seated guest picked** → reuses `placeGuestAtSeat` (already handles swap with the previous occupant).
+- **Read-only mode** (`canEdit = false`) → popover doesn't open; empty seat shows tooltip "Read-only".
+- **Constraint conflict on pick** → still allows it but toasts a warning.
 
-### 6. Claim flow
+## Files affected
 
-- When a signed-in user opens a plan they don't own:
-  - If `plan_has_any_owner(planId)` is **false** → show a top-of-page card: "This plan has no owner yet. **Claim it** to start editing." Button calls an insert into `plan_owners` for `(planId, auth.uid(), 'owner')`. After success, refresh `canEdit`.
-  - If the plan already has an owner → no claim card; just the read-only ribbon.
+- `src/components/planner/SeatPicker.tsx` (new) — the popover/sheet UI, search, filters, recommendation list, keyboard nav.
+- `src/lib/seatRecommend.ts` (new) — pure ranking function `rankCandidates(seat, table, tableSeated, allUnassigned, allSeated, constraints) → RankedGuest[]`.
+- `src/components/planner/FloorPlan.tsx` — wrap empty-seat node in the new picker; thread `onAssign(guestId, tableId, seatIndex)` and the relevant data props down from `SeatingView`.
+- `src/components/planner/SeatingView.tsx` — pass `unassigned`, `assignments`, `constraints`, `guestById`, `onAssign={placeGuestAtSeat}` into `FloorPlan`.
+- No DB changes. Reuses the existing `placeGuestAtSeat` flow, so swap, pin, and constraint logic stay in one place.
 
-### 7. Out of scope (deliberately, to keep scope tight)
+## Out of scope (call out if you want them)
 
-- Inviting other editors by email — we'll add that as a follow-up. For now, a plan has exactly one owner (created at first claim or first save).
-- Profile pages, avatars from Google, name editing — `auth.users` metadata is enough for the avatar dropdown.
-- Magic-link login, password HIBP check, email branding — defaults are fine; we can layer on later.
-- Email verification customisation — using default Lovable templates.
-
-## Files touched
-
-- **New** `supabase/migrations/<ts>_add_auth.sql` — `plan_owners` table, helpers, replacement RLS policies.
-- **New** `src/pages/Auth.tsx` — sign-in / sign-up tabs + Google button.
-- **New** `src/pages/ResetPassword.tsx` — handles `type=recovery` and updates password.
-- **New** `src/hooks/useAuth.tsx` — session provider + hook.
-- **New** `src/components/UserMenu.tsx` — avatar dropdown with email + Sign out.
-- **Edited** `src/App.tsx` — wrap in `AuthProvider`, add `/auth` and `/reset-password` routes.
-- **Edited** `src/pages/Index.tsx` — header user menu, "My plans" section, gated create flow.
-- **Edited** `src/pages/Planner.tsx` — compute `canEdit`, render read-only ribbon and claim card, header user menu.
-- **Edited** every editor surface listed in §5 — accept and respect a `canEdit` prop.
-
-## Technical notes
-
-- Client-side `canEdit` is a UX gate; **the source of truth is RLS**. If a viewer tries to write, Supabase rejects it. The UI just hides the controls so it looks clean.
-- New plan creation uses one round trip: insert into `plans`, then insert into `plan_owners` with the returned id. Both succeed under the new policies because the user is authenticated and the plan has no owners yet.
-- `is_plan_editor` is `SECURITY DEFINER` with `STABLE` and `SET search_path = public` — avoids recursive-RLS pitfalls when used in policies on `plan_owners` itself.
-- We rely on the **default** Lovable auth email templates — no custom email scaffolding in this pass. If the user later wants branded emails, that's a separate step.
-- We will NOT enable auto-confirm; users must verify their email. Google sign-ins are pre-verified.
+- AI-assisted "auto-fill this table" suggestion in the same popover.
+- Multi-select to seat several guests across consecutive seats in one go.
+- Persisted per-user filter preferences.
