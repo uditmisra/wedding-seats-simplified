@@ -201,6 +201,7 @@ export type Database = {
           event_date: string | null
           id: string
           name: string
+          owner_id: string | null
           updated_at: string
         }
         Insert: {
@@ -209,6 +210,7 @@ export type Database = {
           event_date?: string | null
           id?: string
           name?: string
+          owner_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -217,6 +219,7 @@ export type Database = {
           event_date?: string | null
           id?: string
           name?: string
+          owner_id?: string | null
           updated_at?: string
         }
         Relationships: []
