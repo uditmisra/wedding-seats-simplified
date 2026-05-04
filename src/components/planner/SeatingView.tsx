@@ -212,7 +212,12 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
             onUnassign={handleUnassign} onTogglePin={handleTogglePin} onMoveTo={handleMoveTo} onSwapWith={handleSwap}
             unassigned={allUnassigned}
             canEdit={canEdit}
-            onAssign={(guestId, tableId, seatIndex) => placeGuestAtSeat(guestId, tableId, seatIndex)}
+            onAssign={async (guestId, tableId, seatIndex) => {
+              const g = guestById.get(guestId);
+              const t = tableById.get(tableId);
+              await placeGuestAtSeat(guestId, tableId, seatIndex);
+              if (g && t) toast.success(`${g.name} seated at ${t.name} · Seat ${seatIndex + 1}`);
+            }}
           />
           {isBelowLg && (
             <UnassignedDrawerTrigger count={unassigned.length}>
