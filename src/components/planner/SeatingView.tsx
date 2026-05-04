@@ -20,6 +20,7 @@ interface Props {
   assignments: Assignment[];
   constraints: ConstraintDef[];
   refresh: () => void;
+  canEdit?: boolean;
   onGoToGuests?: () => void;
   onGoToTables?: () => void;
 }
@@ -30,7 +31,7 @@ function firstFreeSeat(table: TableDef, seated: Assignment[], excludeId?: string
   return null;
 }
 
-export function SeatingView({ planId, scenarioId, guests, tables, assignments, constraints, refresh, onGoToGuests, onGoToTables }: Props) {
+export function SeatingView({ planId, scenarioId, guests, tables, assignments, constraints, refresh, onGoToGuests, onGoToTables, canEdit = true }: Props) {
   const [search, setSearch] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [view, setView] = useState<"list" | "floor">("floor");
@@ -118,6 +119,7 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
 
   const onDragEnd = async (e: DragEndEvent) => {
     setActiveId(null);
+    if (!canEdit) return;
     const guestId = String(e.active.id);
     const overId = e.over?.id ? String(e.over.id) : null;
     if (!overId) return;
@@ -135,14 +137,17 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
   };
 
   const handleUnassign = async (a: Assignment) => {
+    if (!canEdit) return;
     await supabase.from("assignments").delete().eq("id", a.id);
     refresh();
   };
   const handleTogglePin = async (a: Assignment) => {
+    if (!canEdit) return;
     await supabase.from("assignments").update({ pinned: !a.pinned }).eq("id", a.id);
     refresh();
   };
   const handleMoveTo = async (a: Assignment, targetTableId: string) => {
+    if (!canEdit) return;
     const tbl = tableById.get(targetTableId); if (!tbl) return;
     const seated = assignments.filter(x => x.table_id === targetTableId);
     const idx = firstFreeSeat(tbl, seated);
@@ -150,6 +155,7 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
     refresh();
   };
   const handleSwap = async (a: Assignment, b: Assignment) => {
+    if (!canEdit) return;
     await Promise.all([
       supabase.from("assignments").update({ table_id: b.table_id, seat_index: b.seat_index }).eq("id", a.id),
       supabase.from("assignments").update({ table_id: a.table_id, seat_index: a.seat_index }).eq("id", b.id),

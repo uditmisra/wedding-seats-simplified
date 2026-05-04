@@ -1,77 +1,100 @@
 ## Goal
 
-Let users place each guest into a **specific seat** at a table — not just "at table 5". The current model already has `assignments.seat_index` in the database; it's just unused. We'll start writing it, render guests at their assigned seat, and make every seat a real drop target with swap-on-collision and a right-click menu.
+Add authentication so couples can sign in to own and edit their wedding plans, while keeping the existing share links useful as **read-only** views for guests, family, and vendors.
+
+## Sharing model
+
+- **Owners** (signed-in creators + invited collaborators) — full edit access.
+- **Public link visitors** — read-only seating chart. They see the floor plan, table assignments, and printable view, but cannot drag, edit, add/remove guests/tables/constraints, or run auto-assign.
+- **Existing orphaned plans** — when a signed-in user opens an unowned plan via its link, a banner offers "Claim this plan" → assigns ownership to them.
+
+## Auth methods
+
+- **Email + password** (with email verification on by default).
+- **Google sign-in** via Lovable Cloud's managed OAuth.
 
 ## What changes
 
-### 1. Seat-level drag & drop on the floor plan
+### 1. Database (migration)
 
-In `src/components/planner/FloorPlan.tsx`:
+- New table `plan_owners`:
+  - `plan_id uuid` (FK to `plans.id`, cascade delete)
+  - `user_id uuid` (auth.users id)
+  - `role text` — `"owner"` or `"editor"`
+  - `created_at timestamptz`
+  - Unique on `(plan_id, user_id)`.
+- New security-definer function `public.is_plan_editor(_plan_id uuid, _user_id uuid)` returning bool — checks whether `_user_id` has any row in `plan_owners` for `_plan_id`. Used by every RLS policy below.
+- New helper `public.plan_has_any_owner(_plan_id uuid)` returning bool — used by the claim flow.
+- Replace the existing wide-open "public all …" policies on `plans`, `scenarios`, `tables_def`, `assignments`, `constraints_def`, `guests` with:
+  - **SELECT** — `true` (anyone with the plan code can read).
+  - **INSERT/UPDATE/DELETE** — `auth.uid() IS NOT NULL AND public.is_plan_editor(plan_id, auth.uid())`.
+- `plans` INSERT — allow when `auth.uid() IS NOT NULL` (so a signed-in user can create a new plan; we then write a `plan_owners` row in the same client transaction).
+- `plan_owners` policies:
+  - SELECT — only rows where `user_id = auth.uid()` (so a user can list "my plans").
+  - INSERT — allowed when (a) the user is already an editor of the plan, **or** (b) the plan has no owners yet (claim flow), **or** (c) the inserter is creating a row for themselves immediately after creating the plan.
+  - DELETE — only by an editor of the plan.
 
-- Each computed seat becomes its own `useDroppable` with id `seat:{tableId}:{seatIndex}`.
-- The existing whole-table drop zone stays, with id `table:{tableId}` (auto-pick first empty seat) — so users can be precise *or* casual.
-- Each occupied seat becomes a `useDraggable` with id `guest:{guestId}` (today the invisible handle is hard to grab — we'll make the seated chip itself the drag handle).
-- Visual feedback while dragging:
-  - Hovered empty seat → solid primary fill + ring.
-  - Hovered occupied seat → amber ring with a small ⇄ icon (swap preview).
-  - Hovered table background → soft primary tint (current behaviour).
+### 2. New `/auth` route
 
-### 2. Swap-on-collision logic
+- Dedicated page at `/auth` with two tabs: **Sign in** / **Create account**.
+- Both tabs include a "Continue with Google" button at the top.
+- Email + password form below. On sign-up, send verification email (default Lovable behaviour). Show a clear "Check your inbox" state.
+- After successful auth, redirect to `?next=` if present, otherwise to `/`.
+- Forgot-password link → triggers `resetPasswordForEmail` and a `/reset-password` page with a "set new password" form.
 
-In `src/components/planner/SeatingView.tsx` `onDragEnd`:
+### 3. Auth context + session listener
 
-- Parse the drop id: `seat:tid:idx` vs `table:tid` vs `__unassign__`.
-- For a seat drop:
-  - If the target seat is **empty** → upsert the dragged guest's assignment with `{ table_id: tid, seat_index: idx }`.
-  - If the target seat is **occupied** → swap: write the dragged guest into `(tid, idx)` and move the displaced guest into the dragged guest's previous `(table_id, seat_index)`. If the dragged guest was unassigned, the displaced guest becomes unassigned (delete their row).
-  - Both writes go through a single batched update so the UI doesn't flash an inconsistent state.
-- For a table drop (no seat): find the lowest free `seat_index` in `[0, capacity)` and assign there. If full, fall back to `seat_index = null` (overflow, current behaviour).
-- All writes set `seat_index` going forward.
+- New `src/hooks/useAuth.tsx` provider:
+  - Sets up `supabase.auth.onAuthStateChange` *first*, then calls `getSession()` (per Supabase rules).
+  - Exposes `{ session, user, loading, signOut }`.
+- Wrap `<App>` with the provider in `src/App.tsx`.
 
-### 3. Render guests at their assigned seat
+### 4. Landing page (`src/pages/Index.tsx`)
 
-Today `FloorPlan` zips `seated[i]` with `seats[i]` in arrival order. New rule:
+- Header: when signed out → "Sign in" link. When signed in → avatar/email + "Sign out".
+- "Create a new plan" CTA:
+  - Signed in → goes straight to plan creation (and writes `plan_owners` row for the new plan).
+  - Signed out → routes to `/auth?next=/...` and creates the plan after sign-in.
+- "Recent plans" stays as a localStorage list (shareable codes), but signed-in users also see a **"My plans"** section fetched from `plan_owners` joined to `plans`.
 
-- Build a `Map<seatIndex, Assignment>` per table.
-- For each computed seat position `i`, look up `seatMap.get(i)`.
-- Assignments with `seat_index = null` (legacy rows or overflow) are listed under the table as "unseated at this table" chips, and can be dragged onto a specific seat to claim it.
-- One-time, lazy backfill: when the seating tab loads, any assignment with `seat_index = null` whose table still has an obvious free slot is silently assigned the lowest free index. Pure client-side, no migration needed.
+### 5. Planner page (`src/pages/Planner.tsx`)
 
-### 4. Right-click / long-press seat menu
+- On mount, compute `canEdit = user && isPlanEditor(planId, user.id)` (single RPC or query against `plan_owners`).
+- Pass `canEdit` down through `LayoutTabs`, `SeatingView`, `GuestsTab`, `TablesTab`, `ConstraintsPanel`, `RoomEditor`, `AutoAssignDialog`, `ExportPanel`, `CompareScenarios`.
+- When `canEdit` is false:
+  - All drag handles disabled; seat menus removed; inputs become readonly; "Add", "Save", "Delete", "Auto-assign" buttons hidden.
+  - A subtle ribbon at the top of the planner: "You're viewing a shared seating chart. **Sign in to edit.**" (link → `/auth?next=current-url`).
+- Header gets an avatar/sign-out menu mirroring the landing page.
 
-New tiny component `SeatMenu` (uses existing `DropdownMenu` from shadcn) wrapping each occupied seat:
+### 6. Claim flow
 
-- **Unassign** — delete the assignment row.
-- **Pin / Unpin** — toggle `pinned`.
-- **Move to…** — submenu listing other tables; choosing one moves the guest to that table's first free seat.
-- **Swap with…** — submenu listing currently seated guests at the same table.
+- When a signed-in user opens a plan they don't own:
+  - If `plan_has_any_owner(planId)` is **false** → show a top-of-page card: "This plan has no owner yet. **Claim it** to start editing." Button calls an insert into `plan_owners` for `(planId, auth.uid(), 'owner')`. After success, refresh `canEdit`.
+  - If the plan already has an owner → no claim card; just the read-only ribbon.
 
-Long-press on touch devices opens the same menu.
+### 7. Out of scope (deliberately, to keep scope tight)
 
-### 5. List-view parity
-
-In `SeatingView`'s list view, each `TableCard` already shows seated guests as a vertical list. We'll:
-
-- Render exactly `capacity` rows in seat order (1…N), each row being either a guest pill or an empty `[ Seat n ]` slot.
-- Each row is a droppable seat target (same `seat:tid:idx` id), so seat-level placement works in list view too.
-- Drag handle on the pill works the same as on the canvas.
-
-### 6. Out of scope
-
-- No DB schema changes — `assignments.seat_index` already exists.
-- No changes to auto-assign / constraints solver beyond making it write `seat_index` (lowest-free) when it places a guest. That's a 5-line tweak in `AutoAssignDialog` if needed; we'll confirm during implementation.
-- Room editor and other tabs untouched.
+- Inviting other editors by email — we'll add that as a follow-up. For now, a plan has exactly one owner (created at first claim or first save).
+- Profile pages, avatars from Google, name editing — `auth.users` metadata is enough for the avatar dropdown.
+- Magic-link login, password HIBP check, email branding — defaults are fine; we can layer on later.
+- Email verification customisation — using default Lovable templates.
 
 ## Files touched
 
-- `src/components/planner/FloorPlan.tsx` — per-seat droppables, draggable seated chips, swap visuals.
-- `src/components/planner/SeatingView.tsx` — drop-id parsing, swap logic, seat-level list view, lazy backfill.
-- `src/components/planner/SeatMenu.tsx` — new, small wrapper around `DropdownMenu`.
-- Possibly `src/components/planner/AutoAssignDialog.tsx` — write `seat_index` on insert (one-line).
+- **New** `supabase/migrations/<ts>_add_auth.sql` — `plan_owners` table, helpers, replacement RLS policies.
+- **New** `src/pages/Auth.tsx` — sign-in / sign-up tabs + Google button.
+- **New** `src/pages/ResetPassword.tsx` — handles `type=recovery` and updates password.
+- **New** `src/hooks/useAuth.tsx` — session provider + hook.
+- **New** `src/components/UserMenu.tsx` — avatar dropdown with email + Sign out.
+- **Edited** `src/App.tsx` — wrap in `AuthProvider`, add `/auth` and `/reset-password` routes.
+- **Edited** `src/pages/Index.tsx` — header user menu, "My plans" section, gated create flow.
+- **Edited** `src/pages/Planner.tsx` — compute `canEdit`, render read-only ribbon and claim card, header user menu.
+- **Edited** every editor surface listed in §5 — accept and respect a `canEdit` prop.
 
 ## Technical notes
 
-- Drop ids encode both table and seat to keep dnd-kit's flat id space happy: `seat:{tableId}:{idx}`, `table:{tableId}`, `__unassign__`.
-- Swap is two writes; we issue them in parallel with `Promise.all` and then `refresh()` once. If either fails we toast an error and refetch to recover.
-- `seat_index` is constrained to `[0, capacity)` at write time. If capacity later shrinks below an existing index, that guest renders as "unseated at this table" until moved.
-- The current invisible `SeatDragHandle` is removed — the visible seat chip becomes the drag handle, which is what users expect and stops the "I can't grab the guest" issue.
+- Client-side `canEdit` is a UX gate; **the source of truth is RLS**. If a viewer tries to write, Supabase rejects it. The UI just hides the controls so it looks clean.
+- New plan creation uses one round trip: insert into `plans`, then insert into `plan_owners` with the returned id. Both succeed under the new policies because the user is authenticated and the plan has no owners yet.
+- `is_plan_editor` is `SECURITY DEFINER` with `STABLE` and `SET search_path = public` — avoids recursive-RLS pitfalls when used in policies on `plan_owners` itself.
+- We rely on the **default** Lovable auth email templates — no custom email scaffolding in this pass. If the user later wants branded emails, that's a separate step.
+- We will NOT enable auto-confirm; users must verify their email. Google sign-ins are pre-verified.

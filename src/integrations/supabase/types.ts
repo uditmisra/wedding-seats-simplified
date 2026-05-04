@@ -162,6 +162,38 @@ export type Database = {
           },
         ]
       }
+      plan_owners: {
+        Row: {
+          created_at: string
+          id: string
+          plan_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          plan_id: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          plan_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_owners_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plans: {
         Row: {
           code: string
@@ -265,7 +297,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_plan_editor: {
+        Args: { _plan_id: string; _user_id: string }
+        Returns: boolean
+      }
+      plan_has_any_owner: { Args: { _plan_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
