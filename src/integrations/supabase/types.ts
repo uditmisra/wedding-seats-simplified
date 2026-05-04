@@ -201,6 +201,7 @@ export type Database = {
           event_date: string | null
           id: string
           name: string
+          owner_id: string | null
           updated_at: string
         }
         Insert: {
@@ -209,6 +210,7 @@ export type Database = {
           event_date?: string | null
           id?: string
           name?: string
+          owner_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -217,6 +219,7 @@ export type Database = {
           event_date?: string | null
           id?: string
           name?: string
+          owner_id?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -297,6 +300,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      ensure_sample_plan: { Args: never; Returns: string }
       is_plan_editor: {
         Args: { _plan_id: string; _user_id: string }
         Returns: boolean
