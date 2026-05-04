@@ -265,7 +265,7 @@ export function CompareScenarios({ scenarios, currentScenarioId, currentTables, 
         </div>
         <div className="divide-y divide-hairline-2">
           {rows.length === 0 && (
-            <div className="p-6 text-center font-display-italic text-[14px] text-ink-3">No tables in either layout yet.</div>
+            <div className="p-6 text-center font-display-italic text-[14px] text-ink-3">Both layouts are empty.</div>
           )}
           {rows.map(r => <DiffRow key={r.key} row={r} onCopy={copyTable} onDelete={removeTable} busy={busy}/>)}
         </div>

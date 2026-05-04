@@ -400,7 +400,7 @@ export function GuestsTab({ planId, guests, refresh, autoOpen, onAutoOpenHandled
                       </button>
                     </>
                   ) : (
-                    <p className="font-display-italic">No guests match these filters.</p>
+                    <p className="font-display-italic">Nothing matches those filters.</p>
                   )}
                 </div>
               ) : (

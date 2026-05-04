@@ -65,12 +65,12 @@ export function OnboardingFlow({ planId, scenarioId, guestCount, tableCount, onI
             <h2 className="font-display text-2xl md:text-[32px]">
               Who&apos;s <span className="font-display-italic">coming?</span>
             </h2>
-            <p className="mt-1 text-ink-3">Paste or type names — we&apos;ll structure the rest.</p>
+            <p className="mt-1 text-ink-3">Paste or type names. We&apos;ll structure the rest.</p>
           </div>
           <SmartGuestInput planId={planId} onDone={refresh} />
 
           <div className="flex flex-wrap items-center gap-2 border-t hairline pt-3">
-            <span className="text-xs text-ink-3">Have a spreadsheet?</span>
+            <span className="text-xs text-ink-3">Or you have a spreadsheet?</span>
             <Button variant="outline" size="sm" className="rounded-full border-hairline" onClick={onImport}>
               <Upload size={14} className="mr-1.5" />Import CSV / Excel
             </Button>
@@ -87,7 +87,7 @@ export function OnboardingFlow({ planId, scenarioId, guestCount, tableCount, onI
             <h2 className="font-display text-2xl md:text-[32px]">
               Set up your <span className="font-display-italic">room.</span>
             </h2>
-            <p className="mt-1 text-ink-3">Try: &ldquo;10 rounds of 8 + a head table for 6&rdquo;.</p>
+            <p className="mt-1 text-ink-3">Try &ldquo;10 rounds of 8 plus a head table for 6&rdquo; — we&apos;ll lay it out.</p>
           </div>
           <SmartTableInput planId={planId} scenarioId={scenarioId} existingCount={tableCount} onDone={refresh} />
         </div>
@@ -101,8 +101,8 @@ export function OnboardingFlow({ planId, scenarioId, guestCount, tableCount, onI
             </h2>
             <p className="mt-1 text-ink-3">
               {guestCount > 0 && tableCount > 0
-                ? `${guestCount} guests, ${tableCount} tables. Want us to take a first pass?`
-                : "Add guests and tables first, then come back."}
+                ? `${guestCount} guests, ${tableCount} tables. Should we take a first pass at it?`
+                : "Add guests and tables first — then come back to seat them."}
             </p>
           </div>
 
@@ -122,7 +122,7 @@ export function OnboardingFlow({ planId, scenarioId, guestCount, tableCount, onI
             >
               <LayoutGrid className="text-olive" size={22} />
               <div className="mt-2 font-display text-lg">I&apos;ll seat them myself</div>
-              <div className="mt-1 text-sm text-ink-3">Drag and drop guests onto tables — your call.</div>
+              <div className="mt-1 text-sm text-ink-3">Drag and drop. Take your time.</div>
             </button>
           </div>
         </div>

@@ -89,18 +89,18 @@ export default function Auth() {
         <div className="grid items-start gap-12 pt-6 md:grid-cols-12 md:gap-16 md:pt-16">
           {/* Left — editorial framing */}
           <div className="md:col-span-6">
-            <div className="label-mono mb-7">Welcome back</div>
+            <div className="label-mono mb-7">A quiet sign-in</div>
             <h1 className="m-0 font-display text-[44px] leading-[1.05] tracking-[-0.02em] sm:text-[56px]">
               Save your plans to <span className="font-display-italic">your</span> corner.
             </h1>
             <p className="mt-6 max-w-md text-base leading-relaxed text-ink-2 md:text-[17px]">
-              Sign in to keep every plan in one place, sync between devices, and name the people helping
-              you arrange the room.
+              One place for every plan you&apos;ve started — laptop, phone, and the people you&apos;ve invited
+              to help.
             </p>
             <ul className="mt-8 space-y-3 text-[14px] text-ink-2">
-              <Bullet>Every plan you&apos;ve started, in one quiet dashboard.</Bullet>
-              <Bullet>Edits sync between your laptop and phone.</Bullet>
-              <Bullet>Named collaborators instead of anonymous edits.</Bullet>
+              <Bullet>Every plan, one quiet place.</Bullet>
+              <Bullet>Edits sync between devices.</Bullet>
+              <Bullet>Collaborators with names, not strangers.</Bullet>
             </ul>
           </div>
 
@@ -114,7 +114,7 @@ export default function Auth() {
                   <div className="mb-6">
                     <h2 className="m-0 font-display text-[22px] leading-tight">Sign in</h2>
                     <p className="mt-1 text-[13px] text-ink-3">
-                      Use Google, or pick an email and password.
+                      Google, or an email and a password.
                     </p>
                   </div>
 

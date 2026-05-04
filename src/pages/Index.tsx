@@ -6,11 +6,12 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { generatePlanCode } from "@/lib/planCode";
 import { toast } from "sonner";
-import { ArrowUpRight, X } from "lucide-react";
+import { ArrowUpRight, X, Loader2 } from "lucide-react";
 import { getRecentPlans, removeRecentPlan, type RecentPlan } from "@/lib/recentPlans";
 import { PaperTable } from "@/components/PaperTable";
 import { useAuth } from "@/hooks/useAuth";
 import { UserMenu } from "@/components/UserMenu";
+import { loadOrCreateSamplePlan } from "@/lib/samplePlan";
 
 interface OwnedPlan { id: string; code: string; name: string }
 
@@ -24,8 +25,21 @@ const Index = () => {
   const [recents, setRecents] = useState<RecentPlan[]>([]);
   const [showCodeOpen, setShowCodeOpen] = useState(false);
   const [myPlans, setMyPlans] = useState<OwnedPlan[]>([]);
+  const [sampleLoading, setSampleLoading] = useState(false);
 
   useEffect(() => { setRecents(getRecentPlans()); }, []);
+
+  const openSample = async () => {
+    setSampleLoading(true);
+    try {
+      const code = await loadOrCreateSamplePlan();
+      navigate(`/plan/${code}`);
+    } catch (e) {
+      toast.error((e as Error)?.message ?? "Could not load the sample plan");
+    } finally {
+      setSampleLoading(false);
+    }
+  };
 
   // Pre-fill name if returning from auth with ?name=…
   useEffect(() => {
@@ -101,8 +115,15 @@ const Index = () => {
           <span className="inline-block size-[5px] -translate-y-0.5 rounded-full bg-terracotta" aria-hidden />
         </div>
         <nav className="hidden items-center gap-9 text-sm text-ink-2 md:flex">
-          <a className="hover:text-ink" href="#promise">Why Seatly</a>
-          <a className="hover:text-ink" href="#yours">{user ? "Your plans" : "Examples"}</a>
+          <a className="hover:text-ink" href="#promise">How it works</a>
+          <button
+            onClick={openSample}
+            disabled={sampleLoading}
+            className="inline-flex items-center gap-1 hover:text-ink disabled:opacity-60"
+          >
+            {sampleLoading && <Loader2 size={12} className="animate-spin" />}
+            See an example
+          </button>
           <button
             onClick={() => setShowCodeOpen(true)}
             className="rounded-full border hairline px-4 py-2 text-[13px] hover:bg-paper-2"
@@ -118,14 +139,14 @@ const Index = () => {
         {/* Hero */}
         <section className="grid items-center gap-12 pt-10 md:grid-cols-12 md:gap-16 md:pt-20">
           <div className="md:col-span-7">
-            <div className="label-mono mb-7">— A wedding seating planner</div>
+            <div className="label-mono mb-7">A wedding seating planner</div>
             <h1 className="m-0 font-display text-[56px] leading-[1.0] tracking-[-0.03em] sm:text-7xl xl:text-[92px]">
               Where everyone<br />
               <span className="font-display-italic">finally</span> sits.
             </h1>
             <p className="mt-7 max-w-md text-base leading-relaxed text-ink-2 md:text-[19px] md:leading-[1.55]">
-              Drag your guests onto tables. Resolve who can&apos;t sit next to whom. Share a
-              link with your mother-in-law.
+              Drag guests onto tables. Settle every awkward pairing. Share the link with
+              your mother‑in‑law.
             </p>
 
             {/* CTA card */}
@@ -144,21 +165,19 @@ const Index = () => {
                   disabled={loading}
                   className="h-12 rounded-full px-6 text-[15px] shadow-soft"
                 >
-                  {user ? "Start a plan" : "Sign in & start"}
+                  Start your plan
                   <span className="ml-1 font-display-italic">→</span>
                 </Button>
               </div>
-              {!user && (
-                <p className="mt-3 text-[11px] uppercase tracking-[0.12em] text-ink-3">
-                  <span className="font-mono">·</span> Free, takes a few seconds
-                </p>
-              )}
+              <p className="mt-3 text-[11px] uppercase tracking-[0.12em] text-ink-3">
+                <span className="font-mono">·</span> {user ? "Free. Save and share with one link." : "Free. We'll save it to your account so you can find it later."}
+              </p>
             </div>
 
             <div className="mt-4 max-w-lg">
               {showCodeOpen ? (
                 <div className="rounded-xl border hairline bg-card p-3">
-                  <Label className="label-mono">Got a code from your partner?</Label>
+                  <Label className="label-mono">Paste it below</Label>
                   <div className="mt-2 flex gap-2">
                     <Input
                       value={openCode}
@@ -175,7 +194,7 @@ const Index = () => {
                   onClick={() => setShowCodeOpen(true)}
                   className="text-sm text-ink-3 underline-offset-4 hover:text-ink hover:underline"
                 >
-                  Have a plan code?
+                  Got a code from someone&apos;s plan?
                 </button>
               )}
             </div>
@@ -194,9 +213,9 @@ const Index = () => {
         <section id="promise" className="mt-32 border-t hairline pt-14">
           <div className="grid gap-12 md:grid-cols-3 md:gap-14">
             {[
-              { n: "01", t: "Drag, don't spreadsheet.", d: "A canvas you can touch. Tables, chairs, a dance floor. Move guests like place cards on a real plan." },
-              { n: "02", t: "Constraints, gently solved.", d: "Tell Seatly who must sit together and who absolutely must not. Auto-assign respects every rule." },
-              { n: "03", t: "Share a link, that's it.", d: "Send the URL to the people helping you, edit together, change your mind, often." },
+              { n: "01", t: "Drag, don't spreadsheet.", d: "A canvas you can touch — tables, chairs, a dance floor. Move guests like place cards on a real plan." },
+              { n: "02", t: "Constraints, gently solved.", d: "Tell Seatly who must sit together — and who absolutely must not. Auto-assign respects every line." },
+              { n: "03", t: "Share a link, that's it.", d: "Send the URL to whoever's helping. Edit together. Change your mind, often." },
             ].map(c => (
               <article key={c.n}>
                 <div className="mb-4 font-mono text-[11px] uppercase tracking-[0.12em] text-terracotta">{c.n}</div>

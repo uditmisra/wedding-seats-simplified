@@ -100,11 +100,25 @@ const Planner = () => {
     if (plan) addRecentPlan({ code: plan.code, name: plan.name, openedAt: Date.now() });
   }, [plan?.id, plan?.name]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-ink-3 text-sm">Loading…</div>;
+  if (loading) return (
+    <div className="paper-grain flex min-h-screen items-center justify-center">
+      <span className="font-display-italic text-[15px] text-ink-3">Setting the table…</span>
+    </div>
+  );
   if (notFound || !plan) return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-3">
-      <p>Plan not found.</p>
-      <Link to="/" className="text-terracotta underline">Back home</Link>
+    <div className="paper-grain flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center">
+      <div className="label-mono text-terracotta">Plan not found</div>
+      <p className="m-0 max-w-sm font-display text-2xl leading-tight">
+        That code doesn&apos;t open <span className="font-display-italic">anything.</span>
+      </p>
+      <p className="text-[13px] text-ink-3">Maybe a typo, maybe deleted. The way back is short.</p>
+      <Link
+        to="/"
+        className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-ink px-4 py-2 text-[13px] text-paper hover:bg-ink-2"
+      >
+        Back home
+        <span className="font-display-italic">→</span>
+      </Link>
     </div>
   );
 
@@ -214,10 +228,10 @@ const Planner = () => {
             <Sparkles size={18} className="text-terracotta" />
             <div className="min-w-0 flex-1">
               <div className="font-display text-[18px] leading-tight">
-                This plan is <span className="font-display-italic">unclaimed.</span>
+                Nobody owns this plan <span className="font-display-italic">yet.</span>
               </div>
               <div className="text-[12px] text-ink-3">
-                {user ? "Claim it to start editing." : "Sign in to claim it and start editing."}
+                {user ? "Claim it and it's yours to edit." : "Sign in to claim it — anyone with the link can still view."}
               </div>
             </div>
             {user ? (
@@ -239,7 +253,7 @@ const Planner = () => {
           <div className="flex flex-wrap items-center gap-2.5 rounded-xl border hairline bg-paper-2/60 px-4 py-2.5 text-[13px]">
             <Eye size={14} className="text-ink-3" />
             <span className="text-ink-2">
-              You&apos;re viewing a <span className="font-display-italic">shared</span> seating chart.
+              You&apos;re a <span className="font-display-italic">guest</span> at this plan — looking, not editing.
             </span>
             {!user && (
               <Link
@@ -381,7 +395,7 @@ const Planner = () => {
           tables={tables}
           assignments={assignments}
           constraints={constraints}
-          onClose={() => { setAutoOpen(false); refresh(); toast.success("Done"); }}
+          onClose={() => { setAutoOpen(false); refresh(); toast.success("Seated."); }}
         />
       )}
     </div>
