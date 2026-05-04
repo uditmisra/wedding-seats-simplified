@@ -89,7 +89,7 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
       {view === "floor" ? (
         <div className="grid lg:grid-cols-[280px_1fr] gap-6">
           <UnassignedPanel guests={unassigned} search={search} setSearch={setSearch} totalGuests={guests.length} onAddGuest={onGoToGuests}/>
-          <FloorPlan tables={tables} assignments={assignments} guests={guests} constraints={constraints}/>
+          <FloorPlan tables={tables} assignments={assignments} guests={guests} constraints={constraints} scenarioId={scenarioId}/>
         </div>
       ) : (
       <div className="grid lg:grid-cols-[280px_1fr] gap-6">
