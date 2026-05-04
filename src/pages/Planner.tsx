@@ -46,10 +46,15 @@ const Planner = () => {
   useEffect(() => {
     if (!plan) return;
     (async () => {
-      const { data: owners } = await supabase.from("plan_owners").select("user_id").eq("plan_id", plan.id);
-      const list = owners ?? [];
-      setHasOwner(list.length > 0);
-      setCanEdit(!!user && list.some((o: any) => o.user_id === user.id));
+      const { data: hasOwnerRpc } = await supabase.rpc("plan_has_any_owner", { _plan_id: plan.id });
+      setHasOwner(!!hasOwnerRpc);
+      if (user) {
+        const { data: mine } = await supabase
+          .from("plan_owners").select("user_id").eq("plan_id", plan.id).eq("user_id", user.id).maybeSingle();
+        setCanEdit(!!mine);
+      } else {
+        setCanEdit(false);
+      }
     })();
   }, [plan?.id, user?.id]);
 
