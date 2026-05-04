@@ -207,3 +207,17 @@ const Planner = () => {
 };
 
 export default Planner;
+
+function UnderlineTab({ value, label, count }: { value: string; label: string; count?: number }) {
+  return (
+    <TabsTrigger
+      value={value}
+      className="relative bg-transparent rounded-none border-0 px-0 pt-2 pb-3 h-auto text-sm font-medium text-soft data-[state=active]:text-foreground data-[state=active]:shadow-none data-[state=active]:after:absolute data-[state=active]:after:left-0 data-[state=active]:after:right-0 data-[state=active]:after:-bottom-px data-[state=active]:after:h-0.5 data-[state=active]:after:bg-primary"
+    >
+      {label}
+      {count !== undefined && (
+        <span className="ml-1.5 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-surface text-[10px] font-medium text-soft tabular-nums">{count}</span>
+      )}
+    </TabsTrigger>
+  );
+}
