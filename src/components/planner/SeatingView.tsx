@@ -88,7 +88,7 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
       ? tableSeated.find(a => a.seat_index === targetIdx && a.guest_id !== guestId)
       : undefined;
 
-    const ops: Promise<unknown>[] = [];
+    const ops: PromiseLike<unknown>[] = [];
 
     if (occupant) {
       // SWAP: occupant takes guest's previous (table_id, seat_index), or becomes unassigned
