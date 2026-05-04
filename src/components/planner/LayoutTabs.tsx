@@ -115,7 +115,7 @@ export function LayoutTabs({ planId, scenarios, scenarioId, setScenarioId, table
       <div
         role="tablist"
         aria-label="Layouts"
-        className="flex items-end gap-1 overflow-x-auto pb-px -mb-px scrollbar-thin"
+        className="flex items-center gap-5 overflow-x-auto -mb-px scrollbar-thin border-b hairline"
       >
         {scenarios.map(s => {
           const active = s.id === scenarioId;
@@ -124,29 +124,27 @@ export function LayoutTabs({ planId, scenarios, scenarioId, setScenarioId, table
               key={s.id}
               role="tab"
               aria-selected={active}
-              className={`group relative flex items-center gap-1.5 pl-3.5 pr-1 h-9 rounded-t-lg border border-b-0 transition shrink-0 ${
-                active
-                  ? "bg-card border-border text-foreground shadow-[0_-1px_0_hsl(var(--primary))_inset]"
-                  : "bg-muted/40 border-transparent text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+              className={`group relative flex items-center gap-1 h-9 shrink-0 ${
+                active ? "text-foreground" : "text-soft hover:text-foreground"
               }`}
             >
               <button
                 onClick={() => setScenarioId(s.id)}
-                className="flex items-center gap-1.5 text-sm font-medium pr-1.5"
+                className="flex items-center gap-1.5 text-sm font-medium pr-0.5 pt-1"
               >
                 <span className="max-w-[200px] truncate">{s.name}</span>
-                {s.is_default && <Star size={11} className="text-primary fill-primary"/>}
+                {s.is_default && <Star size={10} className="text-primary fill-primary"/>}
               </button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className={`rounded p-1 transition ${active ? "opacity-60 hover:opacity-100 hover:bg-muted" : "opacity-0 group-hover:opacity-60 hover:opacity-100 hover:bg-background"}`}
+                    className={`rounded p-1 transition ${active ? "opacity-50 hover:opacity-100" : "opacity-0 group-hover:opacity-50 hover:opacity-100"}`}
                     aria-label={`Options for ${s.name}`}
                   >
-                    <MoreHorizontal size={14}/>
+                    <MoreHorizontal size={13}/>
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-56">
+                <DropdownMenuContent align="start" className="w-56 rounded-xl border-hairline">
                   <DropdownMenuItem onClick={() => start({ kind: "rename", target: s })}>
                     <Pencil size={14} className="mr-2"/>Rename
                   </DropdownMenuItem>
@@ -155,7 +153,7 @@ export function LayoutTabs({ planId, scenarios, scenarioId, setScenarioId, table
                   </DropdownMenuItem>
                   {!s.is_default && (
                     <DropdownMenuItem onClick={() => setDefault(s)}>
-                      <Star size={14} className="mr-2"/>Make this the main one
+                      <Star size={14} className="mr-2"/>Set as main
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator/>
@@ -164,10 +162,11 @@ export function LayoutTabs({ planId, scenarios, scenarioId, setScenarioId, table
                     disabled={scenarios.length <= 1}
                     className="text-destructive"
                   >
-                    <Trash2 size={14} className="mr-2"/>Delete layout
+                    <Trash2 size={14} className="mr-2"/>Delete
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              {active && <span className="absolute left-0 right-0 -bottom-px h-0.5 bg-primary"/>}
             </div>
           );
         })}
@@ -178,24 +177,21 @@ export function LayoutTabs({ planId, scenarios, scenarioId, setScenarioId, table
               const current = scenarios.find(s => s.id === scenarioId) ?? scenarios[0];
               start({ kind: "duplicate", from: current });
             }}
-            className="flex items-center gap-1.5 h-9 px-3 rounded-t-lg border border-b-0 border-dashed border-primary/40 text-primary/80 hover:text-primary hover:border-primary hover:bg-primary/5 text-sm font-medium shrink-0 transition"
-            title="See your room a different way — keeps your guest list"
+            className="flex items-center gap-1.5 h-9 px-2 text-primary/70 hover:text-primary text-sm font-medium shrink-0"
+            title="Try an alternate layout — keeps your guest list"
           >
-            <Sparkles size={13}/> Try a Plan B
+            <Sparkles size={13}/> Plan B
           </button>
         ) : (
           <button
             onClick={() => start({ kind: "new" })}
-            className="flex items-center gap-1 h-9 px-2.5 rounded-t-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 text-sm shrink-0 transition"
-            title="Start another layout"
+            className="flex items-center gap-1 h-9 px-1 text-soft hover:text-foreground text-sm shrink-0"
+            title="New layout"
           >
-            <Plus size={14}/> New layout
+            <Plus size={14}/>
           </button>
         )}
       </div>
-
-      {/* Connecting line under the tabs so the active tab visually belongs to the panel below */}
-      <div className="h-px bg-border -mt-px"/>
 
       <Dialog open={!!mode} onOpenChange={(o) => !o && setMode(null)}>
         <DialogContent>
