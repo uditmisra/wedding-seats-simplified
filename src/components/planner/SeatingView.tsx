@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { DndContext, useDraggable, useDroppable, DragOverlay, type DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { DndContext, useDraggable, useDroppable, DragOverlay, type DragEndEvent, PointerSensor, TouchSensor, KeyboardSensor, useSensor, useSensors, pointerWithin } from "@dnd-kit/core";
 import { supabase } from "@/integrations/supabase/client";
 import type { Guest, TableDef, Assignment, ConstraintDef } from "@/lib/types";
 import { Input } from "@/components/ui/input";
@@ -38,7 +38,11 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
   const [search, setSearch] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [view, setView] = useState<"list" | "floor">("floor");
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 3 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 6 } }),
+    useSensor(KeyboardSensor),
+  );
   const isBelowLg = useBelowLg();
 
   const assignedMap = useMemo(() => new Map(assignments.map(a => [a.guest_id, a])), [assignments]);
@@ -184,7 +188,14 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
   }
 
   return (
-    <DndContext sensors={sensors} onDragStart={e => setActiveId(String(e.active.id))} onDragEnd={onDragEnd}>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={pointerWithin}
+      onDragStart={e => setActiveId(String(e.active.id))}
+      onDragEnd={onDragEnd}
+      onDragCancel={() => setActiveId(null)}
+      autoScroll={{ threshold: { x: 0.1, y: 0.15 } }}
+    >
       <TooltipProvider delayDuration={200}>
         <div className="mb-4 flex justify-end">
           <div className="inline-flex rounded-full border-hairline border bg-paper p-0.5">
