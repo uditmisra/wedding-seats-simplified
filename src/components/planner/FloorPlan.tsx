@@ -25,8 +25,12 @@ const noop = () => {};
 export function FloorPlan({ tables, assignments, guests, constraints, highlights, scenarioId, onUnassign = noop, onTogglePin = noop, onMoveTo = noop, onSwapWith = noop }: Props) {
   const guestById = useMemo(() => new Map(guests.map(g => [g.id, g])), [guests]);
 
-  const cellW = 280;
-  const cellH = 280;
+  // Cell size grows with the largest table on the floor so big tables don't crowd neighbours.
+  const dims = tables.map(tableDims);
+  const maxW = Math.max(220, ...dims.map(d => d.box.w + 80));
+  const maxH = Math.max(220, ...dims.map(d => d.box.h + 80));
+  const cellW = Math.ceil(maxW);
+  const cellH = Math.ceil(maxH);
   const cols = tables.length <= 2 ? Math.max(1, tables.length) : tables.length <= 6 ? 3 : 4;
   const rows = Math.max(1, Math.ceil(tables.length / Math.max(1, cols)));
   const width = cols * cellW;
@@ -120,7 +124,8 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
     const row = Math.floor(i / cols);
     const cx = col * cellW + cellW / 2;
     const cy = row * cellH + cellH / 2;
-    return { t, i, cx, cy, seats: computeSeats(t, cx, cy), box: tableBox(t) };
+    const d = dims[i];
+    return { t, i, cx, cy, seats: computeSeats(t, cx, cy, d), box: d.box, dims: d };
   });
 
   return (
@@ -161,7 +166,7 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
                 </filter>
               </defs>
 
-              {layout.map(({ t, i, cx, cy }) => {
+              {layout.map(({ t, i, cx, cy, dims: d }) => {
                 const seated = assignments.filter(a => a.table_id === t.id);
                 const conflict = tableConflicts(t.id, assignments, constraints).length > 0;
                 const over = seated.length > t.capacity;
@@ -170,6 +175,7 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
                     key={t.id} index={i} table={t} cx={cx} cy={cy}
                     seated={seated} conflict={conflict} over={over}
                     diff={highlights?.get(t.id) ?? null}
+                    dims={d}
                   />
                 );
               })}
