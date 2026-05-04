@@ -145,8 +145,7 @@ const Index = () => {
               <span className="font-display-italic">without</span> the spreadsheet.
             </h1>
             <p className="mt-7 max-w-md text-base leading-relaxed text-ink-2 md:text-[19px] md:leading-[1.55]">
-              Drag guests onto tables. Keep your divorced parents apart. Share one link
-              with whoever&apos;s helping. You&apos;ll be done in an afternoon — not a weekend.
+              You&apos;ll be done in an afternoon - not 3 weekends.
             </p>
 
             {/* CTA card */}
