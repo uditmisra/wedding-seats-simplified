@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { usePlanData } from "@/hooks/usePlanData";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +27,7 @@ import { Eye, Sparkles } from "lucide-react";
 
 const Planner = () => {
   const { code } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { plan, setPlan, scenarios, scenarioId, setScenarioId, guests, tables, assignments, constraints, loading, notFound, refresh } = usePlanData(code);
   const { user } = useAuth();
   const [editingName, setEditingName] = useState(false);
@@ -71,6 +72,18 @@ const Planner = () => {
   useEffect(() => {
     if (showOnboarding) setTab("seating");
   }, [showOnboarding]);
+
+  // Auto-claim after returning from auth with ?claim=1
+  useEffect(() => {
+    if (searchParams.get("claim") === "1" && user && plan && hasOwner === false && !canEdit && !claiming) {
+      claim().finally(() => {
+        const next = new URLSearchParams(searchParams);
+        next.delete("claim");
+        setSearchParams(next, { replace: true });
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, plan?.id, hasOwner]);
 
   // Track recently opened plans
   useEffect(() => {
