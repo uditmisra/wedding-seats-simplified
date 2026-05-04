@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { DndContext, useDraggable, useDroppable, DragOverlay, type DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { DndContext, useDraggable, useDroppable, DragOverlay, type DragEndEvent, PointerSensor, TouchSensor, KeyboardSensor, useSensor, useSensors, pointerWithin } from "@dnd-kit/core";
 import { supabase } from "@/integrations/supabase/client";
 import type { Guest, TableDef, Assignment, ConstraintDef } from "@/lib/types";
 import { Input } from "@/components/ui/input";
@@ -38,7 +38,11 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
   const [search, setSearch] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [view, setView] = useState<"list" | "floor">("floor");
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 3 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 6 } }),
+    useSensor(KeyboardSensor),
+  );
   const isBelowLg = useBelowLg();
 
   const assignedMap = useMemo(() => new Map(assignments.map(a => [a.guest_id, a])), [assignments]);
@@ -184,7 +188,14 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
   }
 
   return (
-    <DndContext sensors={sensors} onDragStart={e => setActiveId(String(e.active.id))} onDragEnd={onDragEnd}>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={pointerWithin}
+      onDragStart={e => setActiveId(String(e.active.id))}
+      onDragEnd={onDragEnd}
+      onDragCancel={() => setActiveId(null)}
+      autoScroll={{ threshold: { x: 0.1, y: 0.15 } }}
+    >
       <TooltipProvider delayDuration={200}>
         <div className="mb-4 flex justify-end">
           <div className="inline-flex rounded-full border-hairline border bg-paper p-0.5">
@@ -257,7 +268,7 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
         </div>
       )}
       <DragOverlay>
-        {activeId ? <GuestPill guest={guestById.get(activeId)!} dragging/> : null}
+        {activeId ? <GuestPill guest={guestById.get(activeId)!} dragging overlay/> : null}
       </DragOverlay>
     </DndContext>
   );
@@ -330,20 +341,36 @@ function UnassignedPanel({ guests, search, setSearch, totalGuests, onAddGuest }:
   );
 }
 
-function GuestPill({ guest, dragging, pinned }: { guest: Guest; dragging?: boolean; pinned?: boolean }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: guest.id });
-  const style = transform ? { transform: `translate(${transform.x}px, ${transform.y}px) rotate(-3deg)` } : undefined;
+function GuestPill({ guest, dragging, pinned, overlay }: { guest: Guest; dragging?: boolean; pinned?: boolean; overlay?: boolean }) {
+  if (overlay) {
+    // Presentation-only copy used inside <DragOverlay/>. No useDraggable hook,
+    // so it doesn't conflict with the original draggable's id.
+    return (
+      <div
+        className="group flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm border border-terracotta/60 bg-paper shadow-elegant cursor-grabbing"
+        style={{ transform: "rotate(-3deg)", willChange: "transform" }}
+      >
+        <div className="min-w-0 flex-1 truncate">
+          <span className="font-medium">{guest.name}</span>
+          {guest.party && <span className="ml-1.5 text-xs text-ink-3">{guest.party}</span>}
+        </div>
+        {guest.meal && <span className="size-1.5 rounded-full bg-terracotta" title={guest.meal} />}
+        {pinned && <Pin size={11} className="text-olive" />}
+      </div>
+    );
+  }
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: guest.id });
   return (
     <div
       ref={setNodeRef}
-      style={style}
       {...listeners}
       {...attributes}
-      className={`group flex cursor-grab items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm transition active:cursor-grabbing
+      className={`group flex cursor-grab items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm active:cursor-grabbing transition-colors
         ${isDragging ? "opacity-30" : ""}
         ${dragging
           ? "border border-terracotta/60 bg-paper shadow-elegant"
           : "hover:bg-paper-2/60"}`}
+      style={{ touchAction: "none" }}
     >
       <div className="min-w-0 flex-1 truncate">
         <span className="font-medium">{guest.name}</span>

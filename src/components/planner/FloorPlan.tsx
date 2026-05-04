@@ -382,7 +382,7 @@ function Seat({ tableId, seatIndex, x, y, assignment, guest, table, allTables, t
           <button
             type="button"
             onContextMenu={(e) => { e.preventDefault(); setPickerOpen(true); }}
-            className={`w-full h-full rounded-full border transition flex items-center justify-center font-mono text-[9px] text-ink-3 ${
+            className={`w-full h-full rounded-full border transition-[transform,background-color,border-color] duration-100 flex items-center justify-center font-mono text-[9px] text-ink-3 ${
               isOver ? "bg-terracotta/15 border-terracotta scale-110" : "border-ink/40 bg-paper/60 hover:border-ink/70 hover:bg-paper"
             }`}
             aria-label={`Seat ${seatIndex + 1} — empty. Click to assign.`}
@@ -392,7 +392,7 @@ function Seat({ tableId, seatIndex, x, y, assignment, guest, table, allTables, t
         </SeatPicker>
       ) : (
         <div
-          className={`w-full h-full rounded-full border transition flex items-center justify-center font-mono text-[9px] text-ink-3 ${
+          className={`w-full h-full rounded-full border transition-[transform,background-color,border-color] duration-100 flex items-center justify-center font-mono text-[9px] text-ink-3 ${
             isOver ? "bg-terracotta/15 border-terracotta scale-110" : "border-ink/40 bg-paper/60"
           }`}
         >
@@ -410,7 +410,8 @@ function SeatedChip({ guestId, guest, pinned, swapPreview }: { guestId: string; 
       ref={setNodeRef}
       {...listeners}
       {...attributes}
-      className={`relative w-full h-full rounded-full flex items-center justify-center font-mono text-[10px] font-medium cursor-grab active:cursor-grabbing transition
+      style={{ touchAction: "none" }}
+      className={`relative w-full h-full rounded-full flex items-center justify-center font-mono text-[10px] font-medium cursor-grab active:cursor-grabbing transition-colors duration-150
         ${swapPreview
           ? "ring-2 ring-butter bg-butter/40 text-ink scale-110"
           : "bg-terracotta text-paper ring-1 ring-ink/20 hover:bg-terracotta-2"}
