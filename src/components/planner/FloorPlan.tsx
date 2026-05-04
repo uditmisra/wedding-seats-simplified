@@ -25,8 +25,12 @@ const noop = () => {};
 export function FloorPlan({ tables, assignments, guests, constraints, highlights, scenarioId, onUnassign = noop, onTogglePin = noop, onMoveTo = noop, onSwapWith = noop }: Props) {
   const guestById = useMemo(() => new Map(guests.map(g => [g.id, g])), [guests]);
 
-  const cellW = 280;
-  const cellH = 280;
+  // Cell size grows with the largest table on the floor so big tables don't crowd neighbours.
+  const dims = tables.map(tableDims);
+  const maxW = Math.max(220, ...dims.map(d => d.box.w + 80));
+  const maxH = Math.max(220, ...dims.map(d => d.box.h + 80));
+  const cellW = Math.ceil(maxW);
+  const cellH = Math.ceil(maxH);
   const cols = tables.length <= 2 ? Math.max(1, tables.length) : tables.length <= 6 ? 3 : 4;
   const rows = Math.max(1, Math.ceil(tables.length / Math.max(1, cols)));
   const width = cols * cellW;
@@ -120,7 +124,8 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
     const row = Math.floor(i / cols);
     const cx = col * cellW + cellW / 2;
     const cy = row * cellH + cellH / 2;
-    return { t, i, cx, cy, seats: computeSeats(t, cx, cy), box: tableBox(t) };
+    const d = dims[i];
+    return { t, i, cx, cy, seats: computeSeats(t, cx, cy, d), box: d.box, dims: d };
   });
 
   return (
@@ -161,7 +166,7 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
                 </filter>
               </defs>
 
-              {layout.map(({ t, i, cx, cy }) => {
+              {layout.map(({ t, i, cx, cy, dims: d }) => {
                 const seated = assignments.filter(a => a.table_id === t.id);
                 const conflict = tableConflicts(t.id, assignments, constraints).length > 0;
                 const over = seated.length > t.capacity;
@@ -170,6 +175,7 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
                     key={t.id} index={i} table={t} cx={cx} cy={cy}
                     seated={seated} conflict={conflict} over={over}
                     diff={highlights?.get(t.id) ?? null}
+                    dims={d}
                   />
                 );
               })}
@@ -246,12 +252,61 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
   );
 }
 
-function tableBox(t: TableDef): { w: number; h: number } {
-  if (t.shape === "round") return { w: 200, h: 200 };
-  if (t.shape === "square") return { w: 200, h: 200 };
-  if (t.shape === "head") return { w: 220, h: 120 };
-  if (t.shape === "long") return { w: 240, h: 120 };
-  return { w: 200, h: 140 };
+/**
+ * Compute table dimensions and inner shape size that scale with capacity so
+ * seats never overlap. Seats are ~30px and need ~36px spacing (centre-to-centre).
+ */
+export interface TableDims {
+  /** Hit / drop-zone box including seat halo. */
+  box: { w: number; h: number };
+  /** Drawn shape width (rect) or unused (round = use radius). */
+  shapeW: number;
+  /** Drawn shape height. */
+  shapeH: number;
+  /** Radius for round/square inscribed circle. */
+  radius: number;
+}
+
+const SEAT_PITCH = 36;   // min centre-to-centre seat spacing
+const SEAT_SIZE = 30;    // seat diameter
+const SEAT_GAP = 18;     // gap from table edge to seat centre
+
+function tableDims(t: TableDef): TableDims {
+  const cap = Math.max(1, t.capacity);
+  if (t.shape === "round") {
+    // Circumference must fit cap seats at SEAT_PITCH apart.
+    const seatRing = (cap * SEAT_PITCH) / (2 * Math.PI);
+    const radius = Math.max(60, seatRing - SEAT_GAP);
+    const outer = radius + SEAT_GAP + SEAT_SIZE / 2;
+    return { box: { w: outer * 2, h: outer * 2 }, shapeW: radius * 2, shapeH: radius * 2, radius };
+  }
+  if (t.shape === "square") {
+    // Seats wrap around perimeter; perimeter / cap >= SEAT_PITCH.
+    const side = Math.max(110, (cap * SEAT_PITCH) / 4);
+    const outer = side / 2 + SEAT_GAP + SEAT_SIZE / 2;
+    return { box: { w: outer * 2, h: outer * 2 }, shapeW: side, shapeH: side, radius: side / 2 };
+  }
+  // Rectangular variants — top/bottom rows + optional end seats.
+  const useEnds = cap >= 4;
+  const sideTotal = useEnds ? cap - 2 : cap;
+  const top = Math.ceil(sideTotal / 2);
+  const bot = sideTotal - top;
+  const perRow = Math.max(top, bot, 1);
+  // width must fit perRow seats: (perRow + 1) gaps along the row inside w
+  const minW =
+    t.shape === "head" ? 180 :
+    t.shape === "long" ? 200 : 160;
+  const minH =
+    t.shape === "head" ? 64 :
+    t.shape === "long" ? 60 : 90;
+  const shapeW = Math.max(minW, (perRow + 1) * SEAT_PITCH);
+  const shapeH = minH;
+  const padX = (useEnds ? SEAT_GAP + SEAT_SIZE / 2 : 0) + 8;
+  const padY = SEAT_GAP + SEAT_SIZE / 2;
+  return {
+    box: { w: shapeW + padX * 2, h: shapeH + padY * 2 },
+    shapeW, shapeH, radius: 0,
+  };
 }
 
 function TableDropZone({ tableId, style }: { tableId: string; style: React.CSSProperties }) {
@@ -340,9 +395,10 @@ interface ShapeProps {
   table: TableDef; index: number; cx: number; cy: number;
   seated: Assignment[]; conflict: boolean; over: boolean;
   diff?: "added" | "removed" | "changed" | null;
+  dims: TableDims;
 }
 
-function TableShapeBg({ table, index, cx, cy, seated, conflict, over, diff }: ShapeProps) {
+function TableShapeBg({ table, index, cx, cy, conflict, over, diff, dims }: ShapeProps) {
   const diffColor =
     diff === "added" ? "hsl(var(--olive))" :
     diff === "removed" ? "hsl(var(--ink-4))" :
@@ -356,17 +412,17 @@ function TableShapeBg({ table, index, cx, cy, seated, conflict, over, diff }: Sh
   let shape: JSX.Element;
   let innerRing: JSX.Element | null = null;
   if (table.shape === "round") {
-    shape = <circle cx={cx} cy={cy} r={60} fill={fill} stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} filter="url(#tableShadow)"/>;
-    innerRing = <circle cx={cx} cy={cy} r={54} fill="none" stroke={baseStroke} strokeWidth={0.5} opacity={0.35}/>;
+    const r = dims.radius;
+    shape = <circle cx={cx} cy={cy} r={r} fill={fill} stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} filter="url(#tableShadow)"/>;
+    innerRing = <circle cx={cx} cy={cy} r={Math.max(0, r - 6)} fill="none" stroke={baseStroke} strokeWidth={0.5} opacity={0.35}/>;
   } else if (table.shape === "square") {
-    shape = <rect x={cx - 55} y={cy - 55} width={110} height={110} rx={8} fill={fill} stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} filter="url(#tableShadow)"/>;
-    innerRing = <rect x={cx - 49} y={cy - 49} width={98} height={98} rx={6} fill="none" stroke={baseStroke} strokeWidth={0.5} opacity={0.35}/>;
-  } else if (table.shape === "head") {
-    shape = <rect x={cx - 90} y={cy - 32} width={180} height={64} rx={10} fill={fill} stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} filter="url(#tableShadow)"/>;
-  } else if (table.shape === "long") {
-    shape = <rect x={cx - 100} y={cy - 30} width={200} height={60} rx={6} fill={fill} stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} filter="url(#tableShadow)"/>;
+    const s = dims.shapeW;
+    shape = <rect x={cx - s/2} y={cy - s/2} width={s} height={s} rx={8} fill={fill} stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} filter="url(#tableShadow)"/>;
+    innerRing = <rect x={cx - s/2 + 6} y={cy - s/2 + 6} width={s - 12} height={s - 12} rx={6} fill="none" stroke={baseStroke} strokeWidth={0.5} opacity={0.35}/>;
   } else {
-    shape = <rect x={cx - 80} y={cy - 45} width={160} height={90} rx={6} fill={fill} stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} filter="url(#tableShadow)"/>;
+    const w = dims.shapeW, h = dims.shapeH;
+    const rx = table.shape === "head" ? 10 : 6;
+    shape = <rect x={cx - w/2} y={cy - h/2} width={w} height={h} rx={rx} fill={fill} stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} filter="url(#tableShadow)"/>;
   }
 
   return (
@@ -378,17 +434,17 @@ function TableShapeBg({ table, index, cx, cy, seated, conflict, over, diff }: Sh
   );
 }
 
-function computeSeats(t: TableDef, cx: number, cy: number): { x: number; y: number }[] {
+function computeSeats(t: TableDef, cx: number, cy: number, dims: TableDims): { x: number; y: number }[] {
   const cap = Math.max(1, t.capacity);
   if (t.shape === "round" || t.shape === "square") {
-    const r = t.shape === "round" ? 78 : 82;
+    const r = (t.shape === "round" ? dims.radius : dims.shapeW / 2) + SEAT_GAP;
     return Array.from({ length: cap }, (_, i) => {
       const a = (i / cap) * Math.PI * 2 - Math.PI / 2;
       return { x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r };
     });
   }
-  const w = t.shape === "head" ? 180 : t.shape === "long" ? 200 : 160;
-  const h = t.shape === "head" ? 64 : t.shape === "long" ? 60 : 90;
+  const w = dims.shapeW;
+  const h = dims.shapeH;
   const seats: { x: number; y: number }[] = [];
   const useEnds = cap >= 4;
   const sideTotal = useEnds ? cap - 2 : cap;
@@ -400,11 +456,11 @@ function computeSeats(t: TableDef, cx: number, cy: number): { x: number; y: numb
       seats.push({ x, y });
     }
   };
-  placeRow(top, cy - h / 2 - 18);
-  placeRow(bot, cy + h / 2 + 18);
+  placeRow(top, cy - h / 2 - SEAT_GAP);
+  placeRow(bot, cy + h / 2 + SEAT_GAP);
   if (useEnds) {
-    seats.push({ x: cx - w / 2 - 18, y: cy });
-    seats.push({ x: cx + w / 2 + 18, y: cy });
+    seats.push({ x: cx - w / 2 - SEAT_GAP, y: cy });
+    seats.push({ x: cx + w / 2 + SEAT_GAP, y: cy });
   }
   return seats.slice(0, cap);
 }
