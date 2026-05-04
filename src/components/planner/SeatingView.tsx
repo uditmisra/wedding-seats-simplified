@@ -174,7 +174,7 @@ function TableCard({ table, seated, guestById, hasConflict, onTogglePin }: {
         <div className="font-display text-lg">{table.name}</div>
         <div className="text-xs text-muted-foreground">{seated.length}/{table.capacity} · {table.shape}</div>
       </div>
-      {hasConflict && <div className="text-xs text-destructive mb-2 flex items-center gap-1"><X size={12}/>Has conflicting guests</div>}
+      {hasConflict && <div className="text-xs text-destructive mb-2 flex items-center gap-1"><X size={12}/>Two guests here shouldn't sit together</div>}
       <div className="space-y-1">
         {seated.map(a => {
           const g = guestById.get(a.guest_id);
@@ -182,7 +182,7 @@ function TableCard({ table, seated, guestById, hasConflict, onTogglePin }: {
           return <GuestPill key={a.id} guest={g} pinned={a.pinned} onTogglePin={() => onTogglePin(a)}/>;
         })}
         {Array.from({ length: empties }).map((_, i) => (
-          <div key={i} className="text-xs text-muted-foreground/60 px-2 py-1.5 rounded-lg border border-dashed border-border/50">empty</div>
+          <div key={i} className="text-xs text-muted-foreground/60 px-2 py-1.5 rounded-lg border border-dashed border-border/50">open seat</div>
         ))}
       </div>
     </div>
