@@ -29,18 +29,10 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
   const height = rows * cellH;
 
   return (
-    <div className="relative rounded-2xl border border-border/60 overflow-hidden"
-         style={{ background: "var(--gradient-soft)" }}>
-      {/* Decorative parquet floor */}
-      <svg className="absolute inset-0 w-full h-full opacity-[0.06] pointer-events-none" aria-hidden>
-        <defs>
-          <pattern id="parquet" width="40" height="40" patternUnits="userSpaceOnUse">
-            <rect width="40" height="40" fill="currentColor"/>
-            <path d="M0 0L40 40M40 0L0 40" stroke="hsl(var(--foreground))" strokeOpacity="0.5" strokeWidth="0.5"/>
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#parquet)"/>
-      </svg>
+    <div className="relative rounded-2xl border hairline overflow-hidden bg-card">
+      {/* Subtle radial center wash — replaces parquet noise */}
+      <div className="absolute inset-0 pointer-events-none" aria-hidden
+           style={{ background: "radial-gradient(60% 50% at 50% 50%, hsl(var(--surface)) 0%, transparent 70%)" }}/>
 
       {tables.length === 0 ? (
         <div className="relative p-16 text-center text-muted-foreground">
