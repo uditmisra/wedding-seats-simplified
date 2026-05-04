@@ -158,14 +158,24 @@ const Planner = () => {
       </header>
 
       <main className="container py-8 space-y-8">
-        {!canEdit && hasOwner === false && user && (
+        {!canEdit && hasOwner === false && (
           <div className="rounded-2xl border-hairline border bg-card p-4 sm:p-5 flex flex-wrap items-center gap-3 shadow-soft">
             <Sparkles size={18} className="text-primary"/>
             <div className="flex-1 min-w-0">
               <div className="font-display text-base">This plan has no owner yet</div>
-              <div className="text-xs text-soft">Claim it to start editing.</div>
+              <div className="text-xs text-soft">
+                {user ? "Claim it to start editing." : "Sign in or create an account to claim it and start editing."}
+              </div>
             </div>
-            <Button onClick={claim} disabled={claiming}>Claim this plan</Button>
+            {user ? (
+              <Button onClick={claim} disabled={claiming}>Claim this plan</Button>
+            ) : (
+              <Button asChild>
+                <Link to={`/auth?next=${encodeURIComponent(window.location.pathname + "?claim=1")}`}>
+                  Sign in to claim
+                </Link>
+              </Button>
+            )}
           </div>
         )}
         {!canEdit && hasOwner && (
