@@ -28,6 +28,9 @@ const TAB_DEFS = [
   { value: "seating", numeral: "I", label: "Seating" },
   { value: "guests", numeral: "II", label: "Guests" },
   { value: "tables", numeral: "III", label: "Tables" },
+  { value: "constraints", numeral: "IV", label: "Rules" },
+  { value: "compare", numeral: "V", label: "Compare" },
+  { value: "export", numeral: "VI", label: "Export" },
 ] as const;
 
 const Planner = () => {
@@ -145,7 +148,9 @@ const Planner = () => {
 
   const goImport = () => { setGuestsAutoOpen("import"); setTab("guests"); setOnboardingDismissed(true); };
 
-  const visibleTabs = canEdit ? TAB_DEFS : TAB_DEFS.filter(t => t.value === "seating");
+  // Always show all tabs so visitors can browse the plan; edit-gated UI inside
+  // each tab still prevents anonymous changes (and RLS blocks server-side).
+  const visibleTabs = TAB_DEFS;
 
   return (
     <div className="paper-grain min-h-screen">
@@ -327,27 +332,6 @@ const Planner = () => {
                   )}
                 </div>
               )}
-              {canEdit && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="inline-flex items-center gap-1 px-2 py-2 text-sm text-ink-3 hover:text-ink">
-                      More <MoreHorizontal size={14} />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-52 rounded-xl border-hairline">
-                    <DropdownMenuItem onClick={() => setTab("compare")}>
-                      <GitCompareArrows size={14} className="mr-2" />Compare layouts
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setTab("constraints")}>
-                      <ShieldAlert size={14} className="mr-2" />Sit-with rules
-                      {constraints.length > 0 && <span className="ml-auto text-xs text-ink-3">{constraints.length}</span>}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setTab("export")}>
-                      <Download size={14} className="mr-2" />Export &amp; print
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
             </div>
           </div>
 
@@ -365,25 +349,21 @@ const Planner = () => {
               onGoToTables={() => setTab("tables")}
             />
           </TabsContent>
-          {canEdit && (
-            <>
-              <TabsContent value="guests" className="mt-6 animate-tab-in">
+          <TabsContent value="guests" className="mt-6 animate-tab-in">
                 <GuestsTab planId={plan.id} guests={guests} refresh={refresh} autoOpen={guestsAutoOpen} onAutoOpenHandled={() => setGuestsAutoOpen(null)} />
-              </TabsContent>
-              <TabsContent value="tables" className="mt-6 animate-tab-in">
+          </TabsContent>
+          <TabsContent value="tables" className="mt-6 animate-tab-in">
                 <TablesTab planId={plan.id} scenarioId={scenarioId ?? ""} tables={tables} assignments={assignments} refresh={refresh} autoOpen={tablesAutoOpen} onAutoOpenHandled={() => setTablesAutoOpen(null)} />
-              </TabsContent>
-              <TabsContent value="compare" className="mt-6 animate-tab-in">
+          </TabsContent>
+          <TabsContent value="compare" className="mt-6 animate-tab-in">
                 <CompareScenarios scenarios={scenarios} currentScenarioId={scenarioId} currentTables={tables} currentAssignments={assignments} guests={guests} constraints={constraints} />
-              </TabsContent>
-              <TabsContent value="constraints" className="mt-6 animate-tab-in">
+          </TabsContent>
+          <TabsContent value="constraints" className="mt-6 animate-tab-in">
                 <ConstraintsPanel planId={plan.id} guests={guests} constraints={constraints} refresh={refresh} />
-              </TabsContent>
-              <TabsContent value="export" className="mt-6 animate-tab-in">
+          </TabsContent>
+          <TabsContent value="export" className="mt-6 animate-tab-in">
                 <ExportPanel plan={plan} guests={guests} tables={tables} assignments={assignments} />
-              </TabsContent>
-            </>
-          )}
+          </TabsContent>
         </Tabs>
       </main>
 
