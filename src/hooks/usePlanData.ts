@@ -39,9 +39,14 @@ export function usePlanData(code: string | undefined) {
       if (!active) return;
       if (!data) { setNotFound(true); setLoading(false); return; }
       setPlan(data as Plan);
-      // Pick default scenario (or first)
+      // Pick last-active scenario (persisted), else default, else first
       const { data: scns } = await supabase.from("scenarios").select("*").eq("plan_id", data.id).order("created_at");
-      let chosen = (scns ?? []).find(s => s.is_default) ?? (scns ?? [])[0];
+      const list = scns ?? [];
+      const stored = typeof window !== "undefined" ? localStorage.getItem(`plan:${data.id}:activeScenario`) : null;
+      let chosen =
+        (stored && list.find(s => s.id === stored)) ||
+        list.find(s => s.is_default) ||
+        list[0];
       if (!chosen) {
         const { data: created } = await supabase.from("scenarios").insert({ plan_id: data.id, name: "Default", is_default: true }).select().single();
         chosen = created as Scenario;
@@ -72,7 +77,13 @@ export function usePlanData(code: string | undefined) {
 
   const setScenarioId = useCallback((id: string | null) => {
     setScenarioIdState(id);
-    if (plan) loadAll(plan.id, id);
+    if (plan) {
+      if (typeof window !== "undefined") {
+        if (id) localStorage.setItem(`plan:${plan.id}:activeScenario`, id);
+        else localStorage.removeItem(`plan:${plan.id}:activeScenario`);
+      }
+      loadAll(plan.id, id);
+    }
   }, [plan, loadAll]);
 
   return { plan, setPlan, scenarios, scenarioId, setScenarioId, guests, tables, assignments, constraints, loading, notFound, refresh };
