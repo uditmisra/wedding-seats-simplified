@@ -252,12 +252,61 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
   );
 }
 
-function tableBox(t: TableDef): { w: number; h: number } {
-  if (t.shape === "round") return { w: 200, h: 200 };
-  if (t.shape === "square") return { w: 200, h: 200 };
-  if (t.shape === "head") return { w: 220, h: 120 };
-  if (t.shape === "long") return { w: 240, h: 120 };
-  return { w: 200, h: 140 };
+/**
+ * Compute table dimensions and inner shape size that scale with capacity so
+ * seats never overlap. Seats are ~30px and need ~36px spacing (centre-to-centre).
+ */
+export interface TableDims {
+  /** Hit / drop-zone box including seat halo. */
+  box: { w: number; h: number };
+  /** Drawn shape width (rect) or unused (round = use radius). */
+  shapeW: number;
+  /** Drawn shape height. */
+  shapeH: number;
+  /** Radius for round/square inscribed circle. */
+  radius: number;
+}
+
+const SEAT_PITCH = 36;   // min centre-to-centre seat spacing
+const SEAT_SIZE = 30;    // seat diameter
+const SEAT_GAP = 18;     // gap from table edge to seat centre
+
+function tableDims(t: TableDef): TableDims {
+  const cap = Math.max(1, t.capacity);
+  if (t.shape === "round") {
+    // Circumference must fit cap seats at SEAT_PITCH apart.
+    const seatRing = (cap * SEAT_PITCH) / (2 * Math.PI);
+    const radius = Math.max(60, seatRing - SEAT_GAP);
+    const outer = radius + SEAT_GAP + SEAT_SIZE / 2;
+    return { box: { w: outer * 2, h: outer * 2 }, shapeW: radius * 2, shapeH: radius * 2, radius };
+  }
+  if (t.shape === "square") {
+    // Seats wrap around perimeter; perimeter / cap >= SEAT_PITCH.
+    const side = Math.max(110, (cap * SEAT_PITCH) / 4);
+    const outer = side / 2 + SEAT_GAP + SEAT_SIZE / 2;
+    return { box: { w: outer * 2, h: outer * 2 }, shapeW: side, shapeH: side, radius: side / 2 };
+  }
+  // Rectangular variants — top/bottom rows + optional end seats.
+  const useEnds = cap >= 4;
+  const sideTotal = useEnds ? cap - 2 : cap;
+  const top = Math.ceil(sideTotal / 2);
+  const bot = sideTotal - top;
+  const perRow = Math.max(top, bot, 1);
+  // width must fit perRow seats: (perRow + 1) gaps along the row inside w
+  const minW =
+    t.shape === "head" ? 180 :
+    t.shape === "long" ? 200 : 160;
+  const minH =
+    t.shape === "head" ? 64 :
+    t.shape === "long" ? 60 : 90;
+  const shapeW = Math.max(minW, (perRow + 1) * SEAT_PITCH);
+  const shapeH = minH;
+  const padX = (useEnds ? SEAT_GAP + SEAT_SIZE / 2 : 0) + 8;
+  const padY = SEAT_GAP + SEAT_SIZE / 2;
+  return {
+    box: { w: shapeW + padX * 2, h: shapeH + padY * 2 },
+    shapeW, shapeH, radius: 0,
+  };
 }
 
 function TableDropZone({ tableId, style }: { tableId: string; style: React.CSSProperties }) {
