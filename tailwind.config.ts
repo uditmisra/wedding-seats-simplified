@@ -13,9 +13,15 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['"Inter Tight"', "system-ui", "sans-serif"],
+        display: ['"Newsreader"', '"Times New Roman"', "serif"],
+        mono: ['"Geist Mono"', "ui-monospace", "monospace"],
+      },
       colors: {
         border: "hsl(var(--border))",
         hairline: "hsl(var(--hairline))",
+        "hairline-2": "hsl(var(--hairline-2))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
@@ -57,6 +63,28 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Atelier named tokens
+        paper: {
+          DEFAULT: "hsl(var(--paper))",
+          2: "hsl(var(--paper-2))",
+          3: "hsl(var(--paper-3))",
+        },
+        ink: {
+          DEFAULT: "hsl(var(--ink))",
+          2: "hsl(var(--ink-2))",
+          3: "hsl(var(--ink-3))",
+          4: "hsl(var(--ink-4))",
+        },
+        olive: {
+          DEFAULT: "hsl(var(--olive))",
+          2: "hsl(var(--olive-2))",
+        },
+        terracotta: {
+          DEFAULT: "hsl(var(--terracotta))",
+          2: "hsl(var(--terracotta-2))",
+        },
+        rose: "hsl(var(--rose))",
+        butter: "hsl(var(--butter))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

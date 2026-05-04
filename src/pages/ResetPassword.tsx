@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -14,7 +14,7 @@ export default function ResetPassword() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+    const { data: sub } = supabase.auth.onAuthStateChange(event => {
       if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") setReady(true);
     });
     supabase.auth.getSession().then(({ data }) => { if (data.session) setReady(true); });
@@ -22,7 +22,8 @@ export default function ResetPassword() {
   }, []);
 
   const submit = async (e: React.FormEvent) => {
-    e.preventDefault(); setBusy(true);
+    e.preventDefault();
+    setBusy(true);
     const { error } = await supabase.auth.updateUser({ password });
     setBusy(false);
     if (error) { toast.error(error.message); return; }
@@ -31,26 +32,51 @@ export default function ResetPassword() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "var(--gradient-hero)" }}>
-      <header className="container h-16 flex items-center">
-        <Link to="/" className="text-soft hover:text-foreground inline-flex items-center gap-1.5 text-sm">
-          <ArrowLeft size={14}/> Back home
+    <div className="paper-grain min-h-screen">
+      <header className="container flex items-center justify-between py-7">
+        <Link to="/" className="flex items-baseline gap-1.5">
+          <span className="font-display text-[22px] tracking-tight">Seatly</span>
+          <span className="inline-block size-[5px] -translate-y-0.5 rounded-full bg-terracotta" aria-hidden />
+        </Link>
+        <Link to="/" className="inline-flex items-center gap-1.5 text-[13px] text-ink-3 hover:text-ink">
+          <ArrowLeft size={13} /> Back home
         </Link>
       </header>
-      <main className="flex-1 flex items-start justify-center pt-8 pb-20 px-4">
-        <div className="w-full max-w-md rounded-2xl bg-card border-hairline border shadow-elegant p-7">
-          <h1 className="font-display text-2xl">Set a new password</h1>
-          {ready ? (
-            <form onSubmit={submit} className="space-y-3 mt-5">
-              <div className="space-y-1.5">
-                <Label htmlFor="np" className="text-xs text-soft font-normal">New password</Label>
-                <Input id="np" type="password" value={password} onChange={e => setPassword(e.target.value)} minLength={8} required className="h-11 border-hairline"/>
-              </div>
-              <Button type="submit" className="w-full h-11" disabled={busy}>Update password</Button>
-            </form>
-          ) : (
-            <p className="text-sm text-soft mt-3">Open this page from the link in your password reset email.</p>
-          )}
+
+      <main className="container">
+        <div className="mx-auto max-w-md pt-10 md:pt-20">
+          <div className="rounded-2xl border hairline bg-card/80 p-7 shadow-elegant">
+            <div className="label-mono mb-3">Reset</div>
+            <h1 className="m-0 font-display text-[26px] leading-tight">
+              Set a <span className="font-display-italic">new</span> password.
+            </h1>
+            {ready ? (
+              <form onSubmit={submit} className="mt-6 space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="np" className="label-mono">New password</Label>
+                  <Input
+                    id="np"
+                    type="password"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    minLength={8}
+                    required
+                    className="h-11 rounded-full border-hairline bg-transparent px-4"
+                  />
+                  <div className="font-mono text-[11px] text-ink-3">At least 8 characters</div>
+                </div>
+                <Button type="submit" className="h-11 w-full rounded-full" disabled={busy}>
+                  {busy && <Loader2 size={14} className="mr-1.5 animate-spin" />}
+                  Update password
+                  <span className="ml-1 font-display-italic">→</span>
+                </Button>
+              </form>
+            ) : (
+              <p className="mt-4 font-display-italic text-[14px] text-ink-3">
+                Open this page from the link in your password reset email.
+              </p>
+            )}
+          </div>
         </div>
       </main>
     </div>

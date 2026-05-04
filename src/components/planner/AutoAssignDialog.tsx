@@ -49,6 +49,14 @@ export function AutoAssignDialog({ planId, scenarioId, guests, tables, assignmen
       .map(([guest_id, table_id]) => ({ plan_id: planId, scenario_id: scenarioId, guest_id, table_id }));
     if (rows.length) await supabase.from("assignments").insert(rows);
     setLoading(false);
+    try {
+      localStorage.setItem(`plan:${planId}:autoAssignLast`, JSON.stringify({
+        when: Date.now(),
+        seated: rows.length + pinnedIds.size,
+        total: eligible,
+        conflicts: 0,
+      }));
+    } catch {}
     toast.success(`Seated ${rows.length} guests`);
     onClose();
   };

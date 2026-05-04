@@ -1,8 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { LogOut, User as UserIcon } from "lucide-react";
+import { LogOut } from "lucide-react";
 
 function initials(s: string) {
   return s.split(/[@\s.]+/).filter(Boolean).slice(0, 2).map(p => p[0]?.toUpperCase() ?? "").join("") || "?";
@@ -15,24 +14,30 @@ export function UserMenu() {
   if (!user) {
     const next = encodeURIComponent(location.pathname + location.search);
     return (
-      <Button asChild variant="ghost" size="sm" className="h-9">
-        <Link to={`/auth?next=${next}`}>Sign in</Link>
-      </Button>
+      <Link
+        to={`/auth?next=${next}`}
+        className="inline-flex h-9 items-center rounded-full border-hairline border px-3 font-mono text-[11px] uppercase tracking-[0.12em] text-ink-2 hover:bg-paper-2"
+      >
+        Sign in
+      </Link>
     );
   }
   const label = user.email ?? "Account";
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button aria-label="Account" className="h-9 w-9 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center hover:bg-primary/15 transition">
+        <button
+          aria-label="Account"
+          className="flex size-9 items-center justify-center rounded-full bg-olive font-mono text-[11px] font-medium text-paper transition hover:bg-olive-2"
+        >
           {initials(label)}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="truncate text-xs text-soft font-normal">{label}</DropdownMenuLabel>
-        <DropdownMenuSeparator/>
+      <DropdownMenuContent align="end" className="w-56 rounded-xl border-hairline">
+        <DropdownMenuLabel className="truncate text-[12px] font-normal text-ink-3">{label}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => signOut()}>
-          <LogOut size={14} className="mr-2"/>Sign out
+          <LogOut size={14} className="mr-2" />Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

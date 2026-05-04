@@ -22,35 +22,38 @@ export function OnboardingFlow({ planId, scenarioId, guestCount, tableCount, onI
   const [step, setStep] = useState<Step>(guestCount > 0 ? (tableCount > 0 ? 3 : 2) : 1);
 
   const steps = [
-    { n: 1 as Step, label: "Guests", icon: Users, done: guestCount > 0 },
-    { n: 2 as Step, label: "Tables", icon: LayoutGrid, done: tableCount > 0 },
-        { n: 3 as Step, label: "Seat everyone", icon: Wand2, done: false },
+    { n: 1 as Step, numeral: "I", label: "Guests", icon: Users, done: guestCount > 0 },
+    { n: 2 as Step, numeral: "II", label: "Tables", icon: LayoutGrid, done: tableCount > 0 },
+    { n: 3 as Step, numeral: "III", label: "Seat everyone", icon: Wand2, done: false },
   ];
 
   return (
-    <div className="rounded-2xl border border-border/60 bg-card p-6 md:p-8 shadow-[var(--shadow-soft)] space-y-6">
-      {/* Progress rail */}
-      <ol className="flex items-center gap-2 sm:gap-4 text-sm">
+    <div className="rounded-2xl border hairline bg-card p-6 md:p-8 shadow-soft space-y-6">
+      {/* Progress rail — chapter numerals */}
+      <ol className="flex flex-wrap items-center gap-2 text-sm sm:gap-4">
         {steps.map((s, i) => {
           const Icon = s.icon;
           const isActive = step === s.n;
           const isDone = s.done;
           return (
-            <li key={s.n} className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
+            <li key={s.n} className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
               <button
                 onClick={() => setStep(s.n)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition ${
-                  isActive ? "bg-primary text-primary-foreground border-primary"
-                  : isDone ? "bg-sage/20 text-foreground border-sage/40"
-                  : "bg-background text-muted-foreground border-border/60 hover:text-foreground"
+                className={`flex items-center gap-2 rounded-full border px-3.5 py-1.5 transition ${
+                  isActive ? "border-ink bg-ink text-paper"
+                  : isDone ? "border-olive/40 bg-olive/15 text-ink"
+                  : "border-hairline bg-paper text-ink-3 hover:text-ink"
                 }`}
               >
-                {isDone ? <Check size={14}/> : <Icon size={14}/>}
+                <span className={`font-display-italic text-[12px] ${isActive ? "text-paper" : isDone ? "text-olive" : "text-terracotta"}`}>
+                  {s.numeral}
+                </span>
+                {isDone ? <Check size={14} /> : <Icon size={14} />}
                 <span className="font-medium">{s.label}</span>
-                {isDone && s.n === 1 && <span className="text-xs opacity-70">· {guestCount}</span>}
-                {isDone && s.n === 2 && <span className="text-xs opacity-70">· {tableCount}</span>}
+                {isDone && s.n === 1 && <span className="font-mono text-[10px] opacity-70">· {guestCount}</span>}
+                {isDone && s.n === 2 && <span className="font-mono text-[10px] opacity-70">· {tableCount}</span>}
               </button>
-              {i < steps.length - 1 && <div className="h-px flex-1 bg-border/60"/>}
+              {i < steps.length - 1 && <div className="h-px flex-1 bg-hairline" />}
             </li>
           );
         })}
@@ -59,15 +62,21 @@ export function OnboardingFlow({ planId, scenarioId, guestCount, tableCount, onI
       {step === 1 && (
         <div className="space-y-4">
           <div>
-            <h2 className="font-display text-2xl md:text-3xl">Who's coming?</h2>
-            <p className="text-muted-foreground mt-1">Paste or type names — we'll structure the rest.</p>
+            <h2 className="font-display text-2xl md:text-[32px]">
+              Who&apos;s <span className="font-display-italic">coming?</span>
+            </h2>
+            <p className="mt-1 text-ink-3">Paste or type names — we&apos;ll structure the rest.</p>
           </div>
-          <SmartGuestInput planId={planId} onDone={refresh}/>
+          <SmartGuestInput planId={planId} onDone={refresh} />
 
-          <div className="flex flex-wrap gap-2 items-center pt-2 border-t border-border/40">
-            <span className="text-xs text-muted-foreground">Have a spreadsheet?</span>
-            <Button variant="outline" size="sm" onClick={onImport}><Upload size={14} className="mr-1.5"/>Import CSV / Excel</Button>
-            <Button variant="ghost" size="sm" onClick={downloadGuestTemplate}><Download size={14} className="mr-1"/>Template</Button>
+          <div className="flex flex-wrap items-center gap-2 border-t hairline pt-3">
+            <span className="text-xs text-ink-3">Have a spreadsheet?</span>
+            <Button variant="outline" size="sm" className="rounded-full border-hairline" onClick={onImport}>
+              <Upload size={14} className="mr-1.5" />Import CSV / Excel
+            </Button>
+            <Button variant="ghost" size="sm" onClick={downloadGuestTemplate}>
+              <Download size={14} className="mr-1" />Template
+            </Button>
           </div>
         </div>
       )}
@@ -75,41 +84,45 @@ export function OnboardingFlow({ planId, scenarioId, guestCount, tableCount, onI
       {step === 2 && (
         <div className="space-y-4">
           <div>
-            <h2 className="font-display text-2xl md:text-3xl">Set up your room</h2>
-            <p className="text-muted-foreground mt-1">Try: "10 rounds of 8 + a head table for 6".</p>
+            <h2 className="font-display text-2xl md:text-[32px]">
+              Set up your <span className="font-display-italic">room.</span>
+            </h2>
+            <p className="mt-1 text-ink-3">Try: &ldquo;10 rounds of 8 + a head table for 6&rdquo;.</p>
           </div>
-          <SmartTableInput planId={planId} scenarioId={scenarioId} existingCount={tableCount} onDone={refresh}/>
+          <SmartTableInput planId={planId} scenarioId={scenarioId} existingCount={tableCount} onDone={refresh} />
         </div>
       )}
 
       {step === 3 && (
         <div className="space-y-4">
           <div>
-            <h2 className="font-display text-2xl md:text-3xl">You're ready 🎉</h2>
-            <p className="text-muted-foreground mt-1">
+            <h2 className="font-display text-2xl md:text-[32px]">
+              You&apos;re <span className="font-display-italic">ready.</span>
+            </h2>
+            <p className="mt-1 text-ink-3">
               {guestCount > 0 && tableCount > 0
                 ? `${guestCount} guests, ${tableCount} tables. Want us to take a first pass?`
                 : "Add guests and tables first, then come back."}
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <button
               onClick={onAutoAssign}
               disabled={guestCount === 0 || tableCount === 0}
-              className="text-left rounded-xl border border-border/60 hover:border-primary/60 disabled:opacity-50 disabled:hover:border-border/60 transition p-5 bg-background/50"
+              className="rounded-xl border hairline bg-paper-2/40 p-5 text-left transition hover:border-terracotta/60 disabled:opacity-50 disabled:hover:border-hairline"
             >
-              <Wand2 className="text-primary" size={22}/>
-              <div className="font-display text-lg mt-2">Seat them for me</div>
-              <div className="text-sm text-muted-foreground mt-1">Keeps families together, honours your sit-with rules, fills tables evenly.</div>
+              <Wand2 className="text-terracotta" size={22} />
+              <div className="mt-2 font-display text-lg">Seat them for me</div>
+              <div className="mt-1 text-sm text-ink-3">Keeps families together, honours your sit-with rules, fills tables evenly.</div>
             </button>
             <button
               onClick={onFinish}
-              className="text-left rounded-xl border border-border/60 hover:border-primary/60 transition p-5 bg-background/50"
+              className="rounded-xl border hairline bg-paper-2/40 p-5 text-left transition hover:border-terracotta/60"
             >
-              <LayoutGrid className="text-primary" size={22}/>
-              <div className="font-display text-lg mt-2">I'll seat them myself</div>
-              <div className="text-sm text-muted-foreground mt-1">Drag and drop guests onto tables — your call.</div>
+              <LayoutGrid className="text-olive" size={22} />
+              <div className="mt-2 font-display text-lg">I&apos;ll seat them myself</div>
+              <div className="mt-1 text-sm text-ink-3">Drag and drop guests onto tables — your call.</div>
             </button>
           </div>
         </div>

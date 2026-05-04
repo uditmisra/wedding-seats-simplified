@@ -9,8 +9,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { tableConflicts } from "@/lib/seating";
 import { FloorPlan } from "./FloorPlan";
 import { SeatMenu } from "./SeatMenu";
-import { LayoutDashboard, List as ListIcon } from "lucide-react";
+import { EmptyCanvas } from "./EmptyCanvas";
+import { LayoutDashboard, List as ListIcon, Users as UsersIcon } from "lucide-react";
 import { toast } from "sonner";
+import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
+import { useBelowLg } from "@/hooks/use-mobile";
 
 interface Props {
   planId: string;
@@ -36,6 +39,7 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
   const [activeId, setActiveId] = useState<string | null>(null);
   const [view, setView] = useState<"list" | "floor">("floor");
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+  const isBelowLg = useBelowLg();
 
   const assignedMap = useMemo(() => new Map(assignments.map(a => [a.guest_id, a])), [assignments]);
   const guestById = useMemo(() => new Map(guests.map(g => [g.id, g])), [guests]);
@@ -163,20 +167,29 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
     refresh();
   };
 
+  if (tables.length === 0 && guests.length === 0) {
+    return (
+      <EmptyCanvas
+        onAddTables={() => onGoToTables?.()}
+        onAddGuests={() => onGoToGuests?.()}
+      />
+    );
+  }
+
   return (
     <DndContext sensors={sensors} onDragStart={e => setActiveId(String(e.active.id))} onDragEnd={onDragEnd}>
       <TooltipProvider delayDuration={200}>
-        <div className="flex justify-end mb-4">
-          <div className="inline-flex rounded-lg border-hairline border bg-card p-0.5">
+        <div className="mb-4 flex justify-end">
+          <div className="inline-flex rounded-full border-hairline border bg-paper p-0.5">
             <Tooltip><TooltipTrigger asChild>
               <button onClick={() => setView("floor")} aria-label="Floor plan view"
-                className={`p-1.5 rounded-md transition ${view === "floor" ? "bg-primary text-primary-foreground" : "text-soft hover:text-foreground"}`}>
-                <LayoutDashboard size={15}/></button>
+                className={`rounded-full p-1.5 transition ${view === "floor" ? "bg-ink text-paper" : "text-ink-3 hover:text-ink"}`}>
+                <LayoutDashboard size={15} /></button>
             </TooltipTrigger><TooltipContent>Floor plan</TooltipContent></Tooltip>
             <Tooltip><TooltipTrigger asChild>
               <button onClick={() => setView("list")} aria-label="List view"
-                className={`p-1.5 rounded-md transition ${view === "list" ? "bg-primary text-primary-foreground" : "text-soft hover:text-foreground"}`}>
-                <ListIcon size={15}/></button>
+                className={`rounded-full p-1.5 transition ${view === "list" ? "bg-ink text-paper" : "text-ink-3 hover:text-ink"}`}>
+                <ListIcon size={15} /></button>
             </TooltipTrigger><TooltipContent>List view</TooltipContent></Tooltip>
           </div>
         </div>
@@ -184,15 +197,29 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
 
       {view === "floor" ? (
         <div className="grid lg:grid-cols-[280px_1fr] gap-6">
-          <UnassignedPanel guests={unassigned} search={search} setSearch={setSearch} totalGuests={guests.length} onAddGuest={onGoToGuests}/>
+          {!isBelowLg && (
+            <UnassignedPanel guests={unassigned} search={search} setSearch={setSearch} totalGuests={guests.length} onAddGuest={onGoToGuests}/>
+          )}
           <FloorPlan
             tables={tables} assignments={assignments} guests={guests} constraints={constraints} scenarioId={scenarioId}
             onUnassign={handleUnassign} onTogglePin={handleTogglePin} onMoveTo={handleMoveTo} onSwapWith={handleSwap}
           />
+          {isBelowLg && (
+            <UnassignedDrawerTrigger count={unassigned.length}>
+              <UnassignedPanel guests={unassigned} search={search} setSearch={setSearch} totalGuests={guests.length} onAddGuest={onGoToGuests}/>
+            </UnassignedDrawerTrigger>
+          )}
         </div>
       ) : (
         <div className="grid lg:grid-cols-[280px_1fr] gap-6">
-          <UnassignedPanel guests={unassigned} search={search} setSearch={setSearch} totalGuests={guests.length} onAddGuest={onGoToGuests}/>
+          {!isBelowLg && (
+            <UnassignedPanel guests={unassigned} search={search} setSearch={setSearch} totalGuests={guests.length} onAddGuest={onGoToGuests}/>
+          )}
+          {isBelowLg && (
+            <UnassignedDrawerTrigger count={unassigned.length}>
+              <UnassignedPanel guests={unassigned} search={search} setSearch={setSearch} totalGuests={guests.length} onAddGuest={onGoToGuests}/>
+            </UnassignedDrawerTrigger>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {tables.length === 0 && (
               <div className="col-span-full rounded-2xl border border-dashed hairline bg-surface/50 p-12 text-center">
@@ -221,27 +248,68 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
   );
 }
 
+/**
+ * Mobile-only floating button + Vaul drawer that surfaces the unseated panel
+ * (the entire panel is passed in as children so drag-source droppable wiring
+ * is preserved). Hidden at lg+.
+ */
+function UnassignedDrawerTrigger({ count, children }: { count: number; children: React.ReactNode }) {
+  return (
+    <Drawer>
+      <DrawerTrigger asChild>
+        <button
+          type="button"
+          className="fixed bottom-5 left-1/2 z-30 inline-flex -translate-x-1/2 items-center gap-2 rounded-full bg-ink px-5 py-3 font-mono text-[12px] uppercase tracking-[0.12em] text-paper shadow-elegant lg:hidden"
+        >
+          <UsersIcon size={14} />
+          Guests to seat
+          <span className="ml-0.5 inline-flex size-5 items-center justify-center rounded-full bg-paper font-mono text-[10px] text-ink">
+            {count}
+          </span>
+        </button>
+      </DrawerTrigger>
+      <DrawerContent className="bg-paper">
+        <div className="max-h-[80vh] overflow-y-auto p-4 pb-10">
+          {children}
+        </div>
+      </DrawerContent>
+    </Drawer>
+  );
+}
+
 function UnassignedPanel({ guests, search, setSearch, totalGuests, onAddGuest }: { guests: Guest[]; search: string; setSearch: (s: string) => void; totalGuests: number; onAddGuest?: () => void }) {
   const { setNodeRef, isOver } = useDroppable({ id: "__unassign__" });
   return (
-    <div ref={setNodeRef} className={`rounded-2xl border bg-card p-4 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto transition ${isOver ? "border-primary ring-2 ring-primary/20" : "hairline"}`}>
-      <div className="flex items-baseline justify-between mb-3 px-1">
-        <h3 className="font-display text-base">Guests to seat</h3>
-        <span className="text-xs text-soft tabular-nums">{guests.length}</span>
+    <div
+      ref={setNodeRef}
+      className={`paper-grain rounded-2xl border p-4 transition lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto ${isOver ? "border-terracotta ring-2 ring-terracotta/20" : "hairline"}`}
+    >
+      <div className="mb-3 flex items-baseline justify-between px-1">
+        <h3 className="m-0 font-display text-[20px] leading-none">
+          Guests to <span className="font-display-italic">seat</span>
+        </h3>
+        <span className="font-mono text-[11px] tabular-nums text-ink-3">{guests.length}</span>
       </div>
       <div className="relative mb-3 border-b hairline">
-        <Search className="absolute left-1 top-2 text-soft" size={13}/>
-        <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search" className="pl-6 h-8 text-sm border-0 rounded-none focus-visible:ring-0 bg-transparent"/>
+        <Search className="absolute left-1 top-2 text-ink-3" size={13} />
+        <Input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search"
+          className="h-8 rounded-none border-0 bg-transparent pl-6 text-sm focus-visible:ring-0"
+        />
       </div>
-      <div className="space-y-1">
-        {guests.map(g => <GuestPill key={g.id} guest={g}/>)}
+      <div className="space-y-0.5">
+        {guests.map(g => <GuestPill key={g.id} guest={g} />)}
         {guests.length === 0 && totalGuests === 0 && (
-          <div className="text-center py-6">
-            <UserPlus className="mx-auto text-soft mb-2" size={18}/>
-            <Button size="sm" variant="outline" onClick={onAddGuest}>Add guests</Button>
+          <div className="py-6 text-center">
+            <UserPlus className="mx-auto mb-2 text-ink-3" size={18} />
+            <Button size="sm" variant="outline" className="rounded-full border-hairline" onClick={onAddGuest}>Add guests</Button>
           </div>
         )}
-        {guests.length === 0 && totalGuests > 0 && <div className="text-xs text-soft py-6 text-center">All seated</div>}
+        {guests.length === 0 && totalGuests > 0 && (
+          <div className="py-6 text-center font-display-italic text-[13px] text-ink-3">All seated.</div>
+        )}
       </div>
     </div>
   );
@@ -249,17 +317,25 @@ function UnassignedPanel({ guests, search, setSearch, totalGuests, onAddGuest }:
 
 function GuestPill({ guest, dragging, pinned }: { guest: Guest; dragging?: boolean; pinned?: boolean }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: guest.id });
-  const style = transform ? { transform: `translate(${transform.x}px, ${transform.y}px)` } : undefined;
+  const style = transform ? { transform: `translate(${transform.x}px, ${transform.y}px) rotate(-3deg)` } : undefined;
   return (
-    <div ref={setNodeRef} style={style} {...listeners} {...attributes}
-      className={`group flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-sm cursor-grab active:cursor-grabbing transition
-        ${isDragging ? "opacity-30" : ""} ${dragging ? "shadow-elegant bg-card ring-1 ring-primary/40" : "hover:bg-surface-hover"}`}>
-      <div className="flex-1 min-w-0 truncate">
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      className={`group flex cursor-grab items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm transition active:cursor-grabbing
+        ${isDragging ? "opacity-30" : ""}
+        ${dragging
+          ? "border border-terracotta/60 bg-paper shadow-elegant"
+          : "hover:bg-paper-2/60"}`}
+    >
+      <div className="min-w-0 flex-1 truncate">
         <span className="font-medium">{guest.name}</span>
-        {guest.party && <span className="text-soft text-xs ml-1.5">{guest.party}</span>}
+        {guest.party && <span className="ml-1.5 text-xs text-ink-3">{guest.party}</span>}
       </div>
-      {guest.meal && <span className="w-1.5 h-1.5 rounded-full bg-accent" title={guest.meal}/>}
-      {pinned && <Pin size={11} className="text-primary"/>}
+      {guest.meal && <span className="size-1.5 rounded-full bg-terracotta" title={guest.meal} />}
+      {pinned && <Pin size={11} className="text-olive" />}
     </div>
   );
 }
@@ -346,15 +422,15 @@ function CapacityRing({ seated, capacity, ratio, over }: { seated: number; capac
   const r = 13;
   const c = 2 * Math.PI * r;
   return (
-    <div className="relative w-9 h-9 shrink-0" title={`${seated} / ${capacity} seated`}>
-      <svg viewBox="0 0 32 32" className="w-full h-full -rotate-90">
-        <circle cx="16" cy="16" r={r} fill="none" stroke="hsl(var(--hairline))" strokeWidth="2"/>
+    <div className="relative h-9 w-9 shrink-0" title={`${seated} / ${capacity} seated`}>
+      <svg viewBox="0 0 32 32" className="h-full w-full -rotate-90">
+        <circle cx="16" cy="16" r={r} fill="none" stroke="hsl(var(--hairline))" strokeWidth="2" />
         <circle cx="16" cy="16" r={r} fill="none"
-          stroke={over ? "hsl(var(--warning))" : "hsl(var(--primary))"}
+          stroke={over ? "hsl(var(--terracotta))" : "hsl(var(--olive))"}
           strokeWidth="2" strokeLinecap="round"
-          strokeDasharray={`${c * ratio} ${c}`}/>
+          strokeDasharray={`${c * ratio} ${c}`} />
       </svg>
-      <span className="absolute inset-0 flex items-center justify-center text-[10px] font-medium tabular-nums text-soft">{seated}/{capacity}</span>
+      <span className="absolute inset-0 flex items-center justify-center font-mono text-[10px] tabular-nums text-ink-3">{seated}/{capacity}</span>
     </div>
   );
 }

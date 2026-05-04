@@ -124,7 +124,7 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
   });
 
   return (
-    <div className="relative rounded-2xl border hairline overflow-hidden bg-card">
+    <div className="relative rounded-2xl border hairline overflow-hidden bg-paper">
       <div
         ref={viewportRef}
         onWheel={onWheel}
@@ -133,16 +133,13 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
         data-canvas-bg="1"
-        className="relative w-full overflow-hidden touch-none select-none"
+        className="paper-grain relative w-full overflow-hidden touch-none select-none"
         style={{
           height: "70vh", minHeight: 420, cursor,
-          backgroundImage: "radial-gradient(circle, hsl(var(--foreground) / 0.08) 1px, transparent 1px)",
-          backgroundSize: `${dotSize}px ${dotSize}px`,
-          backgroundPosition: `${view.x}px ${view.y}px`,
         }}
       >
         {tables.length === 0 ? (
-          <div className="absolute inset-0 flex items-center justify-center text-center text-muted-foreground p-16">
+          <div className="absolute inset-0 flex items-center justify-center text-center text-ink-3 p-16 font-display-italic">
             Add a few tables and your room will come to life here.
           </div>
         ) : (
@@ -156,14 +153,10 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
           >
             <svg viewBox={`0 0 ${width} ${height}`} width={width} height={height} className="block">
               <defs>
-                <radialGradient id="tableSheen" cx="35%" cy="30%" r="70%">
-                  <stop offset="0%" stopColor="hsl(var(--card))" stopOpacity="1"/>
-                  <stop offset="100%" stopColor="hsl(var(--muted))" stopOpacity="1"/>
-                </radialGradient>
                 <filter id="tableShadow" x="-50%" y="-50%" width="200%" height="200%">
-                  <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
-                  <feOffset dx="0" dy="3" result="off"/>
-                  <feComponentTransfer><feFuncA type="linear" slope="0.25"/></feComponentTransfer>
+                  <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+                  <feOffset dx="0" dy="2" result="off"/>
+                  <feComponentTransfer><feFuncA type="linear" slope="0.18"/></feComponentTransfer>
                   <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
                 </filter>
               </defs>
@@ -224,8 +217,8 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
                 const seated = assignments.filter(a => a.table_id === t.id);
                 return (
                   <div key={`lbl-${t.id}`} className="absolute pointer-events-none text-center" style={{ left: cx, top: cy, transform: "translate(-50%, -50%)" }}>
-                    <div className="font-display text-[13px] leading-none">{t.name}</div>
-                    <div className="text-[9px] uppercase tracking-wider text-muted-foreground mt-1 tabular-nums">{seated.length} / {t.capacity}</div>
+                    <div className="font-display text-[14px] leading-none text-ink">{t.name}</div>
+                    <div className="font-mono text-[9px] uppercase tracking-[0.12em] text-ink-3 mt-1 tabular-nums">{seated.length} / {t.capacity}</div>
                   </div>
                 );
               })}
@@ -234,19 +227,19 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
         )}
 
         {/* Zoom + view controls */}
-        <div className="absolute bottom-3 right-3 flex items-center gap-1 bg-card/90 backdrop-blur rounded-full border hairline shadow-sm px-1 py-1">
-          <button onClick={() => zoomBy(1/1.2)} className="w-7 h-7 rounded-full hover:bg-surface-hover flex items-center justify-center text-soft" aria-label="Zoom out"><Minus size={13}/></button>
-          <button onClick={reset} className="px-2 text-xs tabular-nums text-soft hover:text-foreground min-w-[42px]" aria-label="Reset zoom">{Math.round(view.z * 100)}%</button>
-          <button onClick={() => zoomBy(1.2)} className="w-7 h-7 rounded-full hover:bg-surface-hover flex items-center justify-center text-soft" aria-label="Zoom in"><Plus size={13}/></button>
-          <span className="w-px h-4 bg-border mx-0.5"/>
-          <button onClick={fit} className="w-7 h-7 rounded-full hover:bg-surface-hover flex items-center justify-center text-soft" aria-label="Fit to content" title="Fit to content"><Maximize2 size={12}/></button>
-          <button onClick={reset} className="w-7 h-7 rounded-full hover:bg-surface-hover flex items-center justify-center text-soft" aria-label="Reset view" title="Reset view"><RotateCcw size={12}/></button>
+        <div className="absolute bottom-3 right-3 flex items-center gap-1 bg-paper/90 backdrop-blur rounded-full border hairline shadow-soft px-1 py-1">
+          <button onClick={() => zoomBy(1/1.2)} className="w-7 h-7 rounded-full hover:bg-paper-2 flex items-center justify-center text-ink-3" aria-label="Zoom out"><Minus size={13}/></button>
+          <button onClick={reset} className="px-2 font-mono text-[11px] tabular-nums text-ink-3 hover:text-ink min-w-[42px]" aria-label="Reset zoom">{Math.round(view.z * 100)}%</button>
+          <button onClick={() => zoomBy(1.2)} className="w-7 h-7 rounded-full hover:bg-paper-2 flex items-center justify-center text-ink-3" aria-label="Zoom in"><Plus size={13}/></button>
+          <span className="w-px h-4 bg-hairline mx-0.5"/>
+          <button onClick={fit} className="w-7 h-7 rounded-full hover:bg-paper-2 flex items-center justify-center text-ink-3" aria-label="Fit to content" title="Fit to content"><Maximize2 size={12}/></button>
+          <button onClick={reset} className="w-7 h-7 rounded-full hover:bg-paper-2 flex items-center justify-center text-ink-3" aria-label="Reset view" title="Reset view"><RotateCcw size={12}/></button>
         </div>
 
-        <div className="absolute bottom-3 left-3 flex gap-3 text-[10px] uppercase tracking-wider text-muted-foreground bg-card/80 backdrop-blur rounded-full px-3 py-1.5 border border-border/60">
-          <span className="flex items-center gap-1"><Dot color="hsl(var(--sage))"/>seated</span>
-          <span className="flex items-center gap-1"><Dot color="hsl(var(--muted-foreground))"/>empty</span>
-          <span className="flex items-center gap-1"><Dot color="hsl(var(--destructive))"/>conflict</span>
+        <div className="absolute bottom-3 left-3 flex gap-3 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-3 bg-paper/85 backdrop-blur rounded-full px-3 py-1.5 border hairline">
+          <span className="flex items-center gap-1"><Dot color="hsl(var(--terracotta))"/>seated</span>
+          <span className="flex items-center gap-1"><Dot color="hsl(var(--ink-4))"/>empty</span>
+          <span className="flex items-center gap-1"><Dot color="hsl(var(--rose))"/>conflict</span>
         </div>
       </div>
     </div>
@@ -267,7 +260,7 @@ function TableDropZone({ tableId, style }: { tableId: string; style: React.CSSPr
     <div
       ref={setNodeRef}
       style={style}
-      className={`rounded-2xl pointer-events-auto transition ${isOver ? "ring-2 ring-primary/40 bg-primary/5" : ""}`}
+      className={`rounded-2xl pointer-events-auto transition ${isOver ? "ring-2 ring-terracotta/50 bg-terracotta/5" : ""}`}
     />
   );
 }
@@ -308,8 +301,8 @@ function Seat({ tableId, seatIndex, x, y, assignment, guest, table, allTables, t
         </SeatMenu>
       ) : (
         <div
-          className={`w-full h-full rounded-full border transition flex items-center justify-center text-[9px] text-muted-foreground ${
-            isOver ? "bg-primary/20 border-primary scale-110" : "bg-muted/40 border-border hover:border-foreground/30"
+          className={`w-full h-full rounded-full border transition flex items-center justify-center font-mono text-[9px] text-ink-3 ${
+            isOver ? "bg-terracotta/15 border-terracotta scale-110" : "border-ink/40 bg-paper/60 hover:border-ink/70"
           }`}
         >
           {seatIndex + 1}
@@ -326,14 +319,15 @@ function SeatedChip({ guestId, guest, pinned, swapPreview }: { guestId: string; 
       ref={setNodeRef}
       {...listeners}
       {...attributes}
-      className={`w-full h-full rounded-full flex items-center justify-center text-[10px] font-semibold cursor-grab active:cursor-grabbing transition shadow-soft
-        ${swapPreview ? "ring-2 ring-warning bg-warning/20 scale-110" : "bg-sage/90 hover:bg-sage text-foreground ring-1 ring-foreground/10"}
+      className={`relative w-full h-full rounded-full flex items-center justify-center font-mono text-[10px] font-medium cursor-grab active:cursor-grabbing transition
+        ${swapPreview
+          ? "ring-2 ring-butter bg-butter/40 text-ink scale-110"
+          : "bg-terracotta text-paper ring-1 ring-ink/20 hover:bg-terracotta-2"}
         ${isDragging ? "opacity-30" : ""}`}
-      style={{ background: swapPreview ? undefined : "hsl(var(--sage) / 0.85)" }}
       aria-label={`${guest.name}${pinned ? " (pinned)" : ""}`}
     >
       {initials(guest.name)}
-      {pinned && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-primary ring-1 ring-card"/>}
+      {pinned && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-olive ring-1 ring-paper"/>}
     </button>
   );
 }
@@ -350,30 +344,36 @@ interface ShapeProps {
 
 function TableShapeBg({ table, index, cx, cy, seated, conflict, over, diff }: ShapeProps) {
   const diffColor =
-    diff === "added" ? "hsl(var(--sage))" :
-    diff === "removed" ? "hsl(var(--muted-foreground))" :
-    diff === "changed" ? "hsl(var(--primary))" : null;
-  const stroke = diffColor ?? (conflict ? "hsl(var(--destructive))" : over ? "hsl(var(--warning))" : "hsl(var(--border))");
-  const strokeWidth = diffColor ? 3 : (conflict || over ? 2 : 1);
+    diff === "added" ? "hsl(var(--olive))" :
+    diff === "removed" ? "hsl(var(--ink-4))" :
+    diff === "changed" ? "hsl(var(--terracotta))" : null;
+  const baseStroke = "hsl(var(--ink))";
+  const stroke = diffColor ?? (conflict ? "hsl(var(--terracotta))" : over ? "hsl(var(--butter))" : baseStroke);
+  const strokeWidth = diffColor ? 2.5 : (conflict || over ? 2 : 1.25);
   const dash = diff === "removed" ? "6 4" : undefined;
+  const fill = "hsl(var(--paper))";
 
   let shape: JSX.Element;
+  let innerRing: JSX.Element | null = null;
   if (table.shape === "round") {
-    shape = <circle cx={cx} cy={cy} r={60} fill="url(#tableSheen)" stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} filter="url(#tableShadow)"/>;
+    shape = <circle cx={cx} cy={cy} r={60} fill={fill} stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} filter="url(#tableShadow)"/>;
+    innerRing = <circle cx={cx} cy={cy} r={54} fill="none" stroke={baseStroke} strokeWidth={0.5} opacity={0.35}/>;
   } else if (table.shape === "square") {
-    shape = <rect x={cx - 55} y={cy - 55} width={110} height={110} rx={8} fill="url(#tableSheen)" stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} filter="url(#tableShadow)"/>;
+    shape = <rect x={cx - 55} y={cy - 55} width={110} height={110} rx={8} fill={fill} stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} filter="url(#tableShadow)"/>;
+    innerRing = <rect x={cx - 49} y={cy - 49} width={98} height={98} rx={6} fill="none" stroke={baseStroke} strokeWidth={0.5} opacity={0.35}/>;
   } else if (table.shape === "head") {
-    shape = <rect x={cx - 90} y={cy - 32} width={180} height={64} rx={10} fill="url(#tableSheen)" stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} filter="url(#tableShadow)"/>;
+    shape = <rect x={cx - 90} y={cy - 32} width={180} height={64} rx={10} fill={fill} stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} filter="url(#tableShadow)"/>;
   } else if (table.shape === "long") {
-    shape = <rect x={cx - 100} y={cy - 30} width={200} height={60} rx={6} fill="url(#tableSheen)" stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} filter="url(#tableShadow)"/>;
+    shape = <rect x={cx - 100} y={cy - 30} width={200} height={60} rx={6} fill={fill} stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} filter="url(#tableShadow)"/>;
   } else {
-    shape = <rect x={cx - 80} y={cy - 45} width={160} height={90} rx={6} fill="url(#tableSheen)" stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} filter="url(#tableShadow)"/>;
+    shape = <rect x={cx - 80} y={cy - 45} width={160} height={90} rx={6} fill={fill} stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} filter="url(#tableShadow)"/>;
   }
 
   return (
     <g style={{ animation: `floorplan-rise 360ms cubic-bezier(0.22,1,0.36,1) ${index * 40}ms both`, transformOrigin: `${cx}px ${cy}px` }}>
       <style>{`@keyframes floorplan-rise { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }`}</style>
       {shape}
+      {innerRing}
     </g>
   );
 }

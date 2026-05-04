@@ -101,8 +101,13 @@ export function CompareScenarios({ scenarios, currentScenarioId, currentTables, 
 
   if (scenarios.length < 2) {
     return (
-      <div className="rounded-2xl border border-dashed border-border/60 bg-card/50 p-10 text-center text-muted-foreground">
-        Create a second layout to compare them side by side.
+      <div className="rounded-2xl border border-dashed hairline bg-paper-2/40 p-12 text-center">
+        <p className="m-0 font-display text-[28px] leading-tight">
+          Two <span className="font-display-italic">scenarios</span> — pick a winner.
+        </p>
+        <p className="mx-auto mt-3 max-w-md text-[14px] text-ink-3">
+          Create a second layout from the scenarios picker, then come back to compare them side by side.
+        </p>
       </div>
     );
   }
@@ -183,51 +188,159 @@ export function CompareScenarios({ scenarios, currentScenarioId, currentTables, 
     same: rows.filter(r => r.kind === "same").length,
   };
 
+  // Editorial observation — one short sentence pointing at the calmer plan.
+  const observation = (() => {
+    const leftStats = stats(currentTables, currentAssignments, constraints);
+    const rightStats = stats(otherTables, otherAssignments, constraints);
+    if (rightStats.conflicts < leftStats.conflicts) return `${other?.name ?? "Right"} is the calmer plan.`;
+    if (leftStats.conflicts < rightStats.conflicts) return `${current?.name ?? "Left"} is the calmer plan.`;
+    if (rightStats.seated > leftStats.seated) return `${other?.name ?? "Right"} seats more guests.`;
+    if (leftStats.seated > rightStats.seated) return `${current?.name ?? "Left"} seats more guests.`;
+    return `These two are basically twins.`;
+  })();
+
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-3 items-center text-sm">
-        <Header label="Left" name={current?.name ?? "—"} tables={currentTables} assignments={currentAssignments} constraints={constraints}/>
-        <ArrowLeftRight size={14} className="text-muted-foreground"/>
-        <div className="flex items-center gap-2">
-          <span className="text-xs uppercase tracking-wider text-muted-foreground">Right</span>
-          <select
-            value={otherId ?? ""}
-            onChange={e => setOtherId(e.target.value || null)}
-            className="h-8 rounded-md border border-input bg-background px-2 text-sm font-medium"
-          >
-            {others.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
-          {other && <Stats tables={otherTables} assignments={otherAssignments} constraints={constraints}/>}
-        </div>
-        <div className="ml-auto flex items-center gap-3 text-xs text-muted-foreground">
-          <Legend color="hsl(var(--primary))" label={`${summary.changed} changed`}/>
-          <Legend color="hsl(var(--sage))" label={`${summary.added} added`}/>
-          <Legend color="hsl(var(--muted-foreground))" dashed label={`${summary.removed} removed`}/>
-        </div>
+    <div className="space-y-5">
+      <div>
+        <h2 className="m-0 font-display text-2xl md:text-[28px]">
+          A/B <span className="font-display-italic">scenarios.</span>
+        </h2>
+        <p className="mt-1 text-[14px] text-ink-3">
+          Two layouts side by side. Promote the one that feels right.
+        </p>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-4">
-        <Panel title={current?.name ?? "Current"}>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <ScenarioPanel
+          tag="Live"
+          name={current?.name ?? "Current"}
+          tables={currentTables}
+          assignments={currentAssignments}
+          constraints={constraints}
+        >
           <FloorPlan tables={currentTables} assignments={currentAssignments} guests={guests} constraints={constraints} highlights={leftHighlights}/>
-        </Panel>
-        <Panel title={other?.name ?? "—"}>
+        </ScenarioPanel>
+        <ScenarioPanel
+          tag="Draft"
+          name={other?.name ?? "—"}
+          tables={otherTables}
+          assignments={otherAssignments}
+          constraints={constraints}
+          headerControls={
+            <select
+              value={otherId ?? ""}
+              onChange={e => setOtherId(e.target.value || null)}
+              className="h-7 rounded-full border-hairline border bg-paper px-2 text-[12px] font-medium hover:bg-paper-2"
+            >
+              {others.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          }
+        >
           <FloorPlan tables={otherTables} assignments={otherAssignments} guests={guests} constraints={constraints} highlights={rightHighlights}/>
-        </Panel>
+        </ScenarioPanel>
       </div>
 
-      <div className="rounded-2xl border border-border/60 bg-card/60 overflow-hidden">
-        <div className="px-4 py-2.5 border-b border-border/60 flex items-center justify-between">
-          <div className="font-display text-base">Table-by-table diff</div>
-          <div className="text-xs text-muted-foreground">Tables matched by name. Use the arrows to copy a change to the other layout.</div>
+      {/* Editorial diff strip */}
+      <div className="rounded-2xl border hairline bg-paper-2/40 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="label-mono">What changed</span>
+            <ArrowLeftRight size={11} className="text-ink-3" />
+          </div>
+          <div className="flex flex-wrap items-center gap-2 font-mono text-[11px] uppercase tracking-[0.12em]">
+            <DiffChip color="hsl(var(--olive))" label={`+${summary.added} added`} />
+            <DiffChip color="hsl(var(--terracotta))" label={`${summary.changed} changed`} />
+            <DiffChip color="hsl(var(--ink-4))" label={`-${summary.removed} removed`} dashed />
+          </div>
         </div>
-        <div className="divide-y divide-border/60">
+        <p className="m-0 mt-3 font-display-italic text-[16px] text-ink-2">
+          {observation}
+        </p>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border hairline bg-paper">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b hairline px-5 py-3">
+          <div className="font-display text-[18px]">Table-by-table diff</div>
+          <div className="text-[12px] text-ink-3">Matched by name. Arrows copy a change to the other layout.</div>
+        </div>
+        <div className="divide-y divide-hairline-2">
           {rows.length === 0 && (
-            <div className="p-6 text-center text-sm text-muted-foreground">No tables in either layout yet.</div>
+            <div className="p-6 text-center font-display-italic text-[14px] text-ink-3">No tables in either layout yet.</div>
           )}
           {rows.map(r => <DiffRow key={r.key} row={r} onCopy={copyTable} onDelete={removeTable} busy={busy}/>)}
         </div>
       </div>
     </div>
+  );
+}
+
+function stats(tables: TableDef[], assignments: Assignment[], constraints: ConstraintDef[]) {
+  const seated = assignments.length;
+  const capacity = tables.reduce((s, t) => s + t.capacity, 0);
+  const conflicts = tables.reduce((sum, t) => sum + (tableConflicts(t.id, assignments, constraints).length > 0 ? 1 : 0), 0);
+  return { seated, capacity, conflicts, count: tables.length };
+}
+
+function ScenarioPanel({
+  tag,
+  name,
+  tables,
+  assignments,
+  constraints,
+  headerControls,
+  children,
+}: {
+  tag: "Live" | "Draft";
+  name: string;
+  tables: TableDef[];
+  assignments: Assignment[];
+  constraints: ConstraintDef[];
+  headerControls?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  const s = stats(tables, assignments, constraints);
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-3 rounded-xl border hairline bg-paper px-4 py-3">
+        <div className="flex items-center gap-3">
+          <span
+            className={`rounded-full px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] ${tag === "Live" ? "bg-olive text-paper" : "bg-paper-2 text-ink-3"}`}
+          >
+            {tag}
+          </span>
+          <span className="font-display text-[18px]">
+            <span className="font-display-italic">{name}</span>
+          </span>
+          {headerControls}
+        </div>
+        <div className="hidden items-baseline gap-3 sm:flex">
+          <Metric label="Tables" value={s.count} />
+          <Metric label="Seated" value={s.seated} />
+          {s.conflicts > 0 && <Metric label="Conflicts" value={s.conflicts} accent="terracotta" />}
+        </div>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function Metric({ label, value, accent }: { label: string; value: number; accent?: "olive" | "terracotta" }) {
+  const color = accent === "terracotta" ? "text-terracotta" : "text-ink";
+  return (
+    <span className="inline-flex items-baseline gap-1.5">
+      <span className={`font-display text-[20px] tabular-nums ${color}`}>{value}</span>
+      <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-3">{label}</span>
+    </span>
+  );
+}
+
+function DiffChip({ color, label, dashed }: { color: string; label: string; dashed?: boolean }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border bg-paper px-2 py-0.5"
+      style={{ borderColor: color, borderStyle: dashed ? "dashed" : "solid" }}>
+      <span className="size-1.5 rounded-full" style={{ background: color }} />
+      <span style={{ color }}>{label}</span>
+    </span>
   );
 }
 
@@ -311,44 +424,3 @@ function SideCell({ t, seats, onDelete, kind }: { t: TableDef; seats: number; on
   );
 }
 
-function Panel({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-2">
-      <div className="font-display text-lg px-1">{title}</div>
-      {children}
-    </div>
-  );
-}
-
-function Header({ label, name, tables, assignments, constraints }: { label: string; name: string; tables: TableDef[]; assignments: Assignment[]; constraints: ConstraintDef[] }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-xs uppercase tracking-wider text-muted-foreground">{label}</span>
-      <span className="font-medium">{name}</span>
-      <Stats tables={tables} assignments={assignments} constraints={constraints}/>
-    </div>
-  );
-}
-
-function Stats({ tables, assignments, constraints }: { tables: TableDef[]; assignments: Assignment[]; constraints: ConstraintDef[] }) {
-  const seated = assignments.length;
-  const capacity = tables.reduce((s, t) => s + t.capacity, 0);
-  const conflicts = tables.reduce((sum, t) => sum + (tableConflicts(t.id, assignments, constraints).length > 0 ? 1 : 0), 0);
-  return (
-    <span className="text-xs text-muted-foreground">
-      {tables.length} tables · {seated}/{capacity} seated{conflicts ? ` · ${conflicts} conflicts` : ""}
-    </span>
-  );
-}
-
-function Legend({ color, label, dashed }: { color: string; label: string; dashed?: boolean }) {
-  return (
-    <span className="flex items-center gap-1.5">
-      <span
-        className="inline-block w-3 h-3 rounded-sm"
-        style={{ border: `2px ${dashed ? "dashed" : "solid"} ${color}` }}
-      />
-      {label}
-    </span>
-  );
-}
