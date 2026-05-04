@@ -218,6 +218,10 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
                       onTogglePin={onTogglePin}
                       onMoveTo={onMoveTo}
                       onSwapWith={onSwapWith}
+                      unassigned={unassigned}
+                      constraints={constraints}
+                      onAssign={onAssign}
+                      canEdit={canEdit}
                     />
                   );
                 });
