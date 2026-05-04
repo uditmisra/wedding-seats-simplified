@@ -38,7 +38,12 @@ export function SmartGuestInput({ planId, onDone }: Props) {
     setLoading(true);
     const { data, error } = await supabase.functions.invoke("ai-parse", { body: { mode: "guests", input: text } });
     setLoading(false);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      let msg = error.message;
+      try { const b = await (error as any).context?.json?.(); if (b?.error) msg = b.error; } catch { /* */ }
+      toast.error(msg);
+      return;
+    }
     if (data?.error) { toast.error(data.error); return; }
     const guests: ParsedGuest[] = data?.guests ?? [];
     if (!guests.length) { toast.error("Couldn't find any guests in that text"); return; }

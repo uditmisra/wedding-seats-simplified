@@ -29,10 +29,36 @@ function initials(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0]?.toUpperCase() ?? "").join("");
 }
 
+interface Prefs {
+  keepPinned: boolean;
+  groupByParty: boolean;
+  mixSides: boolean;
+  honorRules: boolean;
+}
+
+function loadPrefs(planId: string): Prefs {
+  try {
+    const raw = localStorage.getItem(`plan:${planId}:autoPrefs`);
+    if (raw) return { ...defaultPrefs, ...JSON.parse(raw) };
+  } catch { /* */ }
+  return defaultPrefs;
+}
+
+const defaultPrefs: Prefs = { keepPinned: true, groupByParty: true, mixSides: false, honorRules: true };
+
 export function ConstraintsPanel({ planId, guests, constraints, refresh }: Props) {
   const [adding, setAdding] = useState<ConstraintKind | null>(null);
   const [a, setA] = useState("");
   const [b, setB] = useState("");
+  const [prefs, setPrefs] = useState<Prefs>(() => loadPrefs(planId));
+
+  const updatePref = <K extends keyof Prefs>(key: K, val: Prefs[K]) => {
+    setPrefs(p => {
+      const next = { ...p, [key]: val };
+      localStorage.setItem(`plan:${planId}:autoPrefs`, JSON.stringify(next));
+      return next;
+    });
+  };
 
   const byId = useMemo(() => new Map(guests.map(g => [g.id, g])), [guests]);
   const guestNames = useMemo(() => guests.map(g => g.name).sort((x, y) => x.localeCompare(y)), [guests]);
@@ -147,6 +173,36 @@ export function ConstraintsPanel({ planId, guests, constraints, refresh }: Props
           >
             Run auto-assign
           </Button>
+
+          <div className="mt-5 border-t hairline pt-4">
+            <div className="label-mono mb-3">Preferences</div>
+            <div className="flex flex-col gap-2.5">
+              <PrefToggle
+                label="Keep pinned guests"
+                hint="Pinned seats won't be moved"
+                value={prefs.keepPinned}
+                onChange={v => updatePref("keepPinned", v)}
+              />
+              <PrefToggle
+                label="Group by party"
+                hint="Couples and families sit together"
+                value={prefs.groupByParty}
+                onChange={v => updatePref("groupByParty", v)}
+              />
+              <PrefToggle
+                label="Mix sides of family"
+                hint="Spread bride &amp; groom sides evenly"
+                value={prefs.mixSides}
+                onChange={v => updatePref("mixSides", v)}
+              />
+              <PrefToggle
+                label="Honor sit-with rules"
+                hint="Apply the rules listed above"
+                value={prefs.honorRules}
+                onChange={v => updatePref("honorRules", v)}
+              />
+            </div>
+          </div>
 
           <div className="mt-5 border-t hairline pt-4">
             <div className="label-mono mb-2">Last run</div>
@@ -289,6 +345,30 @@ function Avatar({ name }: { name: string }) {
     >
       {initials(name)}
     </span>
+  );
+}
+
+function PrefToggle({ label, hint, value, onChange }: { label: string; hint: string; value: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="flex cursor-pointer items-center justify-between gap-3">
+      <div>
+        <div className="text-[13px] text-ink">{label}</div>
+        <div className="text-[11px] text-ink-3">{hint}</div>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={value}
+        onClick={() => onChange(!value)}
+        className="relative inline-flex h-[14px] w-[26px] shrink-0 items-center rounded-full transition"
+        style={{ background: value ? "hsl(var(--olive))" : "hsl(var(--paper-3))" }}
+      >
+        <span
+          className="absolute top-0.5 inline-block size-2.5 rounded-full bg-paper transition"
+          style={{ left: value ? 14 : 2 }}
+        />
+      </button>
+    </label>
   );
 }
 

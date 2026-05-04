@@ -31,7 +31,12 @@ export function SmartTableInput({ planId, scenarioId, existingCount, onDone }: P
     setLoading(true);
     const { data, error } = await supabase.functions.invoke("ai-parse", { body: { mode: "tables", input: text } });
     setLoading(false);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      let msg = error.message;
+      try { const b = await (error as any).context?.json?.(); if (b?.error) msg = b.error; } catch { /* */ }
+      toast.error(msg);
+      return;
+    }
     if (data?.error) { toast.error(data.error); return; }
     const tables: ParsedTable[] = data?.tables ?? [];
     if (!tables.length) { toast.error("Couldn't find any tables in that text"); return; }

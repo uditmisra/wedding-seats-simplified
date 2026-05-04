@@ -9,7 +9,6 @@ import { Plus, Trash2, Pencil, Layers } from "lucide-react";
 import type { TableDef, Shape, Assignment } from "@/lib/types";
 import { toast } from "sonner";
 import { SmartTableInput } from "./SmartTableInput";
-import { RoomEditor } from "./RoomEditor";
 import { PaperTable } from "@/components/PaperTable";
 
 const SHAPES: Shape[] = ["round", "rectangle", "square", "long", "head"];
@@ -27,11 +26,10 @@ interface Props {
 export function TablesTab({ planId, scenarioId, tables, assignments, refresh, autoOpen, onAutoOpenHandled }: Props) {
   const [editing, setEditing] = useState<TableDef | "new" | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
-  const [view, setView] = useState<"setup" | "room">(tables.length > 0 ? "room" : "setup");
 
   useEffect(() => {
-    if (autoOpen === "new") { setView("setup"); setEditing("new"); onAutoOpenHandled?.(); }
-    else if (autoOpen === "bulk") { setView("setup"); setBulkOpen(true); onAutoOpenHandled?.(); }
+    if (autoOpen === "new") { setEditing("new"); onAutoOpenHandled?.(); }
+    else if (autoOpen === "bulk") { setBulkOpen(true); onAutoOpenHandled?.(); }
   }, [autoOpen, onAutoOpenHandled]);
 
   const seatedByTable = useMemo(() => {
@@ -49,103 +47,83 @@ export function TablesTab({ planId, scenarioId, tables, assignments, refresh, au
 
   return (
     <div className="space-y-5">
-      {/* View toggle */}
-      <div className="flex justify-end">
-        <div className="inline-flex rounded-full border-hairline border bg-paper p-0.5 text-sm">
-          <button
-            onClick={() => setView("room")}
-            className={`rounded-full px-3 py-1 transition ${view === "room" ? "bg-ink text-paper" : "text-ink-3 hover:text-ink"}`}
-          >Arrange room</button>
-          <button
-            onClick={() => setView("setup")}
-            className={`rounded-full px-3 py-1 transition ${view === "setup" ? "bg-ink text-paper" : "text-ink-3 hover:text-ink"}`}
-          >Quick setup</button>
-        </div>
+      {/* Totals strip */}
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border hairline bg-hairline-2 sm:grid-cols-4">
+        <Stat label="Tables" value={totals.count} />
+        <Stat label="Seats" value={totals.seats} />
+        <Stat label="Seated" value={`${totals.seated} / ${totals.seats || 0}`} />
+        <Stat label="Open" value={totals.open} />
       </div>
 
-      {view === "room" ? (
-        <RoomEditor planId={planId} scenarioId={scenarioId} tables={tables} assignments={assignments} refresh={refresh} />
-      ) : (
-        <>
-          {/* Totals strip */}
-          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border hairline bg-hairline-2 sm:grid-cols-4">
-            <Stat label="Tables" value={totals.count} />
-            <Stat label="Seats" value={totals.seats} />
-            <Stat label="Seated" value={`${totals.seated} / ${totals.seats || 0}`} />
-            <Stat label="Open" value={totals.open} />
-          </div>
-
-          {/* Main grid + right rail */}
-          <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
-            <div>
-              <div className="mb-4 flex items-baseline justify-between gap-3">
-                <h2 className="m-0 font-display text-2xl md:text-[28px]">
-                  Set the <span className="font-display-italic">room.</span>
-                </h2>
-                <div className="hidden items-center gap-2 sm:flex">
-                  <Button size="sm" variant="outline" className="rounded-full border-hairline" onClick={() => setBulkOpen(true)}>
-                    <Layers size={14} className="mr-1.5" />Bulk add
-                  </Button>
-                  <Button size="sm" className="rounded-full" onClick={() => setEditing("new")}>
-                    <Plus size={14} className="mr-1.5" />Add table
-                  </Button>
-                </div>
-              </div>
-
-              {tables.length === 0 ? (
-                <div className="rounded-2xl border border-dashed hairline bg-paper-2/40 p-12 text-center">
-                  <p className="m-0 font-display-italic text-lg text-ink-2">No tables yet.</p>
-                  <p className="mt-1 text-sm text-ink-3">Describe your room on the right, or add one by hand.</p>
-                  <div className="mt-4 flex justify-center gap-2">
-                    <Button size="sm" variant="outline" className="rounded-full border-hairline" onClick={() => setBulkOpen(true)}>
-                      <Layers size={14} className="mr-1.5" />Bulk add
-                    </Button>
-                    <Button size="sm" className="rounded-full" onClick={() => setEditing("new")}>
-                      <Plus size={14} className="mr-1.5" />Add table
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  {tables.map(t => (
-                    <TableCard
-                      key={t.id}
-                      table={t}
-                      seated={seatedByTable.get(t.id) ?? 0}
-                      onEdit={() => setEditing(t)}
-                      onDelete={async () => {
-                        const fill = seatedByTable.get(t.id) ?? 0;
-                        if (fill > 0 && !confirm(`${fill} guests are seated at this table. Delete anyway?`)) return;
-                        await supabase.from("tables_def").delete().eq("id", t.id);
-                        refresh();
-                      }}
-                    />
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => setEditing("new")}
-                    className="group flex min-h-[180px] flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-hairline bg-paper-2/30 p-5 text-ink-3 transition hover:border-terracotta/60 hover:text-terracotta"
-                  >
-                    <Plus size={20} className="transition group-hover:scale-110" />
-                    <span className="font-display-italic text-[15px]">Add another table</span>
-                  </button>
-                </div>
-              )}
+      {/* Main grid + right rail */}
+      <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
+        <div>
+          <div className="mb-4 flex items-baseline justify-between gap-3">
+            <h2 className="m-0 font-display text-2xl md:text-[28px]">
+              Set the <span className="font-display-italic">room.</span>
+            </h2>
+            <div className="hidden items-center gap-2 sm:flex">
+              <Button size="sm" variant="outline" className="rounded-full border-hairline" onClick={() => setBulkOpen(true)}>
+                <Layers size={14} className="mr-1.5" />Bulk add
+              </Button>
+              <Button size="sm" className="rounded-full" onClick={() => setEditing("new")}>
+                <Plus size={14} className="mr-1.5" />Add table
+              </Button>
             </div>
-
-            {/* Right rail — Smart bulk add */}
-            <aside className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
-              <div className="rounded-2xl border hairline bg-paper-2/40 p-5">
-                <div className="label-mono mb-2">Smart bulk add</div>
-                <p className="m-0 mb-3 font-display-italic text-[13px] leading-snug text-ink-2">
-                  Describe the room — we&apos;ll lay it out.
-                </p>
-                <SmartTableInput planId={planId} scenarioId={scenarioId} existingCount={tables.length} onDone={refresh} />
-              </div>
-            </aside>
           </div>
-        </>
-      )}
+
+          {tables.length === 0 ? (
+            <div className="rounded-2xl border border-dashed hairline bg-paper-2/40 p-12 text-center">
+              <p className="m-0 font-display-italic text-lg text-ink-2">No tables yet.</p>
+              <p className="mt-1 text-sm text-ink-3">Describe your room on the right, or add one by hand.</p>
+              <div className="mt-4 flex justify-center gap-2">
+                <Button size="sm" variant="outline" className="rounded-full border-hairline" onClick={() => setBulkOpen(true)}>
+                  <Layers size={14} className="mr-1.5" />Bulk add
+                </Button>
+                <Button size="sm" className="rounded-full" onClick={() => setEditing("new")}>
+                  <Plus size={14} className="mr-1.5" />Add table
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {tables.map(t => (
+                <TableCard
+                  key={t.id}
+                  table={t}
+                  seated={seatedByTable.get(t.id) ?? 0}
+                  onEdit={() => setEditing(t)}
+                  onDelete={async () => {
+                    const fill = seatedByTable.get(t.id) ?? 0;
+                    if (fill > 0 && !confirm(`${fill} guests are seated at this table. Delete anyway?`)) return;
+                    await supabase.from("tables_def").delete().eq("id", t.id);
+                    refresh();
+                  }}
+                />
+              ))}
+              <button
+                type="button"
+                onClick={() => setEditing("new")}
+                className="group flex min-h-[180px] flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-hairline bg-paper-2/30 p-5 text-ink-3 transition hover:border-terracotta/60 hover:text-terracotta"
+              >
+                <Plus size={20} className="transition group-hover:scale-110" />
+                <span className="font-display-italic text-[15px]">Add another table</span>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Right rail — Smart bulk add */}
+        <aside className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+          <div className="rounded-2xl border hairline bg-paper-2/40 p-5">
+            <div className="label-mono mb-2">Smart bulk add</div>
+            <p className="m-0 mb-3 font-display-italic text-[13px] leading-snug text-ink-2">
+              Describe the room — we&apos;ll lay it out.
+            </p>
+            <SmartTableInput planId={planId} scenarioId={scenarioId} existingCount={tables.length} onDone={refresh} />
+          </div>
+        </aside>
+      </div>
 
       {editing && <TableEditor planId={planId} scenarioId={scenarioId} table={editing === "new" ? null : editing} count={tables.length} onClose={() => { setEditing(null); refresh(); }} />}
       {bulkOpen && <BulkAddDialog planId={planId} scenarioId={scenarioId} count={tables.length} onClose={() => { setBulkOpen(false); refresh(); }} />}

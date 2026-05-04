@@ -5,12 +5,11 @@ import type { Guest, TableDef, Assignment, ConstraintDef } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Pin, UserPlus, X } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { tableConflicts } from "@/lib/seating";
 import { FloorPlan } from "./FloorPlan";
 import { SeatMenu } from "./SeatMenu";
 import { EmptyCanvas } from "./EmptyCanvas";
-import { LayoutDashboard, LayoutGrid, List as ListIcon, Users as UsersIcon } from "lucide-react";
+import { Users as UsersIcon } from "lucide-react";
 import { GroupedClusters } from "./GroupedClusters";
 import { toast } from "sonner";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
@@ -209,27 +208,22 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
       onDragCancel={() => setActiveId(null)}
       autoScroll={{ threshold: { x: 0.1, y: 0.15 } }}
     >
-      <TooltipProvider delayDuration={200}>
-        <div className="mb-4 flex justify-end">
-          <div className="inline-flex rounded-full border-hairline border bg-paper p-0.5">
-            <Tooltip><TooltipTrigger asChild>
-              <button onClick={() => setView("floor")} aria-label="Floor plan view"
-                className={`rounded-full p-1.5 transition ${view === "floor" ? "bg-ink text-paper" : "text-ink-3 hover:text-ink"}`}>
-                <LayoutDashboard size={15} /></button>
-            </TooltipTrigger><TooltipContent>Floor plan</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger asChild>
-              <button onClick={() => setView("grouped")} aria-label="Grouped view"
-                className={`rounded-full p-1.5 transition ${view === "grouped" ? "bg-ink text-paper" : "text-ink-3 hover:text-ink"}`}>
-                <LayoutGrid size={15} /></button>
-            </TooltipTrigger><TooltipContent>Grouped clusters</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger asChild>
-              <button onClick={() => setView("list")} aria-label="List view"
-                className={`rounded-full p-1.5 transition ${view === "list" ? "bg-ink text-paper" : "text-ink-3 hover:text-ink"}`}>
-                <ListIcon size={15} /></button>
-            </TooltipTrigger><TooltipContent>List view</TooltipContent></Tooltip>
-          </div>
+      <div className="mb-4 flex justify-end">
+        <div className="inline-flex rounded-full border-hairline border bg-paper p-0.5 text-[13px]">
+          <button onClick={() => setView("floor")}
+            className={`rounded-full px-3.5 py-1 transition ${view === "floor" ? "bg-ink text-paper" : "text-ink-3 hover:text-ink"}`}>
+            Plan
+          </button>
+          <button onClick={() => setView("grouped")}
+            className={`rounded-full px-3.5 py-1 transition ${view === "grouped" ? "bg-ink text-paper" : "text-ink-3 hover:text-ink"}`}>
+            Grouped
+          </button>
+          <button onClick={() => setView("list")}
+            className={`rounded-full px-3.5 py-1 transition ${view === "list" ? "bg-ink text-paper" : "text-ink-3 hover:text-ink"}`}>
+            List
+          </button>
         </div>
-      </TooltipProvider>
+      </div>
 
       {view === "floor" ? (
         <div className="grid lg:grid-cols-[280px_1fr] gap-6">
