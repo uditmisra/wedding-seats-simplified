@@ -116,8 +116,14 @@ function drawCardFront(doc: any, x: number, y: number, w: number, h: number, g: 
   doc.setDrawColor(...TERRACOTTA);
   doc.setLineWidth(0.4);
   doc.line(cx - 8, cy - 12, cx + 8, cy - 12);
-  // Name
-  display(doc, 24);
+  // Name — auto-shrink to fit card width.
+  let size = 24;
+  const maxW = w - 16;
+  while (size > 12) {
+    display(doc, size);
+    if (doc.getTextWidth(g.name) <= maxW) break;
+    size -= 1;
+  }
   setInk(doc, INK);
   const nw = doc.getTextWidth(g.name);
   doc.text(g.name, cx - nw / 2, cy);
