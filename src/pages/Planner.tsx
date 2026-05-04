@@ -370,25 +370,21 @@ const Planner = () => {
               onGoToTables={() => setTab("tables")}
             />
           </TabsContent>
-          {canEdit && (
-            <>
-              <TabsContent value="guests" className="mt-6 animate-tab-in">
+          <TabsContent value="guests" className="mt-6 animate-tab-in">
                 <GuestsTab planId={plan.id} guests={guests} refresh={refresh} autoOpen={guestsAutoOpen} onAutoOpenHandled={() => setGuestsAutoOpen(null)} />
-              </TabsContent>
-              <TabsContent value="tables" className="mt-6 animate-tab-in">
+          </TabsContent>
+          <TabsContent value="tables" className="mt-6 animate-tab-in">
                 <TablesTab planId={plan.id} scenarioId={scenarioId ?? ""} tables={tables} assignments={assignments} refresh={refresh} autoOpen={tablesAutoOpen} onAutoOpenHandled={() => setTablesAutoOpen(null)} />
-              </TabsContent>
-              <TabsContent value="compare" className="mt-6 animate-tab-in">
+          </TabsContent>
+          <TabsContent value="compare" className="mt-6 animate-tab-in">
                 <CompareScenarios scenarios={scenarios} currentScenarioId={scenarioId} currentTables={tables} currentAssignments={assignments} guests={guests} constraints={constraints} />
-              </TabsContent>
-              <TabsContent value="constraints" className="mt-6 animate-tab-in">
+          </TabsContent>
+          <TabsContent value="constraints" className="mt-6 animate-tab-in">
                 <ConstraintsPanel planId={plan.id} guests={guests} constraints={constraints} refresh={refresh} />
-              </TabsContent>
-              <TabsContent value="export" className="mt-6 animate-tab-in">
+          </TabsContent>
+          <TabsContent value="export" className="mt-6 animate-tab-in">
                 <ExportPanel plan={plan} guests={guests} tables={tables} assignments={assignments} />
-              </TabsContent>
-            </>
-          )}
+          </TabsContent>
         </Tabs>
       </main>
 
