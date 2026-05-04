@@ -18,6 +18,8 @@ import { LayoutTabs } from "@/components/planner/LayoutTabs";
 import { CompareScenarios } from "@/components/planner/CompareScenarios";
 import { UserMenu } from "@/components/UserMenu";
 import { Link as LinkIcon, Check, Wand2, GitCompareArrows, ShieldAlert, Download, Mail, Bookmark, MoreHorizontal, Pencil, Eye, Sparkles } from "lucide-react";
+import { ClaimPlanModal } from "@/components/ClaimPlanModal";
+import { SignInNudge } from "@/components/SignInNudge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { addRecentPlan } from "@/lib/recentPlans";
@@ -47,6 +49,7 @@ const Planner = () => {
   const [canEdit, setCanEdit] = useState(false);
   const [hasOwner, setHasOwner] = useState<boolean | null>(null);
   const [claiming, setClaiming] = useState(false);
+  const [claimModalOpen, setClaimModalOpen] = useState(false);
 
   const onboardingActive = !loading && plan && (guests.length === 0 || tables.length === 0);
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
@@ -94,6 +97,25 @@ const Planner = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, plan?.id, hasOwner]);
+
+  // For signed-in viewers of an unowned plan: pop the claim modal once per
+  // session per plan. sessionStorage so dismissals don't bleed across days.
+  useEffect(() => {
+    if (!user || !plan) return;
+    if (hasOwner !== false) return;
+    if (canEdit) return;
+    if (searchParams.get("claim") === "1") return; // auto-claim path covers this
+    if (typeof window === "undefined") return;
+    const key = `claim-modal:${plan.id}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    setClaimModalOpen(true);
+  }, [user?.id, plan?.id, hasOwner, canEdit, searchParams]);
+
+  const handleClaimFromModal = async () => {
+    await claim();
+    setClaimModalOpen(false);
+  };
 
   useEffect(() => {
     if (showOnboarding) setTab("seating");
@@ -240,8 +262,18 @@ const Planner = () => {
       </header>
 
       <main className="container py-8 space-y-8">
-        {/* Claim banner — no owner yet */}
-        {!canEdit && hasOwner === false && (
+        {/* Day-2+ sign-in nudge for anonymous viewers (non-blocking, dismissible). */}
+        {!user && (
+          <SignInNudge
+            planId={plan.id}
+            signedIn={!!user}
+            guestCount={guests.length}
+            tableCount={tables.length}
+          />
+        )}
+
+        {/* Anonymous viewer — inline claim banner asking them to sign in. */}
+        {!canEdit && hasOwner === false && !user && (
           <div className="flex flex-wrap items-center gap-3 rounded-2xl border hairline bg-card p-4 shadow-soft sm:p-5">
             <Sparkles size={18} className="text-terracotta" />
             <div className="min-w-0 flex-1">
@@ -249,22 +281,14 @@ const Planner = () => {
                 This plan needs an <span className="font-display-italic">owner.</span>
               </div>
               <div className="text-[12px] text-ink-3">
-                {user
-                  ? "Claim it and only you can edit. Anyone with the link can still view."
-                  : "Sign in to claim it — only you'll be able to edit. Anyone with the link can still view."}
+                Sign in to claim it — only you&apos;ll be able to edit. Anyone with the link can still view.
               </div>
             </div>
-            {user ? (
-              <Button onClick={claim} disabled={claiming} className="rounded-full">
-                {claiming ? "Claiming…" : "Claim this plan"}
-              </Button>
-            ) : (
-              <Button asChild className="rounded-full">
-                <Link to={`/auth?next=${encodeURIComponent(window.location.pathname + "?claim=1")}`}>
-                  Sign in to claim
-                </Link>
-              </Button>
-            )}
+            <Button asChild className="rounded-full">
+              <Link to={`/auth?next=${encodeURIComponent(window.location.pathname + "?claim=1")}`}>
+                Sign in to claim
+              </Link>
+            </Button>
           </div>
         )}
 
@@ -393,6 +417,18 @@ const Planner = () => {
           onClose={() => { setAutoOpen(false); refresh(); toast.success("Seated."); }}
         />
       )}
+
+      <ClaimPlanModal
+        open={claimModalOpen}
+        planName={plan.name}
+        guestCount={guests.length}
+        tableCount={tables.length}
+        startedLabel="recently"
+        email={user?.email ?? ""}
+        busy={claiming}
+        onClaim={handleClaimFromModal}
+        onDecline={() => setClaimModalOpen(false)}
+      />
     </div>
   );
 };

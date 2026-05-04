@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { LogOut } from "lucide-react";
+import { LayoutDashboard, LogOut } from "lucide-react";
 
 function initials(s: string) {
   return s.split(/[@\s.]+/).filter(Boolean).slice(0, 2).map(p => p[0]?.toUpperCase() ?? "").join("") || "?";
@@ -36,6 +36,11 @@ export function UserMenu() {
       <DropdownMenuContent align="end" className="w-56 rounded-xl border-hairline">
         <DropdownMenuLabel className="truncate text-[12px] font-normal text-ink-3">{label}</DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link to="/dashboard">
+            <LayoutDashboard size={14} className="mr-2" />Dashboard
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => signOut()}>
           <LogOut size={14} className="mr-2" />Sign out
         </DropdownMenuItem>
