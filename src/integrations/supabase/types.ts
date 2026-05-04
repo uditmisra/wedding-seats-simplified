@@ -300,6 +300,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      ensure_sample_plan: { Args: never; Returns: string }
       is_plan_editor: {
         Args: { _plan_id: string; _user_id: string }
         Returns: boolean
