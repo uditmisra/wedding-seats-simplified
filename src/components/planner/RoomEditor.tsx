@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Plus, RotateCw, Trash2, X, Maximize2, Magnet } from "lucide-react";
+import { Plus, RotateCw, Trash2, X, Maximize2, Magnet, AlertTriangle, Wand2 } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
 import type { TableDef, Shape, Assignment } from "@/lib/types";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ const CANVAS_W = 1400;
 const CANVAS_H = 900;
 const GRID = 20;            // canvas units
 const SNAP_TOLERANCE = 8;   // canvas units — how close before alignment guide engages
+const CLEARANCE = 24;       // canvas units of breathing room around each table (chairs/aisle)
 
 interface Props {
   planId: string;
@@ -63,6 +64,23 @@ export function RoomEditor({ planId, scenarioId, tables, assignments, refresh }:
   const selected = tables.find(t => t.id === selectedId) ?? null;
 
   const tableAt = (t: TableDef) => localPos[t.id] ?? { x: t.x, y: t.y, rotation: t.rotation };
+
+  // Compute which tables currently overlap (AABB with chair clearance)
+  const overlaps = useMemo(() => {
+    const positions = tables.map(t => ({ id: t.id, ...tableAt(t), ...tableSize(t) }));
+    const hit = new Set<string>();
+    const pairs: Array<[string, string]> = [];
+    for (let i = 0; i < positions.length; i++) {
+      for (let j = i + 1; j < positions.length; j++) {
+        if (boxesOverlap(positions[i], positions[j], CLEARANCE)) {
+          hit.add(positions[i].id); hit.add(positions[j].id);
+          pairs.push([positions[i].id, positions[j].id]);
+        }
+      }
+    }
+    return { ids: hit, pairs };
+    // recompute when tables OR live drag positions change
+  }, [tables, localPos]);
 
   const onPointerDownTable = (e: React.PointerEvent, t: TableDef) => {
     e.stopPropagation();
@@ -151,6 +169,60 @@ export function RoomEditor({ planId, scenarioId, tables, assignments, refresh }:
     }
   };
 
+  const autoSeparate = async () => {
+    if (overlaps.ids.size === 0) return;
+    // Build mutable position map; iteratively push overlapping pairs apart
+    const pos = new Map<string, { x: number; y: number; w: number; h: number }>();
+    for (const t of tables) {
+      const p = tableAt(t); const sz = tableSize(t);
+      pos.set(t.id, { x: p.x, y: p.y, w: sz.w, h: sz.h });
+    }
+    const ids = Array.from(pos.keys());
+    for (let iter = 0; iter < 80; iter++) {
+      let moved = false;
+      for (let i = 0; i < ids.length; i++) {
+        for (let j = i + 1; j < ids.length; j++) {
+          const a = pos.get(ids[i])!; const b = pos.get(ids[j])!;
+          if (!boxesOverlap(a, b, CLEARANCE)) continue;
+          const dx = b.x - a.x; const dy = b.y - a.y;
+          const minX = (a.w + b.w) / 2 + CLEARANCE;
+          const minY = (a.h + b.h) / 2 + CLEARANCE;
+          const overlapX = minX - Math.abs(dx);
+          const overlapY = minY - Math.abs(dy);
+          // push along the axis of least penetration (cheapest separation)
+          if (overlapX < overlapY) {
+            const push = (overlapX / 2) * (dx >= 0 ? 1 : -1);
+            a.x -= push; b.x += push;
+          } else {
+            const push = (overlapY / 2) * (dy >= 0 ? 1 : -1);
+            a.y -= push; b.y += push;
+          }
+          // keep inside canvas
+          a.x = clamp(a.x, 60, CANVAS_W - 60); a.y = clamp(a.y, 60, CANVAS_H - 60);
+          b.x = clamp(b.x, 60, CANVAS_W - 60); b.y = clamp(b.y, 60, CANVAS_H - 60);
+          moved = true;
+        }
+      }
+      if (!moved) break;
+    }
+    // Snap to grid + persist all changed positions
+    const updates = tables.map(t => {
+      const p = pos.get(t.id)!;
+      const x = Math.round(p.x / GRID) * GRID;
+      const y = Math.round(p.y / GRID) * GRID;
+      return { id: t.id, x, y, changed: x !== Math.round(t.x) || y !== Math.round(t.y) };
+    }).filter(u => u.changed);
+    if (updates.length === 0) {
+      toast.message("Couldn't separate further — try resizing the room or removing a table.");
+      return;
+    }
+    await Promise.all(updates.map(u =>
+      supabase.from("tables_def").update({ x: u.x, y: u.y }).eq("id", u.id)
+    ));
+    toast.success(`Nudged ${updates.length} table${updates.length === 1 ? "" : "s"} apart`);
+    refresh();
+  };
+
   const addTable = async () => {
     const name = `Table ${tables.length + 1}`;
     const x = 180 + ((tables.length) % 4) * 280;
@@ -170,6 +242,16 @@ export function RoomEditor({ planId, scenarioId, tables, assignments, refresh }:
             Drag to move · hold <kbd className="px-1 rounded bg-muted text-[10px]">Shift</kbd> for free placement
           </div>
           <div className="flex items-center gap-1">
+            {overlaps.ids.size > 0 && (
+              <div className="flex items-center gap-1.5 mr-1">
+                <span className="flex items-center gap-1 text-xs font-medium text-destructive bg-destructive/10 border border-destructive/30 rounded-full px-2 py-1">
+                  <AlertTriangle size={12}/> {overlaps.ids.size} overlapping
+                </span>
+                <Button size="sm" variant="outline" className="h-8 px-2 text-xs" onClick={autoSeparate} title="Nudge overlapping tables apart">
+                  <Wand2 size={12} className="mr-1"/>Auto-separate
+                </Button>
+              </div>
+            )}
             <Toggle
               size="sm"
               pressed={snap}
@@ -253,6 +335,7 @@ export function RoomEditor({ planId, scenarioId, tables, assignments, refresh }:
                 pos={pos}
                 seated={seated}
                 selected={isSelected}
+                overlap={overlaps.ids.has(t.id)}
                 onPointerDown={(e) => onPointerDownTable(e, t)}
                 onRotateStart={(e) => onPointerDownRotate(e, t)}
               />
