@@ -301,6 +301,7 @@ export type Database = {
     }
     Functions: {
       ensure_sample_plan: { Args: never; Returns: string }
+      get_plan_snapshot: { Args: { _code: string }; Returns: Json }
       is_plan_editor: {
         Args: { _plan_id: string; _user_id: string }
         Returns: boolean
