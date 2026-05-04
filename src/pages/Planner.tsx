@@ -261,7 +261,7 @@ const Planner = () => {
         </div>
       </header>
 
-      <main className="container py-8 space-y-8">
+      <main className="container py-8 pb-24 sm:pb-8 space-y-8">
         {/* Day-2+ sign-in nudge for anonymous viewers (non-blocking, dismissible). */}
         {!user && (
           <SignInNudge
@@ -314,6 +314,9 @@ const Planner = () => {
           <OnboardingFlow
             planId={plan.id}
             scenarioId={scenarioId ?? ""}
+            planName={plan.name}
+            planCode={plan.code}
+            eventDate={plan.event_date}
             guestCount={guests.length}
             tableCount={tables.length}
             onImport={goImport}
@@ -336,7 +339,7 @@ const Planner = () => {
         )}
 
         <Tabs value={tab} onValueChange={setTab}>
-          <div className="flex items-end justify-between gap-3 border-b hairline bg-white/30 px-4 -mx-4 rounded-t-md">
+          <div className="hidden items-end justify-between gap-3 border-b hairline bg-white/30 px-4 -mx-4 rounded-t-md sm:flex">
             <TabsList className="h-auto gap-7 rounded-none bg-transparent p-0">
               {visibleTabs.map(t => {
                 const count = t.value === "guests" ? guests.length : t.value === "tables" ? tables.length : undefined;
@@ -429,6 +432,40 @@ const Planner = () => {
         onClaim={handleClaimFromModal}
         onDecline={() => setClaimModalOpen(false)}
       />
+
+      {/* Mobile bottom tab bar — design surface MobileGuestsA tab strip */}
+      {!showOnboarding && (
+        <nav
+          className="fixed inset-x-0 bottom-0 z-30 border-t hairline bg-paper/95 backdrop-blur sm:hidden"
+          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+          aria-label="Planner sections"
+        >
+          <div className="flex items-stretch justify-between">
+            {visibleTabs.map(t => {
+              const active = tab === t.value;
+              return (
+                <button
+                  key={t.value}
+                  type="button"
+                  onClick={() => setTab(t.value)}
+                  className="flex flex-1 flex-col items-center gap-0.5 py-2 transition"
+                >
+                  <span
+                    className={`font-display-italic text-[12px] ${active ? "text-terracotta" : "text-ink-3"}`}
+                  >
+                    {t.numeral}
+                  </span>
+                  <span
+                    className={`text-[10px] tracking-[0.04em] ${active ? "font-medium text-ink" : "text-ink-3"}`}
+                  >
+                    {t.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+      )}
     </div>
   );
 };

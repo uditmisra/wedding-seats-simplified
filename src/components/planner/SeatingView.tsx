@@ -10,7 +10,8 @@ import { tableConflicts } from "@/lib/seating";
 import { FloorPlan } from "./FloorPlan";
 import { SeatMenu } from "./SeatMenu";
 import { EmptyCanvas } from "./EmptyCanvas";
-import { LayoutDashboard, List as ListIcon, Users as UsersIcon } from "lucide-react";
+import { LayoutDashboard, LayoutGrid, List as ListIcon, Users as UsersIcon } from "lucide-react";
+import { GroupedClusters } from "./GroupedClusters";
 import { toast } from "sonner";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { useBelowLg } from "@/hooks/use-mobile";
@@ -37,7 +38,7 @@ function firstFreeSeat(table: TableDef, seated: Assignment[], excludeId?: string
 export function SeatingView({ planId, scenarioId, guests, tables, assignments, constraints, refresh, onGoToGuests, onGoToTables, canEdit = true }: Props) {
   const [search, setSearch] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [view, setView] = useState<"list" | "floor">("floor");
+  const [view, setView] = useState<"list" | "floor" | "grouped">("floor");
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 3 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 6 } }),
@@ -205,6 +206,11 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
                 <LayoutDashboard size={15} /></button>
             </TooltipTrigger><TooltipContent>Floor plan</TooltipContent></Tooltip>
             <Tooltip><TooltipTrigger asChild>
+              <button onClick={() => setView("grouped")} aria-label="Grouped view"
+                className={`rounded-full p-1.5 transition ${view === "grouped" ? "bg-ink text-paper" : "text-ink-3 hover:text-ink"}`}>
+                <LayoutGrid size={15} /></button>
+            </TooltipTrigger><TooltipContent>Grouped clusters</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger asChild>
               <button onClick={() => setView("list")} aria-label="List view"
                 className={`rounded-full p-1.5 transition ${view === "list" ? "bg-ink text-paper" : "text-ink-3 hover:text-ink"}`}>
                 <ListIcon size={15} /></button>
@@ -236,6 +242,8 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
             </UnassignedDrawerTrigger>
           )}
         </div>
+      ) : view === "grouped" ? (
+        <GroupedClusters guests={guests} tables={tables} assignments={assignments} />
       ) : (
         <div className="grid lg:grid-cols-[280px_1fr] gap-6">
           {!isBelowLg && (
