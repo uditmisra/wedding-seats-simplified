@@ -96,7 +96,6 @@ export function FloorPlan({ tables, assignments, guests, constraints }: Props) {
               const top = ((cy - th / 2) / height) * 100;
               const w = (tw / width) * 100;
               const h = (th / height) * 100;
-              const seated = assignments.filter(a => a.table_id === t.id);
               return (
                 <TableDropZone
                   key={t.id}
