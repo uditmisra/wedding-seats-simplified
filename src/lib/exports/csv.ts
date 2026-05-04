@@ -7,6 +7,10 @@ interface Args {
   assignments: Assignment[];
 }
 
+/**
+ * Caterer's-eye-view CSV. Includes the full roster so unseated guests
+ * (e.g. "maybe" RSVPs) still appear with empty table fields.
+ */
 export function exportCsv(args: Args) {
   const { planName, guests, tables, assignments } = args;
   const guestById = new Map(guests.map(g => [g.id, g]));
@@ -34,22 +38,12 @@ export function exportCsv(args: Args) {
       g.notes ?? "",
     ]);
   }
-  // Append unassigned guests so the caterer sees the full roster.
   const assignedSet = new Set(assignments.map(a => a.guest_id));
   for (const g of guests) {
     if (assignedSet.has(g.id)) continue;
     rows.push([
-      g.name,
-      g.party ?? "",
-      g.side ?? "",
-      "",
-      "",
-      "",
-      g.meal ?? "",
-      g.accessibility ?? "",
-      g.is_kid ? "yes" : "",
-      g.rsvp,
-      g.notes ?? "",
+      g.name, g.party ?? "", g.side ?? "", "", "", "",
+      g.meal ?? "", g.accessibility ?? "", g.is_kid ? "yes" : "", g.rsvp, g.notes ?? "",
     ]);
   }
 
