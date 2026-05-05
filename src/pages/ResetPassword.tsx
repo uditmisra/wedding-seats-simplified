@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2 } from "lucide-react";
+import { Logo } from "@/components/Logo";
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -34,10 +35,7 @@ export default function ResetPassword() {
   return (
     <div className="paper-grain min-h-screen">
       <header className="container flex items-center justify-between py-7">
-        <Link to="/" className="flex items-baseline gap-1.5">
-          <span className="font-display text-[22px] tracking-tight">Seatly</span>
-          <span className="inline-block size-[5px] -translate-y-0.5 rounded-full bg-terracotta" aria-hidden />
-        </Link>
+        <Link to="/"><Logo size={22} /></Link>
         <Link to="/" className="inline-flex items-center gap-1.5 text-[13px] text-ink-3 hover:text-ink">
           <ArrowLeft size={13} /> Back home
         </Link>

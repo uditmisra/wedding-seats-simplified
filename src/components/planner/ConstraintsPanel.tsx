@@ -93,7 +93,7 @@ export function ConstraintsPanel({ planId, guests, constraints, refresh }: Props
             The <span className="font-display-italic">non-negotiables.</span>
           </h2>
           <p className="mt-1 text-[14px] text-ink-3">
-            Tell Seatly who must sit together and who absolutely must not. Auto-assign respects every line.
+            Tell us who must sit together and who absolutely must not. Auto-assign respects every line.
           </p>
         </div>
 
@@ -158,7 +158,7 @@ export function ConstraintsPanel({ planId, guests, constraints, refresh }: Props
         <div className="rounded-2xl border hairline bg-paper-2/40 p-5">
           <div className="label-mono mb-2">Auto-assign</div>
           <p className="m-0 mb-4 font-display-italic text-[14px] leading-snug text-ink-2">
-            Take a first pass — Seatly groups by party, respects every rule above, and fills tables evenly.
+            Take a first pass — groups by party, respects every rule above, and fills tables evenly.
           </p>
           <p className="m-0 mb-4 text-[12px] text-ink-3">
             You&apos;ll get a preview before anything moves. Pinned guests stay put.

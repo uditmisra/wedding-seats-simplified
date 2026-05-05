@@ -9,6 +9,7 @@ import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2 } from "lucide-react";
+import { Logo } from "@/components/Logo";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -76,10 +77,7 @@ export default function Auth() {
   return (
     <div className="paper-grain min-h-screen">
       <header className="container flex items-center justify-between py-7">
-        <Link to="/" className="flex items-baseline gap-1.5">
-          <span className="font-display text-[22px] tracking-tight">Seatly</span>
-          <span className="inline-block size-[5px] -translate-y-0.5 rounded-full bg-terracotta" aria-hidden />
-        </Link>
+        <Link to="/"><Logo size={22} /></Link>
         <Link
           to="/"
           className="inline-flex items-center gap-1.5 text-[13px] text-ink-3 hover:text-ink"
@@ -204,10 +202,7 @@ function LinkSentPage({
   return (
     <div className="paper-grain min-h-screen">
       <header className="container flex items-center justify-between py-7">
-        <Link to="/" className="flex items-baseline gap-1.5">
-          <span className="font-display text-[22px] tracking-tight">Seatly</span>
-          <span className="inline-block size-[5px] -translate-y-0.5 rounded-full bg-terracotta" aria-hidden />
-        </Link>
+        <Link to="/"><Logo size={22} /></Link>
         <Link
           to="/"
           className="inline-flex items-center gap-1.5 text-[13px] text-ink-3 hover:text-ink"
@@ -226,7 +221,7 @@ function LinkSentPage({
           </h1>
           <p className="mt-6 max-w-md text-base leading-[1.55] text-ink-2 md:text-[16px]">
             We&apos;ve sent a sign-in link to <strong className="text-ink">{email}</strong>. Click
-            it to open Seatly with all your plans intact.
+            it to open Wedding Seater with all your plans intact.
           </p>
           <div className="mt-7 flex items-center gap-3 text-[13px] text-ink-3">
             <span className="inline-block size-[6px] animate-[pulse_1.6s_ease-in-out_infinite] rounded-full bg-terracotta" aria-hidden />
@@ -295,7 +290,7 @@ function LinkSentPage({
                   color: "hsl(var(--paper))",
                 }}
               >
-                Take me to Seatly →
+                Take me to Wedding Seater →
               </div>
               <div
                 className="absolute font-mono"
@@ -306,7 +301,7 @@ function LinkSentPage({
                   color: "hsl(var(--ink-3))",
                 }}
               >
-                seatly.app/auth/v/4f3a-…
+                weddingseater.app/auth/v/4f3a-…
               </div>
             </div>
           </div>

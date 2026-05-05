@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { generatePlanCode } from "@/lib/planCode";
 import { toast } from "sonner";
 import { Loader2, Plus } from "lucide-react";
+import { Logo } from "@/components/Logo";
 import { PaperTable } from "@/components/PaperTable";
 import { UserMenu } from "@/components/UserMenu";
 
@@ -104,10 +105,7 @@ const Dashboard = () => {
       {/* Top nav — design surface AuthDashboardA */}
       <header className="border-b hairline">
         <div className="container flex items-center justify-between py-5">
-          <Link to="/" className="flex items-baseline gap-1.5">
-            <span className="font-display text-[22px] tracking-tight">Seatly</span>
-            <span className="inline-block h-[5px] w-[5px] -translate-y-px rounded-full bg-terracotta" aria-hidden />
-          </Link>
+          <Link to="/"><Logo size={22} /></Link>
           <nav className="hidden items-center gap-7 text-[13px] md:flex">
             <span className="text-ink">Plans</span>
             <a href="#templates" className="text-ink-3 hover:text-ink">Templates</a>

@@ -89,7 +89,7 @@ export function SamplePreviewCard({ coupleName, eventDate, planCode, tables }: P
           style={{ borderColor: "hsl(var(--hairline))" }}
         >
           <span>SAMPLE PREVIEW</span>
-          <span>seatly · {planCode ?? "PLM-2840"}</span>
+          <span>wedding seater · {planCode ?? "PLM-2840"}</span>
         </div>
       </div>
     </div>

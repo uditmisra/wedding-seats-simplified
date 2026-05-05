@@ -12,6 +12,7 @@ import { PaperTable } from "@/components/PaperTable";
 import { useAuth } from "@/hooks/useAuth";
 import { UserMenu } from "@/components/UserMenu";
 import { loadOrCreateSamplePlan } from "@/lib/samplePlan";
+import { Logo } from "@/components/Logo";
 
 interface OwnedPlan { id: string; code: string; name: string }
 
@@ -110,10 +111,7 @@ const Index = () => {
     <div className="paper-grain min-h-screen">
       {/* Top nav */}
       <header className="container flex items-center justify-between py-7">
-        <div className="flex items-baseline gap-1.5">
-          <span className="font-display text-[22px] tracking-tight">Seatly</span>
-          <span className="inline-block size-[5px] -translate-y-0.5 rounded-full bg-terracotta" aria-hidden />
-        </div>
+        <Logo size={22} />
         <nav className="hidden items-center gap-9 text-sm text-ink-2 md:flex">
           <a className="hover:text-ink" href="#promise">How it works</a>
           <button

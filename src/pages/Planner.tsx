@@ -17,6 +17,7 @@ import { OnboardingFlow } from "@/components/planner/OnboardingFlow";
 import { LayoutTabs } from "@/components/planner/LayoutTabs";
 import { CompareScenarios } from "@/components/planner/CompareScenarios";
 import { UserMenu } from "@/components/UserMenu";
+import { Logo } from "@/components/Logo";
 import { Link as LinkIcon, Check, Wand2, GitCompareArrows, ShieldAlert, Download, Mail, Bookmark, MoreHorizontal, Pencil, Eye, Sparkles } from "lucide-react";
 import { ClaimPlanModal } from "@/components/ClaimPlanModal";
 import { SignInNudge } from "@/components/SignInNudge";
@@ -185,9 +186,8 @@ const Planner = () => {
       {/* Editorial header */}
       <header className="sticky top-0 z-30 border-b hairline bg-paper/85 backdrop-blur-md">
         <div className="container flex h-16 items-center gap-6">
-          <Link to="/" aria-label="Home" className="flex items-baseline gap-[3px]">
-            <span className="font-display text-[18px]">Seatly</span>
-            <span className="inline-block h-1 w-1 -translate-y-px rounded-full bg-terracotta" aria-hidden />
+          <Link to="/" aria-label="Home">
+            <Logo size={18} />
           </Link>
           <span className="hidden h-5 w-px bg-hairline sm:block" aria-hidden />
           <div className="min-w-0 flex-1">
