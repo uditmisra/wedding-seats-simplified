@@ -37,6 +37,8 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 
 // Configuration
 const SITE_NAME = "Wedding Seater"
+const FROM_NAME = "Wedding Seater"
+const FROM_LOCAL = "hello"
 const SENDER_DOMAIN = "notify.weddingseater.app"
 const ROOT_DOMAIN = "weddingseater.app"
 const FROM_DOMAIN = "weddingseater.app" // Domain shown in From address (may be root or sender subdomain)
@@ -219,6 +221,17 @@ async function handleWebhook(req: Request): Promise<Response> {
   }
 
   // Build template props from payload.data (HookData structure)
+  const userMeta = (payload.data.user?.user_metadata ?? {}) as Record<string, unknown>
+  const inviterMeta = (payload.data.metadata ?? {}) as Record<string, unknown>
+  const recipientName =
+    (userMeta.full_name as string | undefined) ||
+    (userMeta.name as string | undefined) ||
+    (userMeta.first_name as string | undefined)
+  const inviterName =
+    (inviterMeta.inviter_name as string | undefined) ||
+    (inviterMeta.invited_by_name as string | undefined) ||
+    (inviterMeta.inviter as string | undefined)
+
   const templateProps = {
     siteName: SITE_NAME,
     siteUrl: `https://${ROOT_DOMAIN}`,
@@ -228,6 +241,8 @@ async function handleWebhook(req: Request): Promise<Response> {
     email: payload.data.email,
     oldEmail: payload.data.old_email,
     newEmail: payload.data.new_email,
+    recipientName,
+    inviterName,
   }
 
   // Render React Email to HTML and plain text
@@ -258,7 +273,7 @@ async function handleWebhook(req: Request): Promise<Response> {
       run_id,
       message_id: messageId,
       to: payload.data.email,
-      from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
+      from: `${FROM_NAME} <${FROM_LOCAL}@${FROM_DOMAIN}>`,
       sender_domain: SENDER_DOMAIN,
       subject: EMAIL_SUBJECTS[emailType] || 'Notification',
       html,
