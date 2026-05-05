@@ -20,7 +20,10 @@ function djb2(s: string): number {
   return Math.abs(h);
 }
 
+const NEUTRAL = "#8a8a7a"; // unaffiliated guests — no party
+
 export function guestColor(guest: Pick<Guest, "party" | "name">): string {
-  const key = guest.party?.trim() || guest.name?.trim() || "?";
-  return PARTY_PALETTE[djb2(key) % PARTY_PALETTE.length];
+  const party = guest.party?.trim();
+  if (!party) return NEUTRAL;
+  return PARTY_PALETTE[djb2(party) % PARTY_PALETTE.length];
 }

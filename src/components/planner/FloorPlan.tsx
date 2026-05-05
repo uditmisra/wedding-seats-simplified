@@ -42,6 +42,11 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
   const height = rows * cellH;
 
   const viewportRef = useRef<HTMLDivElement | null>(null);
+  const { setNodeRef: setCanvasDropRef } = useDroppable({ id: "__canvas__" });
+  const setViewportRef = (el: HTMLDivElement | null) => {
+    viewportRef.current = el;
+    setCanvasDropRef(el);
+  };
   const stateKey = `floorplan:view:${scenarioId ?? "default"}`;
 
   const [view, setView] = useState<{ x: number; y: number; z: number }>(() => {
@@ -136,7 +141,7 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
   return (
     <div className="relative rounded-2xl border hairline overflow-hidden bg-paper">
       <div
-        ref={viewportRef}
+        ref={setViewportRef}
         onWheel={onWheel}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}

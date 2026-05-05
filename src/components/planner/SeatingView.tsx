@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { DndContext, useDraggable, useDroppable, DragOverlay, type DragEndEvent, PointerSensor, TouchSensor, KeyboardSensor, useSensor, useSensors, pointerWithin } from "@dnd-kit/core";
+import { DndContext, useDraggable, useDroppable, DragOverlay, type DragEndEvent, type CollisionDetection, PointerSensor, TouchSensor, KeyboardSensor, useSensor, useSensors, pointerWithin, closestCenter } from "@dnd-kit/core";
 import { supabase } from "@/integrations/supabase/client";
 import type { Guest, TableDef, Assignment, ConstraintDef } from "@/lib/types";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,34 @@ interface Props {
   onGoToGuests?: () => void;
   onGoToTables?: () => void;
 }
+
+// Composite collision strategy:
+// 1. Unassign panel — strict pointer-within (intentional gesture).
+// 2. Floor plan canvas — pointer-within the canvas wrapper, then closest-center
+//    among seats (Voronoi-style: no pixel precision required).
+// 3. List view seat rows — pointer-within individual rows (full-width, easy to hit).
+const seatingCollision: CollisionDetection = (args) => {
+  const unassignHit = pointerWithin({
+    ...args,
+    droppableContainers: args.droppableContainers.filter(c => c.id === "__unassign__"),
+  });
+  if (unassignHit.length > 0) return unassignHit;
+
+  const canvasContainers = args.droppableContainers.filter(c => c.id === "__canvas__");
+  if (canvasContainers.length > 0) {
+    const inCanvas = pointerWithin({ ...args, droppableContainers: canvasContainers });
+    if (!inCanvas.length) return [];
+    return closestCenter({
+      ...args,
+      droppableContainers: args.droppableContainers.filter(c => String(c.id).startsWith("seat:")),
+    });
+  }
+
+  return pointerWithin({
+    ...args,
+    droppableContainers: args.droppableContainers.filter(c => String(c.id).startsWith("seat:")),
+  });
+};
 
 function firstFreeSeat(table: TableDef, seated: Assignment[], excludeId?: string): number | null {
   const taken = new Set(seated.filter(a => a.id !== excludeId && a.seat_index != null).map(a => a.seat_index!));
@@ -169,9 +197,6 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
     if (overId.startsWith("seat:")) {
       const [, tid, idxStr] = overId.split(":");
       await placeGuestAtSeat(guestId, tid, parseInt(idxStr, 10));
-    } else if (overId.startsWith("table:")) {
-      const tid = overId.slice("table:".length);
-      await placeGuestAtSeat(guestId, tid, null);
     }
   };
 
@@ -214,7 +239,7 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={pointerWithin}
+      collisionDetection={seatingCollision}
       onDragStart={e => setActiveId(String(e.active.id))}
       onDragEnd={onDragEnd}
       onDragCancel={() => setActiveId(null)}
