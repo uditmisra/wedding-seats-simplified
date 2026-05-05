@@ -9,4 +9,8 @@ export interface TemplateEntry {
   previewData?: Record<string, any>
 }
 
-export const TEMPLATES: Record<string, TemplateEntry> = {}
+import { template as welcome } from './welcome.tsx'
+
+export const TEMPLATES: Record<string, TemplateEntry> = {
+  'welcome': welcome,
+}
