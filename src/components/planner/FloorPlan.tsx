@@ -5,6 +5,7 @@ import { tableConflicts } from "@/lib/seating";
 import { Plus, Minus, Maximize2, RotateCcw } from "lucide-react";
 import { SeatMenu } from "./SeatMenu";
 import { SeatPicker } from "./SeatPicker";
+import { guestColor } from "@/lib/guestColor";
 
 interface Props {
   tables: TableDef[];
@@ -402,20 +403,21 @@ function Seat({ tableId, seatIndex, x, y, assignment, guest, table, allTables, t
 
 function SeatedChip({ guestId, guest, pinned, swapPreview }: { guestId: string; guest: Guest; pinned: boolean; swapPreview: boolean }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: guestId });
+  const color = guestColor(guest);
+  const label = guest.name.split(" ")[0].slice(0, 4); // first name, max 4 chars
   return (
     <button
       ref={setNodeRef}
       {...listeners}
       {...attributes}
-      style={{ touchAction: "none" }}
-      className={`relative w-full h-full rounded-full flex items-center justify-center font-mono text-[10px] font-medium cursor-grab active:cursor-grabbing transition-colors duration-150
-        ${swapPreview
-          ? "ring-2 ring-butter bg-butter/40 text-ink scale-110"
-          : "bg-terracotta text-paper ring-1 ring-ink/20 hover:bg-terracotta-2"}
+      style={{ touchAction: "none", background: swapPreview ? "hsl(var(--butter) / 0.4)" : color }}
+      className={`relative w-[30px] h-[30px] rounded-full flex items-center justify-center font-mono text-[8px] font-semibold cursor-grab active:cursor-grabbing transition-opacity duration-150 text-paper
+        ${swapPreview ? "ring-2 ring-butter text-ink scale-110" : "ring-1 ring-white/20"}
         ${isDragging ? "opacity-30" : ""}`}
       aria-label={`${guest.name}${pinned ? " (pinned)" : ""}`}
+      title={`${guest.name}${guest.party ? ` · ${guest.party}` : ""}`}
     >
-      {initials(guest.name)}
+      {label}
       {pinned && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-olive ring-1 ring-paper"/>}
     </button>
   );

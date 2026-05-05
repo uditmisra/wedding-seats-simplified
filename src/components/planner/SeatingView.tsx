@@ -14,6 +14,7 @@ import { GroupedClusters } from "./GroupedClusters";
 import { toast } from "sonner";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { useBelowLg } from "@/hooks/use-mobile";
+import { guestColor } from "@/lib/guestColor";
 
 interface Props {
   planId: string;
@@ -21,6 +22,7 @@ interface Props {
   guests: Guest[];
   tables: TableDef[];
   assignments: Assignment[];
+  setAssignments: React.Dispatch<React.SetStateAction<Assignment[]>>;
   constraints: ConstraintDef[];
   refresh: () => void;
   canEdit?: boolean;
@@ -34,7 +36,7 @@ function firstFreeSeat(table: TableDef, seated: Assignment[], excludeId?: string
   return null;
 }
 
-export function SeatingView({ planId, scenarioId, guests, tables, assignments, constraints, refresh, onGoToGuests, onGoToTables, canEdit = true }: Props) {
+export function SeatingView({ planId, scenarioId, guests, tables, assignments, setAssignments, constraints, refresh, onGoToGuests, onGoToTables, canEdit = true }: Props) {
   const [search, setSearch] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [view, setView] = useState<"list" | "floor" | "grouped">("floor");
@@ -107,41 +109,50 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
     const tbl = tableById.get(tableId); if (!tbl) return;
     const tableSeated = assignments.filter(a => a.table_id === tableId);
 
-    // Resolve seat index when only table provided
     let targetIdx = seatIndex;
     if (targetIdx == null) targetIdx = firstFreeSeat(tbl, tableSeated, existing?.id);
 
-    // Detect occupant of the target seat (if any)
     const occupant = targetIdx != null
       ? tableSeated.find(a => a.seat_index === targetIdx && a.guest_id !== guestId)
       : undefined;
 
-    const ops: PromiseLike<unknown>[] = [];
-
-    if (occupant) {
-      // SWAP: occupant takes guest's previous (table_id, seat_index), or becomes unassigned
+    // ── Optimistic update — instant UI ────────────────────────
+    setAssignments(prev => {
+      let next = prev.filter(a => a.guest_id !== guestId);
+      if (occupant) {
+        if (existing) {
+          next = next.map(a => a.id === occupant.id
+            ? { ...a, table_id: existing.table_id, seat_index: existing.seat_index ?? null }
+            : a);
+        } else {
+          next = next.filter(a => a.id !== occupant.id);
+        }
+      }
       if (existing) {
-        ops.push(supabase.from("assignments").update({
-          table_id: existing.table_id, seat_index: existing.seat_index,
-        }).eq("id", occupant.id));
+        next.push({ ...existing, table_id: tableId, seat_index: targetIdx });
+      } else {
+        next.push({ id: `opt-${guestId}`, plan_id: planId, scenario_id: scenarioId, guest_id: guestId, table_id: tableId, seat_index: targetIdx, pinned: false });
+      }
+      return next;
+    });
+
+    // ── Background persist ────────────────────────────────────
+    const ops: PromiseLike<unknown>[] = [];
+    if (occupant) {
+      if (existing) {
+        ops.push(supabase.from("assignments").update({ table_id: existing.table_id, seat_index: existing.seat_index }).eq("id", occupant.id));
       } else {
         ops.push(supabase.from("assignments").delete().eq("id", occupant.id));
       }
     }
-
     if (existing) {
-      ops.push(supabase.from("assignments").update({
-        table_id: tableId, seat_index: targetIdx,
-      }).eq("id", existing.id));
+      ops.push(supabase.from("assignments").update({ table_id: tableId, seat_index: targetIdx }).eq("id", existing.id));
     } else {
-      ops.push(supabase.from("assignments").insert({
-        plan_id: planId, scenario_id: scenarioId, guest_id: guestId, table_id: tableId, seat_index: targetIdx,
-      }));
+      ops.push(supabase.from("assignments").insert({ plan_id: planId, scenario_id: scenarioId, guest_id: guestId, table_id: tableId, seat_index: targetIdx }));
     }
-
     const results = await Promise.all(ops);
-    if (results.some((r: any) => r?.error)) toast.error("Couldn't update seating");
-    refresh();
+    if (results.some((r: any) => r?.error)) { toast.error("Couldn't update seating"); refresh(); return; }
+    refresh(); // background sync to replace optimistic IDs
   };
 
   const onDragEnd = async (e: DragEndEvent) => {
@@ -151,6 +162,7 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, c
     const overId = e.over?.id ? String(e.over.id) : null;
     if (!overId) return;
     if (overId === "__unassign__") {
+      setAssignments(prev => prev.filter(a => a.guest_id !== guestId));
       await supabase.from("assignments").delete().eq("guest_id", guestId).eq("scenario_id", scenarioId);
       refresh(); return;
     }
@@ -356,14 +368,14 @@ function UnassignedPanel({ guests, search, setSearch, totalGuests, onAddGuest }:
 }
 
 function GuestPill({ guest, dragging, pinned, overlay }: { guest: Guest; dragging?: boolean; pinned?: boolean; overlay?: boolean }) {
+  const dot = <span className="inline-block w-2 h-2 shrink-0 rounded-full" style={{ background: guestColor(guest) }} />;
   if (overlay) {
-    // Presentation-only copy used inside <DragOverlay/>. No useDraggable hook,
-    // so it doesn't conflict with the original draggable's id.
     return (
       <div
-        className="group flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm border border-terracotta/60 bg-paper shadow-elegant cursor-grabbing"
+        className="group flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm border border-hairline bg-paper shadow-elegant cursor-grabbing"
         style={{ transform: "rotate(-3deg)", willChange: "transform" }}
       >
+        {dot}
         <div className="min-w-0 flex-1 truncate">
           <span className="font-medium">{guest.name}</span>
           {guest.party && <span className="ml-1.5 text-xs text-ink-3">{guest.party}</span>}
@@ -382,10 +394,11 @@ function GuestPill({ guest, dragging, pinned, overlay }: { guest: Guest; draggin
       className={`group flex cursor-grab items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm active:cursor-grabbing transition-colors
         ${isDragging ? "opacity-30" : ""}
         ${dragging
-          ? "border border-terracotta/60 bg-paper shadow-elegant"
+          ? "border border-hairline bg-paper shadow-elegant"
           : "hover:bg-paper-2/60"}`}
       style={{ touchAction: "none" }}
     >
+      {dot}
       <div className="min-w-0 flex-1 truncate">
         <span className="font-medium">{guest.name}</span>
         {guest.party && <span className="ml-1.5 text-xs text-ink-3">{guest.party}</span>}

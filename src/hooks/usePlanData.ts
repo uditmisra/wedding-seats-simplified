@@ -94,5 +94,5 @@ export function usePlanData(code: string | undefined) {
     }
   }, [plan, code, loadAll]);
 
-  return { plan, setPlan, scenarios, scenarioId, setScenarioId, guests, tables, assignments, constraints, loading, notFound, refresh };
+  return { plan, setPlan, scenarios, scenarioId, setScenarioId, guests, tables, assignments, setAssignments, constraints, loading, notFound, refresh };
 }

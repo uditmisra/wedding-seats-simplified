@@ -41,7 +41,7 @@ const TAB_DEFS = [
 const Planner = () => {
   const { code } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { plan, setPlan, scenarios, scenarioId, setScenarioId, guests, tables, assignments, constraints, loading, notFound, refresh } = usePlanData(code);
+  const { plan, setPlan, scenarios, scenarioId, setScenarioId, guests, tables, assignments, setAssignments, constraints, loading, notFound, refresh } = usePlanData(code);
   const { user } = useAuth();
   const [editingName, setEditingName] = useState(false);
   const [autoOpen, setAutoOpen] = useState(false);
@@ -370,6 +370,7 @@ const Planner = () => {
               guests={guests}
               tables={tables}
               assignments={assignments}
+              setAssignments={setAssignments}
               constraints={constraints}
               refresh={refresh}
               canEdit={canEdit}
