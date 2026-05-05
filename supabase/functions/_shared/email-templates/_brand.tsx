@@ -6,7 +6,7 @@ export const BRAND = {
   name: 'Wedding Seater',
   tagline: 'A SEATING PLANNER · EST. 2026',
   url: 'https://weddingseater.app',
-  logoUrl: 'https://weddingseater.app/brand/wedding-seater-mark.png',
+  logoUrl: 'https://bqacaxesfvbcxbmqdemz.supabase.co/storage/v1/object/public/email-assets/wedding-seater-mark.png',
   paper: '#f3eee3',
   paper2: '#ebe5d6',
   ink: '#23201a',
@@ -29,7 +29,7 @@ export const Footer = () => (
   <>
     <Hr style={hairline} />
     <Text style={footerText}>
-      WEDDINGSEATER.APP · HELLO@WEDDINGSEATER.APP
+      WEDDINGSEATER.APP
     </Text>
   </>
 )
