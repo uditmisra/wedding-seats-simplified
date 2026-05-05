@@ -1,90 +1,28 @@
 /// <reference types="npm:@types/react@18.3.1" />
-
 import * as React from 'npm:react@18.3.1'
+import { Body, Button, Container, Head, Html, Preview, Text } from 'npm:@react-email/components@0.0.22'
+import { Header, Footer, styles, BRAND } from './_brand.tsx'
 
-import {
-  Body,
-  Button,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Link,
-  Preview,
-  Text,
-} from 'npm:@react-email/components@0.0.22'
+interface Props { siteName: string; oldEmail: string; email: string; newEmail: string; confirmationUrl: string }
 
-interface EmailChangeEmailProps {
-  siteName: string
-  // oldEmail is the user's current address (HookData.OldEmail). For the
-  // NEW-recipient half of a secure email_change fanout, `email` equals the
-  // recipient (NEW), so the "from" line must render oldEmail to read
-  // "from OLD to NEW" instead of "from NEW to NEW".
-  oldEmail: string
-  email: string
-  newEmail: string
-  confirmationUrl: string
-}
-
-export const EmailChangeEmail = ({
-  siteName,
-  oldEmail,
-  newEmail,
-  confirmationUrl,
-}: EmailChangeEmailProps) => (
+export const EmailChangeEmail = ({ oldEmail, newEmail, confirmationUrl }: Props) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Confirm your email change for {siteName}</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Heading style={h1}>Confirm your email change</Heading>
-        <Text style={text}>
-          You requested to change your email address for {siteName} from{' '}
-          <Link href={`mailto:${oldEmail}`} style={link}>
-            {oldEmail}
-          </Link>{' '}
-          to{' '}
-          <Link href={`mailto:${newEmail}`} style={link}>
-            {newEmail}
-          </Link>
-          .
+    <Preview>Confirm your email change for Wedding Seater</Preview>
+    <Body style={styles.main}>
+      <Container style={styles.container}>
+        <Header />
+        <Text style={label}>EMAIL CHANGE</Text>
+        <h1 style={styles.h1}>Confirm your <span style={styles.italic}>new</span> email.</h1>
+        <Text style={styles.text}>
+          You asked to change your Wedding Seater email from <strong style={{ color: BRAND.ink }}>{oldEmail}</strong> to <strong style={{ color: BRAND.ink }}>{newEmail}</strong>.
         </Text>
-        <Text style={text}>
-          Click the button below to confirm this change:
-        </Text>
-        <Button style={button} href={confirmationUrl}>
-          Confirm Email Change
-        </Button>
-        <Text style={footer}>
-          If you didn't request this change, please secure your account
-          immediately.
-        </Text>
+        <Button style={styles.button} href={confirmationUrl}>Confirm change →</Button>
+        <Text style={styles.muted}>If you didn't request this, you can safely ignore this email.</Text>
+        <Footer />
       </Container>
     </Body>
   </Html>
 )
-
 export default EmailChangeEmail
-
-const main = { backgroundColor: '#ffffff', fontFamily: 'Inter Tight, Helvetica, Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontFamily: 'Newsreader, Georgia, serif',
-  fontSize: '28px',
-  fontWeight: 400 as const,
-  letterSpacing: '-0.01em',
-  color: 'hsl(50, 14%, 15%)',
-  margin: '0 0 20px',
-}
-const text = { fontSize: '15px', color: 'hsl(46, 12%, 39%)', lineHeight: '1.55', margin: '0 0 24px' }
-const link = { color: 'hsl(15, 55%, 46%)', textDecoration: 'underline' }
-const button = {
-  backgroundColor: 'hsl(50, 14%, 15%)',
-  color: 'hsl(41, 40%, 92%)',
-  fontSize: '14px',
-  borderRadius: '999px',
-  padding: '13px 24px',
-  textDecoration: 'none',
-  fontWeight: 500 as const,
-}
-const footer = { fontSize: '12px', color: 'hsl(45, 12%, 54%)', margin: '32px 0 0', lineHeight: '1.5' }
+const label = { fontFamily: 'ui-monospace, Menlo, monospace', fontSize: '10px', letterSpacing: '0.32em', color: BRAND.terracotta, margin: '0 0 14px' }
