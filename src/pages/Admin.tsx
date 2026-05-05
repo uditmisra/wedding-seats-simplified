@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Logo } from "@/components/Logo";
 import { UserMenu } from "@/components/UserMenu";
 import { toast } from "sonner";
-import { Loader2, Trash2, LogIn, ExternalLink, RefreshCw } from "lucide-react";
+import { Loader2, Trash2, ExternalLink, RefreshCw } from "lucide-react";
 
 const ADMIN_EMAIL = "udit.misra93@gmail.com";
 
@@ -137,27 +137,12 @@ export default function Admin() {
   const deleteUser = async (userId: string, email: string) => {
     if (!confirm(`Delete user "${email}" and all their data? This cannot be undone.`)) return;
     setBusyUser(userId);
-    const { error } = await supabase.functions.invoke("admin-ops", {
-      body: { action: "delete_user", userId },
-    });
+    const { error } = await supabase.rpc("admin_delete_user" as never, { p_user_id: userId } as never);
     setBusyUser(null);
     if (error) { toast.error(error.message); return; }
     toast.success(`${email} deleted`);
     setUsers(us => us.filter(u => u.id !== userId));
-  };
-
-  const impersonate = async (userId: string, email: string) => {
-    setBusyUser(userId);
-    const { data, error } = await supabase.functions.invoke("admin-ops", {
-      body: { action: "impersonate", userId },
-    });
-    setBusyUser(null);
-    if (error || !data?.url) {
-      toast.error(error?.message ?? "Could not generate link");
-      return;
-    }
-    toast.success(`Opening session as ${email}`);
-    window.open(data.url, "_blank", "noopener");
+    if (tab === "overview") fetchStats();
   };
 
   if (loading || !user || user.email !== ADMIN_EMAIL) {
@@ -291,23 +276,24 @@ export default function Admin() {
                         <td className="px-4 py-3">
                           {u.email !== ADMIN_EMAIL && (
                             <div className="flex items-center justify-end gap-2">
-                              <button
-                                onClick={() => impersonate(u.id, u.email)}
-                                disabled={busyUser === u.id}
-                                title="Impersonate — opens a new tab signed in as this user"
-                                className="rounded p-1 text-ink-3 hover:bg-paper-2 hover:text-ink disabled:opacity-40"
+                              <a
+                                href={`https://supabase.com/dashboard/project/bqacaxesfvbcxbmqdemz/auth/users?search=${encodeURIComponent(u.email)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title="View in Supabase dashboard"
+                                className="rounded p-1 text-ink-3 hover:bg-paper-2 hover:text-ink"
                               >
-                                {busyUser === u.id
-                                  ? <Loader2 size={13} className="animate-spin" />
-                                  : <LogIn size={13} />}
-                              </button>
+                                <ExternalLink size={13} />
+                              </a>
                               <button
                                 onClick={() => deleteUser(u.id, u.email)}
                                 disabled={busyUser === u.id}
                                 title="Delete user"
                                 className="rounded p-1 text-ink-3 hover:bg-rose/10 hover:text-rose disabled:opacity-40"
                               >
-                                <Trash2 size={13} />
+                                {busyUser === u.id
+                                  ? <Loader2 size={13} className="animate-spin" />
+                                  : <Trash2 size={13} />}
                               </button>
                             </div>
                           )}
