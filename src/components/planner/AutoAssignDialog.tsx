@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Guest, TableDef, Assignment, ConstraintDef } from "@/lib/types";
 import { toast } from "sonner";
 import { Sparkles } from "lucide-react";
+import { analytics } from "@/lib/analytics";
 
 interface Props {
   planId: string;
@@ -57,6 +58,7 @@ export function AutoAssignDialog({ planId, scenarioId, guests, tables, assignmen
         conflicts: 0,
       }));
     } catch {}
+    analytics.autoAssignRun({ guestCount: rows.length });
     toast.success(`Seated ${rows.length} guests`);
     onClose();
   };

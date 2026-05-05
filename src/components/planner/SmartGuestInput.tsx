@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Sparkles, Loader2, Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import type { RSVP } from "@/lib/types";
+import { analytics } from "@/lib/analytics";
 
 interface ParsedGuest {
   name: string;
@@ -68,6 +69,7 @@ export function SmartGuestInput({ planId, onDone }: Props) {
     if (!rows.length) return;
     const { error } = await supabase.from("guests").insert(rows);
     if (error) { toast.error(error.message); return; }
+    analytics.guestsAdded({ count: rows.length, method: "ai" });
     toast.success(`Added ${rows.length} guests`);
     setText(""); setParsed(null); onDone();
   };

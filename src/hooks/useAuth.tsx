@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { identifyUser, resetUser } from "@/lib/analytics";
 
 interface AuthCtx {
   session: Session | null;
@@ -17,9 +18,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Subscribe FIRST, then read session.
-    const { data: sub } = supabase.auth.onAuthStateChange((_evt, s) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((evt, s) => {
       setSession(s);
       setLoading(false);
+      if (s?.user) identifyUser(s.user.id, s.user.email ?? "");
+      if (evt === "SIGNED_OUT") resetUser();
     });
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);

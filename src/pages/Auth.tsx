@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { Logo } from "@/components/Logo";
+import { analytics } from "@/lib/analytics";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -45,6 +46,7 @@ export default function Auth() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setBusy(false);
     if (error) { toast.error(error.message); return; }
+    analytics.signedIn();
     navigate(next, { replace: true });
   };
 
@@ -56,6 +58,7 @@ export default function Auth() {
     });
     setBusy(false);
     if (error) { toast.error(error.message); return; }
+    analytics.signedUp();
     setSentTo(email);
   };
 

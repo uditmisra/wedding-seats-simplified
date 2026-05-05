@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Sparkles, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Shape } from "@/lib/types";
+import { analytics } from "@/lib/analytics";
 
 interface ParsedTable { name: string; shape: Shape; capacity: number }
 
@@ -57,6 +58,7 @@ export function SmartTableInput({ planId, scenarioId, existingCount, onDone }: P
     if (!rows.length) return;
     const { error } = await supabase.from("tables_def").insert(rows);
     if (error) { toast.error(error.message); return; }
+    analytics.tableAdded({ method: "ai" });
     toast.success(`Created ${rows.length} tables`);
     setText(""); setParsed(null); onDone();
   };

@@ -13,6 +13,7 @@ import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { toast } from "sonner";
 import type { Guest, RSVP } from "@/lib/types";
 import { downloadGuestTemplate } from "@/lib/template";
+import { analytics } from "@/lib/analytics";
 import { SmartGuestInput } from "./SmartGuestInput";
 import { Combobox } from "@/components/ui/combobox";
 import { useBelowLg } from "@/hooks/use-mobile";
@@ -237,6 +238,7 @@ export function GuestsTab({ planId, guests, refresh, autoOpen, onAutoOpenHandled
       if (cInserts.length) await supabase.from("constraints_def").insert(cInserts);
     }
 
+    analytics.guestsAdded({ count: inserted?.length ?? 0, method: "paste" });
     toast.success(`Imported ${inserted?.length ?? 0} guests`);
     setImportRows(null); setImportHeaders([]); setMapping({});
     refresh();

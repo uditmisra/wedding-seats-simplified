@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { UserMenu } from "@/components/UserMenu";
 import { loadOrCreateSamplePlan } from "@/lib/samplePlan";
 import { Logo } from "@/components/Logo";
+import { analytics } from "@/lib/analytics";
 
 interface OwnedPlan { id: string; code: string; name: string }
 
@@ -92,6 +93,7 @@ const Index = () => {
       .insert({ plan_id: data.id, user_id: user.id, role: "owner" });
     setLoading(false);
     if (ownErr) toast.error("Plan created but ownership failed");
+    analytics.planCreated({ name: data.name });
     navigate(`/plan/${data.code}`);
   };
 

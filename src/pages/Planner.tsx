@@ -18,6 +18,7 @@ import { LayoutTabs } from "@/components/planner/LayoutTabs";
 import { CompareScenarios } from "@/components/planner/CompareScenarios";
 import { UserMenu } from "@/components/UserMenu";
 import { Logo } from "@/components/Logo";
+import { analytics } from "@/lib/analytics";
 import { Link as LinkIcon, Check, Wand2, GitCompareArrows, ShieldAlert, Download, Mail, Bookmark, MoreHorizontal, Pencil, Eye, Sparkles } from "lucide-react";
 import { ClaimPlanModal } from "@/components/ClaimPlanModal";
 import { SignInNudge } from "@/components/SignInNudge";
@@ -123,8 +124,11 @@ const Planner = () => {
   }, [showOnboarding]);
 
   useEffect(() => {
-    if (plan) addRecentPlan({ code: plan.code, name: plan.name, openedAt: Date.now() });
-  }, [plan?.id, plan?.name]);
+    if (plan) {
+      addRecentPlan({ code: plan.code, name: plan.name, openedAt: Date.now() });
+      analytics.planOpened({ code: plan.code, owned: canEdit });
+    }
+  }, [plan?.id]);
 
   if (loading) return (
     <div className="paper-grain flex min-h-screen items-center justify-center">
@@ -167,6 +171,7 @@ const Planner = () => {
 
   const copyLink = async () => {
     await navigator.clipboard.writeText(window.location.href);
+    analytics.planShared({ code: plan.code });
     setCopied(true); setTimeout(() => setCopied(false), 1500);
   };
 
@@ -338,7 +343,7 @@ const Planner = () => {
           />
         )}
 
-        <Tabs value={tab} onValueChange={setTab}>
+        <Tabs value={tab} onValueChange={v => { if (v === "export") analytics.exportOpened(); setTab(v); }}>
           <div className="hidden items-end justify-between gap-3 border-b hairline bg-white/30 px-4 -mx-4 rounded-t-md sm:flex">
             <TabsList className="h-auto gap-7 rounded-none bg-transparent p-0">
               {visibleTabs.map(t => {
