@@ -16,6 +16,7 @@ import { AutoAssignDialog } from "@/components/planner/AutoAssignDialog";
 import { OnboardingFlow } from "@/components/planner/OnboardingFlow";
 import { LayoutTabs } from "@/components/planner/LayoutTabs";
 import { CompareScenarios } from "@/components/planner/CompareScenarios";
+import { SharePopover } from "@/components/planner/SharePopover";
 import { UserMenu } from "@/components/UserMenu";
 import { Logo } from "@/components/Logo";
 import { analytics } from "@/lib/analytics";
@@ -220,35 +221,15 @@ const Planner = () => {
           <TooltipProvider delayDuration={200}>
             <div className="flex items-center gap-2">
               <span className="hidden font-mono text-[11px] text-ink-3 sm:inline">Saved · just now</span>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Tooltip><TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      className="rounded-full border hairline px-3 py-1.5 text-[12px] text-ink-2 hover:bg-paper-2 inline-flex"
-                      aria-label="Share plan"
-                    >
-                      Share link <span className="ml-1 font-display-italic text-terracotta">↗</span>
-                    </button>
-                  </TooltipTrigger><TooltipContent>Share this plan</TooltipContent></Tooltip>
-                </PopoverTrigger>
-                <PopoverContent align="end" className="w-72 rounded-xl border-hairline p-4 shadow-elegant">
-                  <div className="space-y-2.5">
-                    <Button variant="outline" size="sm" className="w-full justify-start font-normal" onClick={copyLink}>
-                      {copied ? <Check size={14} className="mr-2 text-olive" /> : <LinkIcon size={14} className="mr-2" />}
-                      {copied ? "Link copied" : "Copy link"}
-                    </Button>
-                    <Button asChild variant="outline" size="sm" className="w-full justify-start font-normal">
-                      <a href={`mailto:?subject=${encodeURIComponent(`Our seating plan: ${plan.name}`)}&body=${encodeURIComponent(`${typeof window !== "undefined" ? window.location.href : ""}`)}`}>
-                        <Mail size={14} className="mr-2" />Email yourself
-                      </a>
-                    </Button>
-                    <div className="flex items-center gap-1.5 border-t hairline pt-2 text-xs text-ink-3">
-                      <Bookmark size={11} /> Press ⌘+D to bookmark
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
+              <SharePopover
+                planName={plan.name}
+                planUrl={typeof window !== "undefined" ? window.location.href : ""}
+                inviterName={
+                  (user?.user_metadata as any)?.full_name ||
+                  (user?.user_metadata as any)?.name ||
+                  (user?.email ? user.email.split("@")[0] : undefined)
+                }
+              />
               {canEdit && (
                 <Button size="sm" onClick={() => setAutoOpen(true)} className="h-9 rounded-full px-4 shadow-soft">
                   <Wand2 size={14} className="mr-1.5" />Auto-seat
