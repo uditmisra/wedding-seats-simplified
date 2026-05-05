@@ -1,58 +1,26 @@
 /// <reference types="npm:@types/react@18.3.1" />
-
 import * as React from 'npm:react@18.3.1'
+import { Body, Container, Head, Html, Preview, Text } from 'npm:@react-email/components@0.0.22'
+import { Header, Footer, styles, BRAND } from './_brand.tsx'
 
-import {
-  Body,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Preview,
-  Text,
-} from 'npm:@react-email/components@0.0.22'
+interface Props { token: string }
 
-interface ReauthenticationEmailProps {
-  token: string
-}
-
-export const ReauthenticationEmail = ({ token }: ReauthenticationEmailProps) => (
+export const ReauthenticationEmail = ({ token }: Props) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Your verification code</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Heading style={h1}>Confirm reauthentication</Heading>
-        <Text style={text}>Use the code below to confirm your identity:</Text>
-        <Text style={codeStyle}>{token}</Text>
-        <Text style={footer}>
-          This code will expire shortly. If you didn't request this, you can
-          safely ignore this email.
-        </Text>
+    <Preview>Your Wedding Seater verification code</Preview>
+    <Body style={styles.main}>
+      <Container style={styles.container}>
+        <Header />
+        <Text style={label}>VERIFY</Text>
+        <h1 style={styles.h1}>Confirm <span style={styles.italic}>it's you.</span></h1>
+        <Text style={styles.text}>Use the code below to confirm your identity:</Text>
+        <Text style={styles.code}>{token}</Text>
+        <Text style={styles.muted}>This code expires shortly. If you didn't request it, you can safely ignore this email.</Text>
+        <Footer />
       </Container>
     </Body>
   </Html>
 )
-
 export default ReauthenticationEmail
-
-const main = { backgroundColor: '#ffffff', fontFamily: 'Inter Tight, Helvetica, Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontFamily: 'Newsreader, Georgia, serif',
-  fontSize: '28px',
-  fontWeight: 400 as const,
-  letterSpacing: '-0.01em',
-  color: 'hsl(50, 14%, 15%)',
-  margin: '0 0 20px',
-}
-const text = { fontSize: '15px', color: 'hsl(46, 12%, 39%)', lineHeight: '1.55', margin: '0 0 24px' }
-const codeStyle = {
-  fontFamily: 'Geist Mono, Courier, monospace',
-  fontSize: '24px',
-  fontWeight: 500 as const,
-  letterSpacing: '0.16em',
-  color: 'hsl(50, 14%, 15%)',
-  margin: '0 0 30px',
-}
-const footer = { fontSize: '12px', color: 'hsl(45, 12%, 54%)', margin: '32px 0 0', lineHeight: '1.5' }
+const label = { fontFamily: 'ui-monospace, Menlo, monospace', fontSize: '10px', letterSpacing: '0.32em', color: BRAND.terracotta, margin: '0 0 14px' }

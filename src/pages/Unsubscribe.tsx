@@ -51,7 +51,7 @@ export default function Unsubscribe() {
             {state === "valid" && (
               <>
                 <h1 className="m-0 font-display text-[26px] leading-tight">Stop <span className="font-display-italic">these</span> emails?</h1>
-                <p className="mt-3 text-ink-2 text-[14px]">You'll no longer receive transactional emails from Seatly at this address.</p>
+                <p className="mt-3 text-ink-2 text-[14px]">You'll no longer receive transactional emails from Wedding Seater at this address.</p>
                 <Button onClick={confirm} className="mt-5 h-11 w-full rounded-full">Confirm unsubscribe</Button>
               </>
             )}
