@@ -188,15 +188,8 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
               })}
             </svg>
 
-            {/* Drop zones + seats overlay (sharing transform) */}
+            {/* Seat drop zones + seats overlay (sharing transform) */}
             <div className="absolute inset-0 pointer-events-none">
-              {layout.map(({ t, cx, cy, box }) => (
-                <TableDropZone
-                  key={t.id}
-                  tableId={t.id}
-                  style={{ left: cx - box.w / 2 - 30, top: cy - box.h / 2 - 30, width: box.w + 60, height: box.h + 60, position: "absolute" }}
-                />
-              ))}
               {layout.map(({ t, seats }) => {
                 const seated = assignments.filter(a => a.table_id === t.id);
                 const seatMap = new Map<number, Assignment>();
@@ -356,8 +349,8 @@ function Seat({ tableId, seatIndex, x, y, assignment, guest, table, allTables, t
   return (
     <div
       ref={dropRef}
-      style={{ left: x, top: y, position: "absolute", transform: "translate(-50%, -50%)", width: 30, height: 30 }}
-      className="pointer-events-auto"
+      style={{ left: x, top: y, position: "absolute", transform: "translate(-50%, -50%)", width: 44, height: 44 }}
+      className="pointer-events-auto flex items-center justify-center"
       title={occupied ? `${guest!.name}${guest!.meal ? ` · ${guest!.meal}` : ""}` : `Seat ${seatIndex + 1} — empty`}
     >
       {occupied ? (
@@ -386,7 +379,7 @@ function Seat({ tableId, seatIndex, x, y, assignment, guest, table, allTables, t
           <button
             type="button"
             onContextMenu={(e) => { e.preventDefault(); setPickerOpen(true); }}
-            className={`w-full h-full rounded-full border transition-[transform,background-color,border-color] duration-100 flex items-center justify-center font-mono text-[9px] text-ink-3 ${
+            className={`w-[30px] h-[30px] rounded-full border transition-[transform,background-color,border-color] duration-100 flex items-center justify-center font-mono text-[9px] text-ink-3 ${
               isOver ? "bg-terracotta/15 border-terracotta scale-110" : "border-ink/40 bg-paper/60 hover:border-ink/70 hover:bg-paper"
             }`}
             aria-label={`Seat ${seatIndex + 1} — empty. Click to assign.`}
@@ -396,7 +389,7 @@ function Seat({ tableId, seatIndex, x, y, assignment, guest, table, allTables, t
         </SeatPicker>
       ) : (
         <div
-          className={`w-full h-full rounded-full border transition-[transform,background-color,border-color] duration-100 flex items-center justify-center font-mono text-[9px] text-ink-3 ${
+          className={`w-[30px] h-[30px] rounded-full border transition-[transform,background-color,border-color] duration-100 flex items-center justify-center font-mono text-[9px] text-ink-3 ${
             isOver ? "bg-terracotta/15 border-terracotta scale-110" : "border-ink/40 bg-paper/60"
           }`}
         >

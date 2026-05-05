@@ -408,9 +408,9 @@ function SeatRow({ table, seatIndex, assignment, guest, allTables, tableSeated, 
   const occupied = !!assignment && !!guest;
   return (
     <div ref={setNodeRef}
-      className={`flex items-center gap-2 rounded-lg transition px-1
-        ${isOver ? (occupied ? "bg-warning/10 ring-1 ring-warning/40" : "bg-primary/10 ring-1 ring-primary/40") : ""}`}>
-      <span className="w-5 text-[10px] text-soft tabular-nums text-center">{seatIndex + 1}</span>
+      className={`flex items-center gap-2 rounded-lg transition px-1 py-0.5
+        ${isOver ? (occupied ? "bg-terracotta/10 ring-1 ring-terracotta/40" : "bg-olive/10 ring-1 ring-olive/30") : ""}`}>
+      <span className="w-5 shrink-0 text-[10px] text-soft tabular-nums text-center">{seatIndex + 1}</span>
       <div className="flex-1 min-w-0">
         {occupied ? (
           <SeatMenu
@@ -421,7 +421,7 @@ function SeatRow({ table, seatIndex, assignment, guest, allTables, tableSeated, 
             <div><GuestPill guest={guest!} pinned={assignment!.pinned}/></div>
           </SeatMenu>
         ) : (
-          <div className="h-7 rounded-lg border border-dashed hairline"/>
+          <div className={`h-7 rounded-lg border border-dashed transition ${isOver ? "border-olive/60 bg-olive/5" : "hairline"}`}/>
         )}
       </div>
     </div>
@@ -435,16 +435,15 @@ function TableCard({ table, seated, guestById, tables, hasConflict, onUnassign, 
   onMoveTo: (a: Assignment, tableId: string) => void;
   onSwapWith: (a: Assignment, b: Assignment) => void;
 }) {
-  const { setNodeRef, isOver } = useDroppable({ id: `table:${table.id}` });
   const over = seated.length > table.capacity;
   const fillRatio = Math.min(1, seated.length / Math.max(1, table.capacity));
   const seatMap = new Map<number, Assignment>();
   seated.forEach(a => { if (a.seat_index != null) seatMap.set(a.seat_index, a); });
   const overflow = seated.filter(a => a.seat_index == null || a.seat_index >= table.capacity);
   return (
-    <div ref={setNodeRef}
+    <div
       className={`rounded-2xl border bg-card p-4 transition
-        ${isOver ? "border-primary ring-2 ring-primary/20" : hasConflict ? "border-destructive/60" : over ? "border-warning/60" : "hairline"}`}>
+        ${hasConflict ? "border-destructive/60" : over ? "border-warning/60" : "hairline"}`}>
       <div className="flex items-center justify-between mb-3">
         <div className="font-display text-lg leading-tight">{table.name}</div>
         <CapacityRing seated={seated.length} capacity={table.capacity} ratio={fillRatio} over={over}/>
