@@ -77,20 +77,20 @@ export function SharePopover({ planName, planUrl, inviterName }: Props) {
         if (!o) reset();
       }}
     >
-      <PopoverTrigger asChild>
-        <Tooltip>
-          <TooltipTrigger asChild>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <PopoverTrigger asChild>
             <button
               type="button"
-              className="rounded-full border hairline px-3 py-1.5 text-[12px] text-ink-2 hover:bg-paper-2 inline-flex"
+              className="rounded-full border hairline px-3 py-1.5 text-[12px] text-ink-2 hover:bg-paper-2 inline-flex items-center"
               aria-label="Share plan"
             >
               Share link <span className="ml-1 font-display-italic text-terracotta">↗</span>
             </button>
-          </TooltipTrigger>
-          <TooltipContent>Share this plan</TooltipContent>
-        </Tooltip>
-      </PopoverTrigger>
+          </PopoverTrigger>
+        </TooltipTrigger>
+        <TooltipContent>Share this plan</TooltipContent>
+      </Tooltip>
       <PopoverContent
         align="end"
         className="w-[340px] rounded-xl border-hairline bg-paper p-5 shadow-elegant"
