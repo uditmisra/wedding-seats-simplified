@@ -223,16 +223,19 @@ async function handleWebhook(req: Request): Promise<Response> {
   }
 
   // Build template props from payload.data (HookData structure)
-  const userMeta = (payload.data.user?.user_metadata ?? {}) as Record<string, unknown>
-  const inviterMeta = (payload.data.metadata ?? {}) as Record<string, unknown>
+  const data = payload.data as Record<string, any>
+  console.log('Auth payload data keys', { keys: Object.keys(data), action_type: data.action_type })
+  const userMeta = (data.user?.user_metadata ?? data.user_metadata ?? {}) as Record<string, any>
+  const topMeta = (data.metadata ?? data.data ?? {}) as Record<string, any>
+  const pickName = (m: Record<string, any>): string | undefined =>
+    (m.full_name || m.name || m.first_name || m.firstName) as string | undefined
   const recipientName =
-    (userMeta.full_name as string | undefined) ||
-    (userMeta.name as string | undefined) ||
-    (userMeta.first_name as string | undefined)
+    pickName(userMeta) ||
+    pickName(topMeta) ||
+    (topMeta.recipient_name as string | undefined)
   const inviterName =
-    (inviterMeta.inviter_name as string | undefined) ||
-    (inviterMeta.invited_by_name as string | undefined) ||
-    (inviterMeta.inviter as string | undefined)
+    (topMeta.inviter_name || topMeta.invited_by_name || topMeta.inviter || topMeta.from_name) as string | undefined ||
+    (userMeta.invited_by_name as string | undefined)
 
   const templateProps = {
     siteName: SITE_NAME,
