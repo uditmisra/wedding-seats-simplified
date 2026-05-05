@@ -300,6 +300,32 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_delete_plan: { Args: { p_plan_id: string }; Returns: undefined }
+      admin_get_stats: { Args: never; Returns: Json }
+      admin_list_plans: {
+        Args: { p_limit?: number; p_offset?: number }
+        Returns: {
+          code: string
+          created_at: string
+          event_date: string
+          guest_count: number
+          id: string
+          name: string
+          owner_email: string
+          table_count: number
+          updated_at: string
+        }[]
+      }
+      admin_list_users: {
+        Args: { p_limit?: number; p_offset?: number }
+        Returns: {
+          created_at: string
+          email: string
+          id: string
+          last_sign_in_at: string
+          plan_count: number
+        }[]
+      }
       ensure_sample_plan: { Args: never; Returns: string }
       get_plan_snapshot: { Args: { _code: string }; Returns: Json }
       is_plan_editor: {
