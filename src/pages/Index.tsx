@@ -32,82 +32,97 @@ const DISP = '"Newsreader", "Times New Roman", serif';
 // ─── Step card: naming the plan ───────────────────────────────────────────
 function StepCardName() {
   return (
-    <div className="paper-grain-strong" style={{ border: `1px solid ${HL}`, padding: 22, height: 260, display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 12px 40px -12px rgba(43,42,34,0.22), inset 0 1px 0 rgba(255,255,255,0.55)" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-        <span style={{ width: 5, height: 5, borderRadius: "50%", background: TC, flexShrink: 0 }} />
-        <div style={{ fontFamily: MONO, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: TC }}>NEW PLAN</div>
+    <div className="paper-grain-strong" style={{ border: `1px solid ${HL}`, height: 260, overflow: "hidden", position: "relative", boxShadow: "0 12px 40px -12px rgba(43,42,34,0.22), inset 0 1px 0 rgba(255,255,255,0.55)" }}>
+      {/* room outline — minimal, same treatment as FeatureCanvas */}
+      <svg width="100%" height="100%" viewBox="0 0 370 260" style={{ position: "absolute", inset: 0, pointerEvents: "none" }} preserveAspectRatio="xMidYMid meet">
+        <rect x="13" y="13" width="344" height="234" fill="none" stroke={INK} strokeWidth="0.9" opacity="0.18" />
+        <rect x="40" y="7" width="62" height="12" fill={P2} stroke={INK} strokeWidth="0.7" opacity="0.5" />
+        <text x="71" y="16" textAnchor="middle" fontFamily={MONO} fontSize="7" fill={INK} opacity="0.4" letterSpacing="0.1em">ENTRY</text>
+      </svg>
+      {/* plan title — editorial, not a form input */}
+      <div style={{ position: "absolute", top: 22, left: 20 }}>
+        <div style={{ fontFamily: MONO, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.14em", color: TC, marginBottom: 5, opacity: 0.85 }}>NEW · PLAN</div>
+        <div style={{ fontFamily: DISP, fontStyle: "italic", fontSize: 26, color: INK, lineHeight: 1, letterSpacing: "-0.01em" }}>Maya &amp; Jordan</div>
+        <svg style={{ display: "block", marginTop: 3, width: 150 }} height="5" viewBox="0 0 150 5" preserveAspectRatio="none">
+          <path d="M 0 4 Q 38 1, 75 3.5 Q 112 5, 150 3" stroke={INK} fill="none" strokeWidth="0.8" opacity="0.25" />
+        </svg>
       </div>
-      <div>
-        <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.14em", color: I3, marginBottom: 10, textTransform: "uppercase" }}>Name</div>
-        <div style={{ position: "relative", paddingBottom: 12 }}>
-          <span style={{ fontFamily: DISP, fontStyle: "italic", fontSize: 30, color: INK, letterSpacing: "-0.01em" }}>Maya &amp; Jordan</span>
-          <span style={{ display: "inline-block", width: 1.5, height: 28, background: TC, marginLeft: 3, verticalAlign: "-5px", opacity: 0.75 }} />
-          {/* hand-drawn underline */}
-          <svg style={{ position: "absolute", bottom: 2, left: 0, width: "100%", height: 7 }} preserveAspectRatio="none" viewBox="0 0 220 7">
-            <path d="M 0 5 Q 55 3, 110 5 Q 165 7, 220 4" stroke={INK} fill="none" strokeWidth="0.9" opacity="0.35" />
-          </svg>
-        </div>
-      </div>
-      <div style={{ display: "flex", justifyContent: "flex-end" }}>
-        <div style={{ background: TC, color: "#fbf6e9", padding: "11px 20px", fontFamily: DISP, fontSize: 15, boxShadow: "2px 2px 0 rgba(43,42,34,0.14)" }}>
-          Begin <span style={{ fontStyle: "italic" }}>→</span>
-        </div>
+      {/* PaperTable components — same visual language as hero + FeatureCanvas */}
+      <PaperTable className="absolute" style={{ top: 96, left: 16 }}  size={66} seats={8} occupied={4} label="T1 · Family" />
+      <PaperTable className="absolute" style={{ top: 96, left: 156 }} size={66} seats={8} occupied={2} label="T2 · College" />
+      <PaperTable className="absolute" style={{ top: 96, left: 296, opacity: 0.32 }} size={66} seats={6} occupied={0} label="T3" />
+      {/* editorial annotation */}
+      <div className="absolute font-display-italic" style={{ bottom: 16, right: 16, fontSize: 11, color: TC, transform: "rotate(-2deg)", textAlign: "right", lineHeight: 1.35, opacity: 0.8 }}>
+        drop guests →<br />onto a table
       </div>
     </div>
   );
 }
 
-// ─── Step card: flagging rules (the humour is in the data) ────────────────
+// ─── Step card: flagging rules — editorial chip style (matches FeatureConflict) ──
 function StepCardFlag() {
-  const rules = [
-    { icon: "×", bg: "rgba(182,90,54,0.08)", label: "Mom  ⌇  Carla",         tag: "KEEP APART", tagC: TC,  tagBg: "rgba(182,90,54,0.12)" },
-    { icon: "+", bg: "rgba(74,82,50,0.08)",  label: "College roommates",      tag: "TOGETHER",   tagC: OLV, tagBg: "rgba(74,82,50,0.12)" },
-    { icon: "×", bg: "rgba(182,90,54,0.08)", label: "Greg  ⌇  the open bar",  tag: "KEEP APART", tagC: TC,  tagBg: "rgba(182,90,54,0.12)" },
-  ];
   return (
-    <div className="paper-grain-strong" style={{ border: `1px solid ${HL}`, padding: 22, height: 260, display: "flex", flexDirection: "column", boxShadow: "0 12px 40px -12px rgba(43,42,34,0.22), inset 0 1px 0 rgba(255,255,255,0.55)" }}>
-      <div style={{ fontFamily: MONO, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: TC, marginBottom: 18 }}>RULES</div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 9, flex: 1 }}>
-        {rules.map((r, i) => (
-          <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", background: r.bg, borderRadius: 6 }}>
-            <span style={{ width: 20, height: 20, border: `1.5px solid ${r.icon === "+" ? OLV : TC}`, color: r.icon === "+" ? OLV : TC, fontFamily: DISP, fontStyle: "italic", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 3, flexShrink: 0 }}>{r.icon}</span>
-            <span style={{ fontFamily: DISP, fontSize: 15, flex: 1 }}>{r.label}</span>
-            <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: "0.1em", color: r.tagC, background: r.tagBg, padding: "2px 7px", borderRadius: 3, whiteSpace: "nowrap" }}>{r.tag}</span>
-          </div>
-        ))}
+    <div className="paper-grain-strong" style={{ border: `1px solid ${HL}`, height: 260, overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 12px 40px -12px rgba(43,42,34,0.22), inset 0 1px 0 rgba(255,255,255,0.55)" }}>
+      <div style={{ padding: "20px 22px 0", flex: 1 }}>
+        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.14em", color: TC, textTransform: "uppercase", marginBottom: 18 }}>KEEP APART</div>
+        {/* Rule 1: Mom × Carla — chip style matching FeatureConflict */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+          <div style={{ background: "rgba(182,90,54,0.1)", padding: "8px 14px", border: "1px solid rgba(182,90,54,0.26)", fontFamily: DISP, fontStyle: "italic", fontSize: 22, borderRadius: 6 }}>Mom</div>
+          <svg width="18" height="18" viewBox="0 0 18 18" style={{ flexShrink: 0 }}>
+            <line x1="3" y1="3" x2="15" y2="15" stroke={TC} strokeWidth="2.2" strokeLinecap="round" />
+            <line x1="15" y1="3" x2="3" y2="15" stroke={TC} strokeWidth="2.2" strokeLinecap="round" />
+          </svg>
+          <div style={{ background: "rgba(182,90,54,0.1)", padding: "8px 14px", border: "1px solid rgba(182,90,54,0.26)", fontFamily: DISP, fontStyle: "italic", fontSize: 22, borderRadius: 6 }}>Carla</div>
+        </div>
+        {/* Rule 2: Greg × the bar */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ background: "rgba(74,82,50,0.1)", padding: "8px 14px", border: "1px solid rgba(74,82,50,0.26)", fontFamily: DISP, fontStyle: "italic", fontSize: 22, borderRadius: 6 }}>Greg</div>
+          <svg width="18" height="18" viewBox="0 0 18 18" style={{ flexShrink: 0 }}>
+            <line x1="3" y1="3" x2="15" y2="15" stroke={TC} strokeWidth="2.2" strokeLinecap="round" />
+            <line x1="15" y1="3" x2="3" y2="15" stroke={TC} strokeWidth="2.2" strokeLinecap="round" />
+          </svg>
+          <div style={{ background: "rgba(74,82,50,0.1)", padding: "8px 14px", border: "1px solid rgba(74,82,50,0.26)", fontFamily: DISP, fontStyle: "italic", fontSize: 22, borderRadius: 6 }}>the bar</div>
+        </div>
       </div>
-      <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.12em", marginTop: 14, display: "flex", alignItems: "center", gap: 6, color: I3 }}>
-        <span style={{ color: TC, fontSize: 13 }}>+</span> ADD A RULE
+      {/* footer strip matching FeatureConflict */}
+      <div style={{ borderTop: `1px solid ${HL}`, padding: "12px 22px", background: "rgba(74,82,50,0.04)", display: "flex", alignItems: "center", gap: 10 }}>
+        <span style={{ fontFamily: DISP, fontSize: 32, fontWeight: 400, color: OLV, lineHeight: 1 }}>23</span>
+        <div>
+          <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: "0.12em", color: OLV, textTransform: "uppercase" }}>rules handled</div>
+          <div style={{ fontFamily: DISP, fontStyle: "italic", fontSize: 11, color: I3, marginTop: 1 }}>Including yours.</div>
+        </div>
+        <div style={{ marginLeft: "auto", fontFamily: MONO, fontSize: 8, color: TC, letterSpacing: "0.1em", background: "rgba(182,90,54,0.08)", padding: "3px 8px", borderRadius: 3, border: `0.5px solid rgba(182,90,54,0.22)` }}>+ ADD RULE</div>
       </div>
     </div>
   );
 }
 
-// ─── Step card: sharing the link ─────────────────────────────────────────
+// ─── Step card: sharing — the moment of sending, not the dashboard view ──────
 function StepCardShare() {
-  const collaborators = [
-    { c: TC,        init: "M", name: "Maya",         tagLabel: "EDITING",       tagBg: "rgba(182,90,54,0.1)",  tagC: TC  },
-    { c: OLV,       init: "J", name: "Jordan",        tagLabel: "EDITING · PHONE", tagBg: "rgba(74,82,50,0.1)", tagC: OLV },
-    { c: "#7a6a3e", init: "R", name: "Mom (Robin)",   tagLabel: "VIEWING",       tagBg: "transparent",          tagC: I3  },
-  ];
   return (
-    <div className="paper-grain-strong" style={{ border: `1px solid ${HL}`, padding: 22, height: 260, display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 12px 40px -12px rgba(43,42,34,0.22), inset 0 1px 0 rgba(255,255,255,0.55)" }}>
-      <div>
-        <div style={{ fontFamily: MONO, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: TC, marginBottom: 14 }}>SHARE · ONE LINK</div>
-        {/* link slug — butter-wash stamp */}
-        <div style={{ background: "rgba(232,210,146,0.28)", padding: "10px 14px", fontFamily: MONO, fontSize: 12, color: INK, border: "0.5px dashed rgba(43,42,34,0.3)", borderRadius: 4, display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ color: TC, fontSize: 11 }}>↗</span>
-          weddingseater.app/m-and-j
+    <div className="paper-grain-strong" style={{ border: `1px solid ${HL}`, height: 260, overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 12px 40px -12px rgba(43,42,34,0.22), inset 0 1px 0 rgba(255,255,255,0.55)" }}>
+      <div style={{ padding: "20px 22px 0", fontFamily: MONO, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.14em", color: TC }}>SEND · THE LINK</div>
+      {/* message thread — the act of sharing, not the collaboration dashboard */}
+      <div style={{ flex: 1, padding: "14px 22px 0", display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ display: "flex", justifyContent: "flex-start" }}>
+          <div style={{ background: "rgba(43,42,34,0.07)", padding: "9px 14px", borderRadius: "12px 12px 12px 4px", fontFamily: DISP, fontStyle: "italic", fontSize: 14, color: INK, maxWidth: "78%" }}>
+            where's the seating chart? can I see it?
+          </div>
+        </div>
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <div style={{ background: "rgba(182,90,54,0.11)", border: "0.5px solid rgba(182,90,54,0.26)", padding: "9px 14px", borderRadius: "12px 12px 4px 12px", maxWidth: "85%" }}>
+            <div style={{ fontFamily: DISP, fontStyle: "italic", fontSize: 14, color: INK, marginBottom: 6 }}>here you go 💐</div>
+            <div style={{ fontFamily: MONO, fontSize: 10.5, color: TC, letterSpacing: "0.01em", borderBottom: "1px solid rgba(182,90,54,0.28)", paddingBottom: 2 }}>weddingseater.app/m-and-j</div>
+          </div>
+        </div>
+        <div style={{ display: "flex", justifyContent: "flex-start" }}>
+          <div style={{ background: "rgba(43,42,34,0.07)", padding: "9px 14px", borderRadius: "12px 12px 12px 4px", fontFamily: DISP, fontStyle: "italic", fontSize: 14, color: INK }}>
+            oh this is so good 😭
+          </div>
         </div>
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        {collaborators.map((p, i) => (
-          <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 28, height: 28, borderRadius: "50%", background: p.c, color: "#fbf6e9", fontFamily: DISP, fontStyle: "italic", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 1px 4px rgba(43,42,34,0.18)" }}>{p.init}</div>
-            <div style={{ fontFamily: DISP, fontSize: 15, color: INK, flex: 1 }}>{p.name}</div>
-            <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: "0.1em", padding: "2px 7px", borderRadius: 3, background: p.tagBg, color: p.tagC, border: i === 2 ? `0.5px solid ${HL}` : "none" }}>{p.tagLabel}</div>
-          </div>
-        ))}
+      <div style={{ padding: "10px 22px 14px", borderTop: `1px solid ${HL}` }}>
+        <div style={{ fontFamily: DISP, fontStyle: "italic", fontSize: 11, color: I3 }}>No account needed. Just the link.</div>
       </div>
     </div>
   );
@@ -689,9 +704,9 @@ const Index = () => {
               ["Price",         "Free. (Costs your sanity.)",                "Free. (Costs nothing.)"],
             ].map((row, i) => (
               <div key={i} className="grid" style={{ gridTemplateColumns: "1.2fr 2.8fr 2.8fr", borderTop: "1px solid rgba(43,42,34,0.12)" }}>
-                <div style={{ padding: "18px 20px", fontFamily: MONO, fontSize: 10, letterSpacing: "0.14em", color: "rgba(43,42,34,0.62)", textTransform: "uppercase", borderRight: "1px solid rgba(43,42,34,0.12)", background: "rgba(43,42,34,0.02)" }}>{row[0]}</div>
-                <div style={{ padding: "18px 20px", fontFamily: DISP, fontStyle: "italic", fontSize: 16, color: "rgba(43,42,34,0.62)", borderRight: "1px solid rgba(43,42,34,0.12)", background: "rgba(43,42,34,0.02)" }}>{row[1]}</div>
-                <div style={{ padding: "18px 20px", fontFamily: DISP, fontSize: 16, color: INK, background: "rgba(74,82,50,0.028)" }}>{row[2]}</div>
+                <div style={{ padding: "20px 20px", fontFamily: MONO, fontSize: 11, letterSpacing: "0.13em", color: "rgba(43,42,34,0.78)", textTransform: "uppercase", borderRight: "1px solid rgba(43,42,34,0.12)", background: "rgba(43,42,34,0.02)" }}>{row[0]}</div>
+                <div style={{ padding: "20px 20px", fontFamily: DISP, fontStyle: "italic", fontSize: 17, color: "rgba(43,42,34,0.72)", borderRight: "1px solid rgba(43,42,34,0.12)", background: "rgba(43,42,34,0.02)" }}>{row[1]}</div>
+                <div style={{ padding: "20px 20px", fontFamily: DISP, fontSize: 17, color: INK, background: "rgba(74,82,50,0.028)" }}>{row[2]}</div>
               </div>
             ))}
           </div>
