@@ -379,8 +379,9 @@ export function GuestsTab({ planId, guests, refresh, autoOpen, onAutoOpenHandled
               </div>
             </div>
 
-            <div className="mt-4 overflow-auto">
-              <div className="grid grid-cols-[1.2fr_1.4fr_90px_60px_70px] gap-2 border-b hairline px-3 py-2">
+            <div className="mt-4">
+              {/* Desktop header row — hidden on mobile to avoid overflow */}
+              <div className="hidden lg:grid grid-cols-[1.2fr_1.4fr_90px_60px_70px] gap-2 border-b hairline px-3 py-2">
                 <span className="label-mono">Name</span>
                 <span className="label-mono">Party</span>
                 <span className="label-mono">RSVP</span>
@@ -413,51 +414,86 @@ export function GuestsTab({ planId, guests, refresh, autoOpen, onAutoOpenHandled
                     <button
                       key={g.id}
                       onClick={() => setSelectedId(g.id)}
-                      className={`grid w-full grid-cols-[1.2fr_1.4fr_90px_60px_70px] items-center gap-2 border-b border-hairline-2 px-3 py-3 text-left text-[14px] transition hover:bg-paper-2/60 ${isSelected ? "bg-terracotta/5" : ""}`}
+                      className={`w-full border-b border-hairline-2 text-left transition hover:bg-paper-2/60 ${isSelected ? "bg-terracotta/5" : ""}`}
                     >
-                      <span className="flex min-w-0 items-center gap-2.5 truncate">
+                      {/* Mobile row — name + party stacked, RSVP pill, action icons */}
+                      <span className="flex items-center gap-3 px-4 py-3 lg:hidden">
                         <span
-                          className="inline-flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full font-mono text-[10px] font-medium text-paper"
+                          className="inline-flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full font-mono text-[10px] font-medium text-paper"
                           style={{ background: avatarFor(g.name) }}
                           aria-hidden
                         >
                           {initials(g.name)}
                         </span>
-                        <span className="truncate">{g.name}</span>
-                        {g.is_kid && <span className="font-mono text-[9px] uppercase tracking-wider text-ink-3">kid</span>}
-                        {g.accessibility && <span className="text-[10px] text-ink-3">♿</span>}
-                      </span>
-                      <span className="truncate text-[13px] text-ink-2">{g.party ?? "—"}</span>
-                      <span>
+                        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                          <span className="truncate text-[14px]">{g.name}</span>
+                          {g.party && (
+                            <span className="truncate font-mono text-[10px] text-ink-3">{g.party}</span>
+                          )}
+                        </span>
                         <span
-                          className="inline-flex items-center rounded-full px-2 py-0.5 font-mono text-[10px]"
+                          className="shrink-0 rounded-full px-2.5 py-1 font-mono text-[10px]"
                           style={{ background: rsvp.pillBg, color: rsvp.pillFg }}
                         >
                           {rsvp.label}
                         </span>
-                      </span>
-                      <span className="font-mono text-[11px] text-ink-3">{g.meal || "—"}</span>
-                      <span className="flex items-center gap-1">
+                        {/* Touch-sized action buttons */}
                         <span
                           role="button"
                           aria-label="Edit"
                           onClick={e => { e.stopPropagation(); setEditing(g); }}
-                          className="inline-flex size-7 cursor-pointer items-center justify-center rounded-full text-ink-3 hover:bg-paper-2 hover:text-ink"
+                          className="inline-flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-ink-3 hover:bg-paper-2 hover:text-ink"
                         >
-                          <Pencil size={12} />
+                          <Pencil size={14} />
                         </span>
-                        <span
-                          role="button"
-                          aria-label="Delete"
-                          onClick={async e => {
-                            e.stopPropagation();
-                            await supabase.from("guests").delete().eq("id", g.id);
-                            if (selectedId === g.id) setSelectedId(null);
-                            refresh();
-                          }}
-                          className="inline-flex size-7 cursor-pointer items-center justify-center rounded-full text-ink-3 hover:bg-terracotta/10 hover:text-terracotta"
-                        >
-                          <Trash2 size={12} />
+                      </span>
+
+                      {/* Desktop row — 5-column table */}
+                      <span className="hidden lg:grid grid-cols-[1.2fr_1.4fr_90px_60px_70px] items-center gap-2 px-3 py-3 text-[14px]">
+                        <span className="flex min-w-0 items-center gap-2.5 truncate">
+                          <span
+                            className="inline-flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full font-mono text-[10px] font-medium text-paper"
+                            style={{ background: avatarFor(g.name) }}
+                            aria-hidden
+                          >
+                            {initials(g.name)}
+                          </span>
+                          <span className="truncate">{g.name}</span>
+                          {g.is_kid && <span className="font-mono text-[9px] uppercase tracking-wider text-ink-3">kid</span>}
+                          {g.accessibility && <span className="text-[10px] text-ink-3">♿</span>}
+                        </span>
+                        <span className="truncate text-[13px] text-ink-2">{g.party ?? "—"}</span>
+                        <span>
+                          <span
+                            className="inline-flex items-center rounded-full px-2 py-0.5 font-mono text-[10px]"
+                            style={{ background: rsvp.pillBg, color: rsvp.pillFg }}
+                          >
+                            {rsvp.label}
+                          </span>
+                        </span>
+                        <span className="font-mono text-[11px] text-ink-3">{g.meal || "—"}</span>
+                        <span className="flex items-center gap-1">
+                          <span
+                            role="button"
+                            aria-label="Edit"
+                            onClick={e => { e.stopPropagation(); setEditing(g); }}
+                            className="inline-flex size-7 cursor-pointer items-center justify-center rounded-full text-ink-3 hover:bg-paper-2 hover:text-ink"
+                          >
+                            <Pencil size={12} />
+                          </span>
+                          <span
+                            role="button"
+                            aria-label="Delete"
+                            onClick={async e => {
+                              e.stopPropagation();
+                              await supabase.from("guests").delete().eq("id", g.id);
+                              if (selectedId === g.id) setSelectedId(null);
+                              refresh();
+                            }}
+                            className="inline-flex size-7 cursor-pointer items-center justify-center rounded-full text-ink-3 hover:bg-terracotta/10 hover:text-terracotta"
+                          >
+                            <Trash2 size={12} />
+                          </span>
                         </span>
                       </span>
                     </button>
