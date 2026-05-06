@@ -682,3 +682,197 @@ home; this pass is visual-frame + drawing tools only.
 - Native print-shop submission.
 - Vector-PDF fallback with embedded Newsreader font.
 - Venue field on plans (user opted out).
+
+---
+
+## Mobile optimisation plan
+
+**Target viewport:** 390×844px (iPhone SE / 12 mini) in portrait. Landscape at
+`844×390` is a secondary target handled in Phase 3.
+
+**Approach:** Responsive-first — same routes, same data model, no separate mobile
+app. Desktop layout at `lg:` breakpoint matches the design canvas exactly; below
+`lg:` we adapt gracefully. Three phases in strict priority order.
+
+### Audit findings (May 2026)
+
+Five problem categories identified from a full codebase audit:
+
+**Outright breakages** — unusable at 390px:
+- `GuestsTab` 5-column table grid `[1.2fr_1.4fr_90px_60px_70px]` causes horizontal
+  scroll; table is unreadable
+- `SeatingView` unassigned FAB at `fixed bottom-5` (20px) overlaps the planner's
+  own bottom tab bar at `fixed bottom-0` (56px tall) — two fixed elements fight
+- `FloorPlan` `MIN_ZOOM=0.4` scales tables to ~12px; seats are physically
+  untappable at minimum zoom
+- `RoomEditor` `CANVAS_W=1400` hardcoded; entire canvas overflows on 390px
+- `Index.tsx` hero right column (`md:h-[560px]`) collapses to zero height on
+  mobile — flagship visual disappears entirely
+
+**Tap target violations** (below 44px minimum):
+- FloorPlan zoom buttons: `w-7 h-7` = 28px
+- Unassigned guests search in SeatingView: `h-8` = 32px
+- Several action buttons in GuestsTab header row
+
+**Layout degradation** (not broken, but cramped):
+- `SmartGuestInput` / `SmartTableInput` 12-column parsed-results grids too narrow
+  at 390px
+- Index.tsx `height: 260` fixed-height demo cards don't reflow on small screens
+- `Planner.tsx` header: plan name input + action buttons in one row gets cramped
+
+**Missing mobile-only patterns** (desktop layout force-collapsed, needs bespoke):
+- `GuestsTab` detail panel: desktop shows 300px right rail; mobile shows nothing
+- `ConstraintsTab`: hover-reveal edit/delete never shows on touch
+- `ExportPanel`: two-column chooser + proof stage overflows at 390px
+- Auth: editorial left column takes full viewport before the form even appears
+
+**Platform gaps** (iOS/Android-specific):
+- No safe-area-inset padding on bottom tab bar (cut off by home indicator)
+- Pinch-to-zoom not wired on FloorPlan canvas (pinch does nothing)
+- No `inputMode` hints on drag targets (keyboard pops on long-press)
+
+---
+
+### Phase M1 — Stop the bleeding (breakages only)
+
+Each item is an independent commit. Deliver in order; every item leaves the app
+in a strictly better state than before.
+
+#### M1A · GuestsTab — mobile guest list
+**File:** `src/components/planner/GuestsTab.tsx`
+
+Replace the 5-column table with a card-row layout below `lg:`. Each guest row:
+`avatar + name (flex-1, truncated) + RSVP pill`. Tapping opens the existing
+detail drawer. The 5-column header row is hidden on mobile. The existing
+`hidden lg:block` right rail already handles the detail panel.
+
+Mobile columns: `grid-cols-[1fr_auto]` (name + RSVP pill).
+Desktop columns: `grid-cols-[1.2fr_1.4fr_90px_60px_70px]` (lg: breakpoint, unchanged).
+
+#### M1B · SeatingView — fix FAB / bottom-nav overlap
+**File:** `src/components/planner/SeatingView.tsx`
+
+The unassigned FAB is `fixed bottom-5` (20px). Planner bottom tab nav is
+`fixed bottom-0` at ~56px. Fix: `bottom-[72px]` on mobile. Also raise FAB
+to minimum 44px height (`h-11`).
+
+#### M1C · FloorPlan — mobile zoom floor and touch targets
+**File:** `src/components/planner/FloorPlan.tsx`
+
+- Detect mobile viewport on mount; set `initialZoom` to
+  `containerWidth / CANVAS_W` (fit-to-width) rather than the desktop default.
+- Raise zoom buttons from `w-7 h-7` to `w-10 h-10` (40px, close enough).
+- Wire pinch-to-zoom: `onTouchMove` reads `touches[0]` + `touches[1]` distance
+  delta and maps it to the existing `setZoom` state.
+
+#### M1D · RoomEditor — mobile gate
+**File:** `src/components/planner/RoomEditor.tsx`
+
+Below `lg:`, replace the canvas with a full-bleed notice panel:
+*"Room editing works best on a larger screen. Everything you add here will be
+waiting when you switch to desktop."*
+The tab remains accessible; only the interactive canvas is gated. Honest and
+avoids a broken drag UX on touch.
+
+#### M1E · Index.tsx — hero vignette height on mobile
+**File:** `src/pages/Index.tsx`
+
+`FloorPlanVignette` collapses to zero on mobile because the container is
+`relative md:h-[560px]` (no base height). Fix: `h-[300px] md:h-[560px]`.
+
+---
+
+### Phase M2 — High-impact experience work
+
+#### M2A · Planner header — mobile compact mode
+**File:** `src/pages/Planner.tsx`
+
+Below `sm:`, the plan name input + action buttons overflow one row. Fix: replace
+the header input with a tappable plan-name text label that opens a Sheet for
+editing. Better UX too — prevents accidental renames during navigation.
+
+#### M2B · SmartGuestInput / SmartTableInput — mobile grid
+**Files:** `src/components/planner/SmartGuestInput.tsx`,
+`src/components/planner/SmartTableInput.tsx`
+
+Parsed-results `grid-cols-12` with `col-span-*` is cramped at 390px. Fix:
+mobile shows stacked cards per row (name line 1, party + RSVP line 2, dietary
+line 3). The `col-span-*` grid activates only at `sm:`.
+
+#### M2C · ExportPanel — stacked mobile layout
+**File:** `src/components/planner/ExportPanel.tsx`
+
+Below `md:`, show only the format picker + options in a single column. The proof
+stage becomes a tappable thumbnail that expands to a modal preview. This avoids
+the fixed-pixel-dimension artifact previews overflowing on 390px.
+
+#### M2D · ConstraintsTab — tap-to-edit rows
+**File:** `src/components/planner/ConstraintsTab.tsx`
+
+Desktop uses hover-reveal edit/delete. On mobile these never appear. Fix:
+`lg:hidden` tap-to-expand per constraint row that reveals edit/delete inline.
+
+#### M2E · Index.tsx — demo card height fix
+**File:** `src/pages/Index.tsx`
+
+Change all `height: 260` fixed-height demo cards in §2 and §3 to
+`minHeight: 260, height: "auto"` on mobile so content never overflows.
+
+---
+
+### Phase M3 — Native-feel polish
+
+#### M3A · Pinch-to-zoom on FloorPlan canvas
+**File:** `src/components/planner/FloorPlan.tsx`
+
+Proper two-finger pinch: store touch midpoint + distance on `touchstart`,
+compute scale delta on `touchmove`, apply to `zoom` state with the same
+clamp/bounds logic used by wheel zoom.
+
+#### M3B · Safe area insets
+**Files:** `src/pages/Planner.tsx`, `src/components/planner/SeatingView.tsx`
+
+Verify `env(safe-area-inset-bottom)` applies to the bottom tab bar (Planner.tsx
+line ~424 already has it), the SeatingView FAB, and the unassigned drawer.
+Add `pb-[env(safe-area-inset-bottom)]` to drawer content wrappers.
+
+#### M3C · Input mode hints
+**Files:** `src/components/planner/GuestsTab.tsx`, `src/pages/Planner.tsx`
+
+Add `inputMode="none"` to draggable guest pills (prevents iOS keyboard flash on
+long-press to drag). Add `autoCapitalize="words"` to plan name and guest name
+fields.
+
+#### M3D · Auth page — hide editorial column on mobile
+**File:** `src/pages/Auth.tsx`
+
+Below `md:`, the editorial left column (64px heading + bullets) consumes the
+full viewport before the user sees the sign-in form. Fix: `hidden md:block` on
+the left column. Show only the sign-in card, full-bleed, on mobile. The
+editorial framing reappears at `md:` as designed.
+
+#### M3E · Landscape orientation
+**Files:** `src/pages/Planner.tsx`, `src/index.css`
+
+At `844×390` landscape (iPhone SE), the 56px bottom tab bar eats 14% of screen
+height. Fix: `@media (orientation: landscape) and (max-height: 500px)` switches
+to a side rail nav instead of bottom bar. CSS-only; no JS required.
+
+---
+
+### Implementation rules for mobile work
+
+- Every phase ships as one commit per item (M1A, M1B, etc. are separate commits).
+- No mobile change should break the `lg:` desktop layout — use `lg:` or
+  breakpoint guards on every mobile override.
+- Minimum touch target: 44×44px on all interactive elements.
+- Never use `pointer-events: none` on tap targets to "solve" overlap — fix the
+  layout instead.
+- Test each change at 390×844 (portrait) before committing.
+
+### Out of scope for mobile pass
+
+- Dedicated PWA manifest / splash screen / installability.
+- Native drag-and-drop rewrite (`@dnd-kit` already has touch support).
+- Floor plan re-architecture as a touch-native canvas.
+- Schema changes or new routes for mobile.
