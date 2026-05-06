@@ -115,33 +115,25 @@ function StepCardShare() {
 
 // ─── Feature card: the canvas ─────────────────────────────────────────────
 function FeatureCanvas() {
-  const tables: [number, number, number, number, string, string][] = [
-    [80,  78, 8,  8,  OLV, "Fam."],
-    [200, 78, 7,  8,  TC,  "Coll."],
-    [320, 78, 5,  8,  OLV, "Work"],
-    [80, 168, 10, 10, TC,  "Head"],
-    [200,168,  3,  8, OLV, "Fr."],
-  ];
   return (
-    <div className="paper-grain" style={{ border: `1px solid ${HL}`, padding: 16, height: 240, overflow: "hidden", position: "relative", boxShadow: "0 2px 14px rgba(43,42,34,0.07)" }}>
-      <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.14em", color: I3, textTransform: "uppercase", marginBottom: 5, textAlign: "center" }}>Maya &amp; Jordan · Seating draft</div>
-      <svg viewBox="0 0 380 206" style={{ width: "100%", height: "calc(100% - 22px)" }}>
-        <path d="M 12 8 L 370 7 L 369 198 L 11 200 Z" fill="none" stroke={INK} strokeWidth="0.7" opacity="0.35" strokeLinejoin="round" />
-        <rect x="284" y="138" width="78" height="54" fill="rgba(182,90,54,0.07)" stroke={TC} strokeWidth="0.9" strokeDasharray="3 3" />
-        <text x="323" y="170" textAnchor="middle" fontFamily={DISP} fontStyle="italic" fontSize="10" fill={TC} opacity="0.85">dance floor</text>
-        {tables.map(([x, y, occ, cap, dotC, lbl], i) => (
-          <g key={i}>
-            <circle cx={x} cy={y} r="25" fill="rgba(243,238,227,0.97)" stroke={INK} strokeWidth="0.9" />
-            {Array.from({ length: cap }).map((_, j) => {
-              const a = (j / cap) * Math.PI * 2 - Math.PI / 2;
-              return <circle key={j} cx={x + Math.cos(a) * 33} cy={y + Math.sin(a) * 33}
-                r="3.8" fill={j < occ ? dotC : "rgba(243,238,227,0.9)"}
-                stroke="rgba(43,42,34,0.2)" strokeWidth="0.6" />;
-            })}
-            <text x={x} y={y + 3.5} textAnchor="middle" fontFamily={DISP} fontStyle="italic" fontSize="9.5" fill={INK}>{lbl}</text>
-          </g>
-        ))}
+    <div className="paper-grain-strong" style={{ border: `1px solid ${HL}`, height: 260, overflow: "hidden", position: "relative", boxShadow: "0 12px 40px -12px rgba(43,42,34,0.22), inset 0 1px 0 rgba(255,255,255,0.55)" }}>
+      {/* room outline + dance floor — SVG layer */}
+      <svg width="100%" height="100%" viewBox="0 0 370 260" style={{ position: "absolute", inset: 0, pointerEvents: "none" }} preserveAspectRatio="xMidYMid meet">
+        <rect x="13" y="13" width="344" height="234" fill="none" stroke={INK} strokeWidth="0.9" opacity="0.22" />
+        <rect x="44" y="7" width="72" height="12" fill="var(--paper-2)" stroke={INK} strokeWidth="0.7" opacity="0.55" />
+        <text x="80" y="16" textAnchor="middle" fontFamily={MONO} fontSize="7" fill={INK} opacity="0.45" letterSpacing="0.12em">ENTRY</text>
+        <rect x="284" y="128" width="78" height="118" fill="rgba(182,90,54,0.07)" stroke={TC} strokeWidth="0.9" strokeDasharray="3 2" />
+        <text x="323" y="192" textAnchor="middle" fontFamily={DISP} fontStyle="italic" fontSize="9.5" fill={TC} opacity="0.9">dance floor</text>
       </svg>
+      {/* actual PaperTable components — same as hero */}
+      <PaperTable className="absolute" style={{ top: 24, left: 14 }}  size={70} seats={8}  occupied={8}  label="T1 · Family" />
+      <PaperTable className="absolute" style={{ top: 24, left: 166 }} size={70} seats={8}  occupied={6}  label="T2 · College" />
+      <PaperTable className="absolute" style={{ top: 144, left: 88 }} size={76} seats={10} occupied={10} label="T3 · Head table" />
+      {/* editorial annotation */}
+      <div className="absolute font-display-italic text-terracotta"
+        style={{ bottom: 18, right: 20, fontSize: 12, transform: "rotate(-3deg)", textAlign: "right", lineHeight: 1.35, opacity: 0.85 }}>
+        keep aunt Pat far<br />from the speakers
+      </div>
     </div>
   );
 }
@@ -149,23 +141,30 @@ function FeatureCanvas() {
 // ─── Feature card: conflict resolution ────────────────────────────────────
 function FeatureConflict() {
   return (
-    <div className="paper-grain" style={{ border: `1px solid ${HL}`, padding: 22, height: 240, display: "flex", flexDirection: "column", justifyContent: "center", gap: 16, boxShadow: "0 2px 14px rgba(43,42,34,0.07)" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-        <div style={{ background: "rgba(182,90,54,0.1)", padding: "10px 16px", border: "1px solid rgba(182,90,54,0.28)", fontFamily: DISP, fontStyle: "italic", fontSize: 22, borderRadius: 6 }}>Mom</div>
-        {/* expressive hand-drawn × */}
-        <svg width="30" height="30" viewBox="0 0 30 30" style={{ flexShrink: 0 }}>
-          <line x1="5" y1="5" x2="25" y2="25" stroke={TC} strokeWidth="2.5" strokeLinecap="round" />
-          <line x1="25" y1="5" x2="5" y2="25" stroke={TC} strokeWidth="2.5" strokeLinecap="round" />
-        </svg>
-        <div style={{ background: "rgba(182,90,54,0.1)", padding: "10px 16px", border: "1px solid rgba(182,90,54,0.28)", fontFamily: DISP, fontStyle: "italic", fontSize: 22, borderRadius: 6 }}>Carla</div>
+    <div className="paper-grain" style={{ border: `1px solid ${HL}`, height: 260, overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 12px 40px -12px rgba(43,42,34,0.22), inset 0 1px 0 rgba(255,255,255,0.55)" }}>
+      {/* constraint card */}
+      <div style={{ padding: "28px 26px 20px", flex: 1 }}>
+        <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.12em", color: TC, textTransform: "uppercase", marginBottom: 20 }}>KEEP APART</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20 }}>
+          <div style={{ background: "rgba(182,90,54,0.1)", padding: "12px 20px", border: "1px solid rgba(182,90,54,0.26)", fontFamily: DISP, fontStyle: "italic", fontSize: 26, borderRadius: 7 }}>Mom</div>
+          <svg width="28" height="28" viewBox="0 0 28 28" style={{ flexShrink: 0 }}>
+            <line x1="5" y1="5" x2="23" y2="23" stroke={TC} strokeWidth="2.5" strokeLinecap="round" />
+            <line x1="23" y1="5" x2="5" y2="23" stroke={TC} strokeWidth="2.5" strokeLinecap="round" />
+          </svg>
+          <div style={{ background: "rgba(182,90,54,0.1)", padding: "12px 20px", border: "1px solid rgba(182,90,54,0.26)", fontFamily: DISP, fontStyle: "italic", fontSize: 26, borderRadius: 7 }}>Carla</div>
+        </div>
+        <div style={{ fontFamily: DISP, fontStyle: "italic", fontSize: 17, color: I2, lineHeight: 1.5 }}>
+          Auto-assign put them{" "}
+          <span style={{ fontStyle: "normal", color: INK, borderBottom: `2px solid ${TC}`, paddingBottom: 1 }}>seven tables apart.</span>
+        </div>
       </div>
-      <div style={{ fontFamily: DISP, fontStyle: "italic", fontSize: 16, color: I2, lineHeight: 1.45, paddingLeft: 2 }}>
-        Auto-assign placed them{" "}
-        <span style={{ fontStyle: "normal", color: INK, borderBottom: `2px solid ${TC}`, paddingBottom: 1 }}>seven tables apart.</span>
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: MONO, fontSize: 10, letterSpacing: "0.12em", background: "rgba(74,82,50,0.08)", padding: "8px 12px", borderRadius: 6 }}>
-        <span style={{ width: 8, height: 8, borderRadius: "50%", background: OLV, flexShrink: 0 }} />
-        <span style={{ color: OLV }}>ALL 23 RULES SATISFIED</span>
+      {/* footer strip */}
+      <div style={{ borderTop: `1px solid ${HL}`, padding: "14px 26px", background: "rgba(74,82,50,0.04)", display: "flex", alignItems: "center", gap: 12 }}>
+        <span style={{ fontFamily: DISP, fontSize: 36, fontWeight: 400, color: OLV, lineHeight: 1 }}>23</span>
+        <div>
+          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.12em", color: OLV, textTransform: "uppercase" }}>rules satisfied</div>
+          <div style={{ fontFamily: DISP, fontStyle: "italic", fontSize: 12, color: I3, marginTop: 2 }}>Including yours, your mum's, and the one your fiancé added at midnight.</div>
+        </div>
       </div>
     </div>
   );
@@ -173,58 +172,36 @@ function FeatureConflict() {
 
 // ─── Feature card: multi-device ───────────────────────────────────────────
 function FeatureMobile() {
-  const miniTables: [number, number, number][] = [[22, 22, 5], [62, 22, 6], [102, 22, 4], [42, 56, 6], [82, 56, 3]];
+  const people = [
+    { init: "M", bg: TC,        name: "Maya",         status: "EDITING NOW",       statusC: OLV, statusBg: "rgba(74,82,50,0.1)"  },
+    { init: "J", bg: OLV,       name: "Jordan",       status: "PHONE · LIVE",      statusC: OLV, statusBg: "rgba(74,82,50,0.1)"  },
+    { init: "R", bg: "#7a6a3e", name: "Mom (Robin)",  status: "MOVED TABLE 9",     statusC: I3,  statusBg: "rgba(43,42,34,0.04)" },
+  ];
   return (
-    <div className="paper-grain" style={{ border: `1px solid ${HL}`, padding: 20, height: 240, display: "flex", justifyContent: "center", alignItems: "center", gap: 18, boxShadow: "0 2px 14px rgba(43,42,34,0.07)" }}>
-      {/* laptop — screen shows actual warm plan */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-        <div style={{ width: 138, height: 90, border: `1px solid ${INK}`, background: "rgba(235,228,213,0.9)", position: "relative", borderRadius: "3px 3px 0 0" }}>
-          <div style={{ position: "absolute", inset: 5, background: P, borderRadius: 2, overflow: "hidden" }}>
-            <svg viewBox="0 0 128 80" width="100%" height="100%">
-              <path d="M 3 4 L 125 3 L 125 77 L 3 77 Z" fill="none" stroke={INK} strokeWidth="0.4" opacity="0.3" />
-              {miniTables.map(([x, y, occ], i) => (
-                <g key={i}>
-                  <circle cx={x} cy={y} r="10" fill="rgba(243,238,227,0.96)" stroke={INK} strokeWidth="0.7" />
-                  {Array.from({ length: 7 }).map((_, j) => {
-                    const a = (j / 7) * Math.PI * 2 - Math.PI / 2;
-                    return <circle key={j} cx={x + Math.cos(a) * 14} cy={y + Math.sin(a) * 14}
-                      r="2.8" fill={j < occ ? "rgba(74,82,50,0.82)" : "rgba(243,238,227,0.9)"}
-                      stroke={INK} strokeWidth="0.4" />;
-                  })}
-                </g>
-              ))}
-              <rect x="97" y="44" width="28" height="28" fill="rgba(182,90,54,0.07)" stroke={TC} strokeWidth="0.6" strokeDasharray="2 2" />
-            </svg>
-          </div>
+    <div className="paper-grain" style={{ border: `1px solid ${HL}`, height: 260, overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 12px 40px -12px rgba(43,42,34,0.22), inset 0 1px 0 rgba(255,255,255,0.55)" }}>
+      <div style={{ padding: "22px 24px 0" }}>
+        {/* link stamp */}
+        <div style={{ background: "rgba(232,210,146,0.32)", border: "0.5px dashed rgba(43,42,34,0.28)", padding: "10px 14px", fontFamily: MONO, fontSize: 11.5, color: INK, display: "flex", alignItems: "center", gap: 8, marginBottom: 22, borderRadius: 4 }}>
+          <span style={{ color: TC, fontSize: 12 }}>↗</span>
+          weddingseater.app/m-and-j
+          <span style={{ marginLeft: "auto", fontFamily: MONO, fontSize: 8, letterSpacing: "0.1em", color: TC, background: "rgba(182,90,54,0.12)", padding: "2px 7px", borderRadius: 3 }}>LIVE</span>
         </div>
-        <div style={{ width: 158, height: 5, background: "rgba(43,42,34,0.8)", borderRadius: "0 0 3px 3px" }} />
-        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.12em", color: I3, marginTop: 9 }}>11:47 PM</div>
-      </div>
-      {/* arrow + label */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
-        <div style={{ fontFamily: DISP, fontStyle: "italic", fontSize: 22, color: TC }}>→</div>
-        <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: "0.1em", color: I3, textAlign: "center", lineHeight: 1.5 }}>SAME<br />PLAN</div>
-      </div>
-      {/* phone — terracotta glow, same warm plan */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-        <div style={{ width: 62, height: 110, border: `1px solid rgba(43,42,34,0.7)`, borderRadius: 12, background: "rgba(235,228,213,0.9)", padding: 5, boxShadow: `0 0 0 3px rgba(182,90,54,0.12), 0 4px 18px rgba(43,42,34,0.14)` }}>
-          <div style={{ width: "100%", height: "100%", background: P, borderRadius: 8, overflow: "hidden" }}>
-            <svg viewBox="0 0 52 100" width="100%" height="100%">
-              {([[16, 20], [36, 20], [16, 50], [36, 50], [16, 80], [36, 80]] as [number, number][]).map(([x, y], i) => (
-                <g key={i}>
-                  <circle cx={x} cy={y} r="9" fill="rgba(243,238,227,0.96)" stroke={INK} strokeWidth="0.6" />
-                  {Array.from({ length: 6 }).map((_, j) => {
-                    const a = (j / 6) * Math.PI * 2 - Math.PI / 2;
-                    return <circle key={j} cx={x + Math.cos(a) * 13} cy={y + Math.sin(a) * 13}
-                      r="2.5" fill={j < 4 ? "rgba(74,82,50,0.82)" : "rgba(243,238,227,0.9)"}
-                      stroke={INK} strokeWidth="0.4" />;
-                  })}
-                </g>
-              ))}
-            </svg>
-          </div>
+        {/* collaborators */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {people.map((p, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ width: 30, height: 30, borderRadius: "50%", background: p.bg, color: "#fbf6e9", fontFamily: DISP, fontStyle: "italic", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 1px 5px rgba(43,42,34,0.18)" }}>{p.init}</div>
+              <div style={{ fontFamily: DISP, fontSize: 16, color: INK, flex: 1 }}>{p.name}</div>
+              <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: "0.1em", color: p.statusC, background: p.statusBg, padding: "3px 8px", borderRadius: 3, border: "0.5px solid rgba(43,42,34,0.1)" }}>{p.status}</div>
+            </div>
+          ))}
         </div>
-        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.12em", color: I3, marginTop: 9 }}>7:14 AM</div>
+      </div>
+      {/* footnote */}
+      <div style={{ marginTop: "auto", borderTop: `1px solid ${HL}`, padding: "12px 24px" }}>
+        <div style={{ fontFamily: DISP, fontStyle: "italic", fontSize: 12.5, color: I3, lineHeight: 1.45 }}>
+          No account needed. No download. Just the link.
+        </div>
       </div>
     </div>
   );
@@ -654,9 +631,9 @@ const Index = () => {
           </h2>
           <div className="grid gap-10 md:grid-cols-3 md:gap-7">
             {[
-              { n: "01", visual: <StepCardName />, title: "Name it. Start dragging.", body: "You're on the canvas in seconds. No account, no tutorial, no onboarding flow." },
-              { n: "02", visual: <StepCardFlag />, title: "Flag the difficult ones.", body: "Auto-assign respects every rule you set — including Greg and the open bar." },
-              { n: "03", visual: <StepCardShare />, title: "Share one link.", body: "Everyone edits the same chart. No conflicting spreadsheet versions. No \"which one is current?\"" },
+              { n: "01", visual: <StepCardName />, title: "On the canvas in thirty seconds.", body: "Name it. You're already dragging guests onto tables. No account, no pricing page, nothing to learn." },
+              { n: "02", visual: <StepCardFlag />, title: "The family politics? Flag them. Forget them.", body: "Mom can't be near Carla. Greg stays away from the bar. Auto-assign places everyone around every rule you've set." },
+              { n: "03", visual: <StepCardShare />, title: "Your whole crew, one link.", body: "Your partner, your mum, your maid of honour — all editing the same chart in real time. No more 'wait, which version is current?'" },
             ].map(s => (
               <div key={s.n}>
                 {s.visual}
@@ -701,7 +678,7 @@ const Index = () => {
             {/* header row */}
             <div className="grid" style={{ gridTemplateColumns: "1.2fr 2.8fr 2.8fr", background: "rgba(43,42,34,0.04)", borderBottom: "1px solid rgba(43,42,34,0.16)" }}>
               <div style={{ padding: "12px 20px", borderRight: "1px solid rgba(43,42,34,0.12)" }} />
-              <div style={{ padding: "12px 20px", fontFamily: MONO, fontSize: 10, letterSpacing: "0.14em", color: "rgba(43,42,34,0.38)", textTransform: "uppercase", borderRight: "1px solid rgba(43,42,34,0.12)", textDecoration: "line-through" }}>Template.xlsx</div>
+              <div style={{ padding: "12px 20px", fontFamily: MONO, fontSize: 10, letterSpacing: "0.14em", color: "rgba(43,42,34,0.55)", textTransform: "uppercase", borderRight: "1px solid rgba(43,42,34,0.12)", textDecoration: "line-through" }}>Template.xlsx</div>
               <div style={{ padding: "12px 20px", fontFamily: MONO, fontSize: 10, letterSpacing: "0.14em", color: TC, textTransform: "uppercase" }}>Wedding Seater</div>
             </div>
             {[
@@ -712,8 +689,8 @@ const Index = () => {
               ["Price",         "Free. (Costs your sanity.)",                "Free. (Costs nothing.)"],
             ].map((row, i) => (
               <div key={i} className="grid" style={{ gridTemplateColumns: "1.2fr 2.8fr 2.8fr", borderTop: "1px solid rgba(43,42,34,0.12)" }}>
-                <div style={{ padding: "18px 20px", fontFamily: MONO, fontSize: 10, letterSpacing: "0.14em", color: "rgba(43,42,34,0.45)", textTransform: "uppercase", borderRight: "1px solid rgba(43,42,34,0.12)", background: "rgba(43,42,34,0.02)" }}>{row[0]}</div>
-                <div style={{ padding: "18px 20px", fontFamily: DISP, fontStyle: "italic", fontSize: 16, color: "rgba(43,42,34,0.45)", borderRight: "1px solid rgba(43,42,34,0.12)", background: "rgba(43,42,34,0.02)" }}>{row[1]}</div>
+                <div style={{ padding: "18px 20px", fontFamily: MONO, fontSize: 10, letterSpacing: "0.14em", color: "rgba(43,42,34,0.62)", textTransform: "uppercase", borderRight: "1px solid rgba(43,42,34,0.12)", background: "rgba(43,42,34,0.02)" }}>{row[0]}</div>
+                <div style={{ padding: "18px 20px", fontFamily: DISP, fontStyle: "italic", fontSize: 16, color: "rgba(43,42,34,0.62)", borderRight: "1px solid rgba(43,42,34,0.12)", background: "rgba(43,42,34,0.02)" }}>{row[1]}</div>
                 <div style={{ padding: "18px 20px", fontFamily: DISP, fontSize: 16, color: INK, background: "rgba(74,82,50,0.028)" }}>{row[2]}</div>
               </div>
             ))}
