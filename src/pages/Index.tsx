@@ -32,7 +32,7 @@ const DISP = '"Newsreader", "Times New Roman", serif';
 // ─── Step card: naming the plan ───────────────────────────────────────────
 function StepCardName() {
   return (
-    <div className="paper-grain" style={{ border: `1px solid ${HL}`, padding: 22, height: 280, display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 2px 14px rgba(43,42,34,0.07)" }}>
+    <div className="paper-grain-strong" style={{ border: `1px solid ${HL}`, padding: 22, height: 260, display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 12px 40px -12px rgba(43,42,34,0.22), inset 0 1px 0 rgba(255,255,255,0.55)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
         <span style={{ width: 5, height: 5, borderRadius: "50%", background: TC, flexShrink: 0 }} />
         <div style={{ fontFamily: MONO, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: TC }}>NEW PLAN</div>
@@ -65,7 +65,7 @@ function StepCardFlag() {
     { icon: "×", bg: "rgba(182,90,54,0.08)", label: "Greg  ⌇  the open bar",  tag: "KEEP APART", tagC: TC,  tagBg: "rgba(182,90,54,0.12)" },
   ];
   return (
-    <div className="paper-grain" style={{ border: `1px solid ${HL}`, padding: 22, height: 280, display: "flex", flexDirection: "column", boxShadow: "0 2px 14px rgba(43,42,34,0.07)" }}>
+    <div className="paper-grain-strong" style={{ border: `1px solid ${HL}`, padding: 22, height: 260, display: "flex", flexDirection: "column", boxShadow: "0 12px 40px -12px rgba(43,42,34,0.22), inset 0 1px 0 rgba(255,255,255,0.55)" }}>
       <div style={{ fontFamily: MONO, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: TC, marginBottom: 18 }}>RULES</div>
       <div style={{ display: "flex", flexDirection: "column", gap: 9, flex: 1 }}>
         {rules.map((r, i) => (
@@ -91,7 +91,7 @@ function StepCardShare() {
     { c: "#7a6a3e", init: "R", name: "Mom (Robin)",   tagLabel: "VIEWING",       tagBg: "transparent",          tagC: I3  },
   ];
   return (
-    <div className="paper-grain" style={{ border: `1px solid ${HL}`, padding: 22, height: 280, display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 2px 14px rgba(43,42,34,0.07)" }}>
+    <div className="paper-grain-strong" style={{ border: `1px solid ${HL}`, padding: 22, height: 260, display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 12px 40px -12px rgba(43,42,34,0.22), inset 0 1px 0 rgba(255,255,255,0.55)" }}>
       <div>
         <div style={{ fontFamily: MONO, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: TC, marginBottom: 14 }}>SHARE · ONE LINK</div>
         {/* link slug — butter-wash stamp */}
@@ -519,7 +519,7 @@ const Index = () => {
               <span className="font-display-italic">without</span> the spreadsheet.
             </h1>
             <p className="mt-8 max-w-[500px] text-[18px] leading-[1.55] text-ink-2" style={{ fontFamily: DISP }}>
-              Drag guests onto a canvas of the room. Flag who can't sit near whom — divorced parents, exes, everyone with an agenda. Auto-assign places everyone around every rule you've set.
+              You already know who can't sit near whom. You've been carrying it in your head for weeks. This is where you put it down — and get the whole thing sorted in one afternoon.
             </p>
 
             {/* CTA form */}
@@ -631,9 +631,9 @@ const Index = () => {
           </h2>
           <div className="grid gap-10 md:grid-cols-3 md:gap-7">
             {[
-              { n: "01", visual: <StepCardName />, title: "On the canvas in thirty seconds.", body: "Name it. You're already dragging guests onto tables. No account, no pricing page, nothing to learn." },
-              { n: "02", visual: <StepCardFlag />, title: "The family politics? Flag them. Forget them.", body: "Mom can't be near Carla. Greg stays away from the bar. Auto-assign places everyone around every rule you've set." },
-              { n: "03", visual: <StepCardShare />, title: "Your whole crew, one link.", body: "Your partner, your mum, your maid of honour — all editing the same chart in real time. No more 'wait, which version is current?'" },
+              { n: "01", visual: <StepCardName />, title: "You're on the canvas before you can overthink it.", body: "Type a name. You're already dragging guests onto tables. No tutorial, no demo, nothing to figure out." },
+              { n: "02", visual: <StepCardFlag />, title: "The family politics? Write them down. Forget them.", body: "Mom can't be near Carla. Greg stays away from the bar. Tell it the rules — it works around every single one of them." },
+              { n: "03", visual: <StepCardShare />, title: "Your whole crew, one link.", body: "Your partner, your mum, your maid of honour — all in the same chart in real time. No more 'wait, which version is current?'" },
             ].map(s => (
               <div key={s.n}>
                 {s.visual}
@@ -653,9 +653,9 @@ const Index = () => {
           </h2>
           <div className="grid gap-10 md:grid-cols-3 md:gap-7">
             {[
-              { visual: <FeatureCanvas />, title: "A canvas, not a grid.", body: "Tables, chairs, the dance floor, the doors. Your seating chart looks like the actual room." },
-              { visual: <FeatureConflict />, title: "The family drama? Handled.", body: "Flag who can't sit near whom. Auto-assign seats 142 guests around every constraint. You deal with the flowers." },
-              { visual: <FeatureMobile />, title: "One link, everyone helps.", body: "Your partner edits from their phone. Your mom moves Uncle Jim to table 9 from her couch. Same chart, always." },
+              { visual: <FeatureCanvas />, title: "A canvas, not a grid.", body: "Tables, chairs, the dance floor, the doors. For the first time, you can see the whole picture at once." },
+              { visual: <FeatureConflict />, title: "The family drama? Handled.", body: "Tell it who can't be near whom. It seats everyone around every rule you've set. You deal with the flowers." },
+              { visual: <FeatureMobile />, title: "Everyone helps. One link.", body: "Your partner, your mum, your maid of honour. All in. No one needs an account, no one needs to download anything." },
             ].map((f, i) => (
               <div key={i}>
                 {f.visual}
@@ -707,7 +707,7 @@ const Index = () => {
             {[
               { visual: <VignetteCouple />, title: "150 guests. No plan yet.", body: "You have the guest list. You have the PDF of the venue. What you're missing is a picture of the actual room that you can drag people around in. That's this." },
               { visual: <VignetteMom />,    title: "Mum wants to help. Let her.", body: "She has the link. She can see the tables. She moves Uncle Jim to table 9 and you see it instantly. No phone calls, no emailing spreadsheets back and forth." },
-              { visual: <VignetteFamily />, title: "Divorced parents. That ex.", body: "You know the pairs. Flag them once — Mom and Carla, Dad and Step-dad, the two cousins who haven't spoken since 2019. Auto-assign works around all of it. Nobody makes a scene." },
+              { visual: <VignetteFamily />, title: "Divorced parents. That ex.", body: "You know the pairs. Tell it once — Mom and Carla, Dad and Step-dad, the cousins who haven't spoken since 2019. It works around all of them. Nobody makes a scene." },
             ].map((p, i) => (
               <article key={i} style={{ background: P, border: `1px solid ${HL}` }}>
                 {p.visual}
@@ -730,13 +730,13 @@ const Index = () => {
               </h2>
             </div>
             <div style={{ borderBottom: "0.5px solid rgba(43,42,34,0.18)" }}>
-              <FAQPair q="Is it actually free?" a="Yes. No trial period, no credit card, no upgrade wall hiding the useful features. Free." />
-              <FAQPair q="Do I need to make an account?" a="No. Your plan link is your account. Bookmark it, text it to yourself, open it on any device — it's always there." />
-              <FAQPair q="Can my partner edit it too?" a="Anyone with the link can edit. Share it with your partner, your parents, your maid of honour. You don't need to coordinate who's 'in charge' of the spreadsheet." />
-              <FAQPair q="What if I already started in a spreadsheet?" a="Paste your guest list directly into Wedding Seater — it'll parse names automatically. You don't have to start from scratch." />
-              <FAQPair q="How does the drag-and-drop work?" a="You see a canvas of the room. Drag a name from the guest list onto a table. Move someone by dragging them somewhere else. It works the way your brain does — as a picture, not a grid of cells." />
-              <FAQPair q="What about the awkward pairings?" a="Flag who can't sit near whom — divorced parents, feuding relatives, exes. Auto-assign respects every rule when it places guests. You can also move anyone manually." />
-              <FAQPair q="Will I lose my work?" a="No. Saves automatically. Your link works on any device, any time. Start on your laptop at 11pm, check it from your phone in bed." />
+              <FAQPair q="Is it actually free?" a="Yes. Not free-trial free. Not free-until-you-try-to-do-anything free. Just free." />
+              <FAQPair q="Do I need to make an account?" a="No. Your link is your plan. Bookmark it, text it to yourself, open it on any device. It'll be there." />
+              <FAQPair q="Can my partner edit it too?" a="Anyone with the link can. You don't need to be 'in charge' of the spreadsheet anymore — there is no spreadsheet." />
+              <FAQPair q="What if I already started a spreadsheet?" a="Paste your guest list in and we'll figure out the rest. You don't have to start from zero." />
+              <FAQPair q="How hard is the drag-and-drop?" a="You drag a name from the guest list. You drop it on a table. That's it. If you can move an app icon on your phone, you can do this." />
+              <FAQPair q="What about the difficult families?" a="Tell it who can't sit near whom. It works around every one of those rules when it places the guests. You can always move anyone yourself too." />
+              <FAQPair q="What if I lose my work?" a="You won't. It saves every change automatically. Start on your laptop, pick it up on your phone in bed. It's always where you left it." />
             </div>
           </div>
         </section>
