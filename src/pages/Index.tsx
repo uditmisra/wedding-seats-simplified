@@ -32,17 +32,24 @@ const DISP = '"Newsreader", "Times New Roman", serif';
 // ─── Step card: naming the plan ───────────────────────────────────────────
 function StepCardName() {
   return (
-    <div style={{ background: P, border: `1px solid ${HL}`, padding: 22, height: 280, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-      <div style={{ fontFamily: MONO, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: TC }}>NEW PLAN</div>
+    <div className="paper-grain" style={{ border: `1px solid ${HL}`, padding: 22, height: 280, display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 2px 14px rgba(43,42,34,0.07)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+        <span style={{ width: 5, height: 5, borderRadius: "50%", background: TC, flexShrink: 0 }} />
+        <div style={{ fontFamily: MONO, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: TC }}>NEW PLAN</div>
+      </div>
       <div>
-        <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.12em", color: I3 }}>NAME</div>
-        <div style={{ borderBottom: `1px solid ${INK}`, paddingBottom: 8, marginTop: 6 }}>
-          <span style={{ fontFamily: DISP, fontStyle: "italic", fontSize: 28, color: INK }}>Maya &amp; Jordan</span>
-          <span style={{ display: "inline-block", width: 1, height: 24, background: INK, marginLeft: 2, verticalAlign: "-4px" }} />
+        <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.14em", color: I3, marginBottom: 10, textTransform: "uppercase" }}>Name</div>
+        <div style={{ position: "relative", paddingBottom: 12 }}>
+          <span style={{ fontFamily: DISP, fontStyle: "italic", fontSize: 30, color: INK, letterSpacing: "-0.01em" }}>Maya &amp; Jordan</span>
+          <span style={{ display: "inline-block", width: 1.5, height: 28, background: TC, marginLeft: 3, verticalAlign: "-5px", opacity: 0.75 }} />
+          {/* hand-drawn underline */}
+          <svg style={{ position: "absolute", bottom: 2, left: 0, width: "100%", height: 7 }} preserveAspectRatio="none" viewBox="0 0 220 7">
+            <path d="M 0 5 Q 55 3, 110 5 Q 165 7, 220 4" stroke={INK} fill="none" strokeWidth="0.9" opacity="0.35" />
+          </svg>
         </div>
       </div>
       <div style={{ display: "flex", justifyContent: "flex-end" }}>
-        <div style={{ background: INK, color: P, padding: "10px 16px", fontFamily: DISP, fontSize: 14 }}>
+        <div style={{ background: TC, color: "#fbf6e9", padding: "11px 20px", fontFamily: DISP, fontSize: 15, boxShadow: "2px 2px 0 rgba(43,42,34,0.14)" }}>
           Begin <span style={{ fontStyle: "italic" }}>→</span>
         </div>
       </div>
@@ -53,23 +60,25 @@ function StepCardName() {
 // ─── Step card: flagging rules (the humour is in the data) ────────────────
 function StepCardFlag() {
   const rules = [
-    { icon: "×", iconColor: TC, label: "Mom  ⌇  Carla", tag: "KEEP APART" },
-    { icon: "+", iconColor: OLV, label: "The college roommates", tag: "TOGETHER" },
-    { icon: "×", iconColor: TC, label: "Greg  ⌇  the open bar", tag: "KEEP APART" },
+    { icon: "×", bg: "rgba(182,90,54,0.08)", label: "Mom  ⌇  Carla",         tag: "KEEP APART", tagC: TC,  tagBg: "rgba(182,90,54,0.12)" },
+    { icon: "+", bg: "rgba(74,82,50,0.08)",  label: "College roommates",      tag: "TOGETHER",   tagC: OLV, tagBg: "rgba(74,82,50,0.12)" },
+    { icon: "×", bg: "rgba(182,90,54,0.08)", label: "Greg  ⌇  the open bar",  tag: "KEEP APART", tagC: TC,  tagBg: "rgba(182,90,54,0.12)" },
   ];
   return (
-    <div style={{ background: P, border: `1px solid ${HL}`, padding: 22, height: 280, display: "flex", flexDirection: "column" }}>
-      <div style={{ fontFamily: MONO, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: TC, marginBottom: 16 }}>RULES</div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
+    <div className="paper-grain" style={{ border: `1px solid ${HL}`, padding: 22, height: 280, display: "flex", flexDirection: "column", boxShadow: "0 2px 14px rgba(43,42,34,0.07)" }}>
+      <div style={{ fontFamily: MONO, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: TC, marginBottom: 18 }}>RULES</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 9, flex: 1 }}>
         {rules.map((r, i) => (
-          <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", border: `0.5px solid rgba(43,42,34,0.2)` }}>
-            <span style={{ width: 18, height: 18, border: `1px solid ${r.iconColor}`, color: r.iconColor, fontFamily: DISP, fontStyle: "italic", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>{r.icon}</span>
-            <span style={{ fontFamily: DISP, fontSize: 15 }}>{r.label}</span>
-            <span style={{ marginLeft: "auto", fontFamily: MONO, fontSize: 9, letterSpacing: "0.1em", color: I3, whiteSpace: "nowrap" }}>{r.tag}</span>
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", background: r.bg, borderRadius: 6 }}>
+            <span style={{ width: 20, height: 20, border: `1.5px solid ${r.icon === "+" ? OLV : TC}`, color: r.icon === "+" ? OLV : TC, fontFamily: DISP, fontStyle: "italic", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 3, flexShrink: 0 }}>{r.icon}</span>
+            <span style={{ fontFamily: DISP, fontSize: 15, flex: 1 }}>{r.label}</span>
+            <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: "0.1em", color: r.tagC, background: r.tagBg, padding: "2px 7px", borderRadius: 3, whiteSpace: "nowrap" }}>{r.tag}</span>
           </div>
         ))}
       </div>
-      <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.12em", color: I3, marginTop: 12 }}>+ ADD A RULE</div>
+      <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.12em", marginTop: 14, display: "flex", alignItems: "center", gap: 6, color: I3 }}>
+        <span style={{ color: TC, fontSize: 13 }}>+</span> ADD A RULE
+      </div>
     </div>
   );
 }
@@ -77,24 +86,26 @@ function StepCardFlag() {
 // ─── Step card: sharing the link ─────────────────────────────────────────
 function StepCardShare() {
   const collaborators = [
-    { c: TC,  init: "M", name: "Maya",        tag: "EDITING" },
-    { c: OLV, init: "J", name: "Jordan",       tag: "EDITING · PHONE" },
-    { c: "#7a6a3e", init: "R", name: "Mom (Robin)", tag: "VIEWING" },
+    { c: TC,        init: "M", name: "Maya",         tagLabel: "EDITING",       tagBg: "rgba(182,90,54,0.1)",  tagC: TC  },
+    { c: OLV,       init: "J", name: "Jordan",        tagLabel: "EDITING · PHONE", tagBg: "rgba(74,82,50,0.1)", tagC: OLV },
+    { c: "#7a6a3e", init: "R", name: "Mom (Robin)",   tagLabel: "VIEWING",       tagBg: "transparent",          tagC: I3  },
   ];
   return (
-    <div style={{ background: P, border: `1px solid ${HL}`, padding: 22, height: 280, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+    <div className="paper-grain" style={{ border: `1px solid ${HL}`, padding: 22, height: 280, display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 2px 14px rgba(43,42,34,0.07)" }}>
       <div>
         <div style={{ fontFamily: MONO, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: TC, marginBottom: 14 }}>SHARE · ONE LINK</div>
-        <div style={{ background: P2, padding: "10px 14px", fontFamily: MONO, fontSize: 12, color: INK, border: `0.5px dashed ${INK}` }}>
+        {/* link slug — butter-wash stamp */}
+        <div style={{ background: "rgba(232,210,146,0.28)", padding: "10px 14px", fontFamily: MONO, fontSize: 12, color: INK, border: "0.5px dashed rgba(43,42,34,0.3)", borderRadius: 4, display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ color: TC, fontSize: 11 }}>↗</span>
           weddingseater.app/m-and-j
         </div>
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {collaborators.map((p, i) => (
           <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 24, height: 24, borderRadius: "50%", background: p.c, color: P, fontFamily: DISP, fontStyle: "italic", fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center" }}>{p.init}</div>
-            <div style={{ fontFamily: DISP, fontSize: 15, color: INK }}>{p.name}</div>
-            <div style={{ marginLeft: "auto", fontFamily: MONO, fontSize: 9, letterSpacing: "0.1em", color: I3 }}>{p.tag}</div>
+            <div style={{ width: 28, height: 28, borderRadius: "50%", background: p.c, color: "#fbf6e9", fontFamily: DISP, fontStyle: "italic", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 1px 4px rgba(43,42,34,0.18)" }}>{p.init}</div>
+            <div style={{ fontFamily: DISP, fontSize: 15, color: INK, flex: 1 }}>{p.name}</div>
+            <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: "0.1em", padding: "2px 7px", borderRadius: 3, background: p.tagBg, color: p.tagC, border: i === 2 ? `0.5px solid ${HL}` : "none" }}>{p.tagLabel}</div>
           </div>
         ))}
       </div>
@@ -104,22 +115,32 @@ function StepCardShare() {
 
 // ─── Feature card: the canvas ─────────────────────────────────────────────
 function FeatureCanvas() {
+  // varied occupancy so it looks like a real plan in progress
+  const tables: [number, number, number, number][] = [
+    [80, 78, 8, 8], [200, 78, 7, 8], [320, 78, 6, 8],
+    [80, 168, 10, 10], [200, 168, 3, 8],
+  ];
   return (
-    <div style={{ background: P, border: `1px solid ${HL}`, padding: 16, height: 240, overflow: "hidden" }}>
+    <div className="paper-grain" style={{ border: `1px solid ${HL}`, padding: 16, height: 240, overflow: "hidden", boxShadow: "0 2px 14px rgba(43,42,34,0.07)" }}>
       <svg viewBox="0 0 380 220" style={{ width: "100%", height: "100%" }}>
-        <rect x="10" y="10" width="360" height="200" fill="none" stroke={INK} strokeWidth="0.6" opacity="0.5" />
-        {([[80, 80], [200, 80], [320, 80], [80, 170], [200, 170]] as [number,number][]).map(([x, y], i) => (
+        {/* room outline — slightly imprecise */}
+        <path d="M 10 12 L 371 10 L 370 208 L 9 210 Z" fill="none" stroke={INK} strokeWidth="0.75" opacity="0.4" strokeLinejoin="round" />
+        {/* dance floor — terracotta wash */}
+        <rect x="281" y="141" width="79" height="59" fill="rgba(182,90,54,0.07)" stroke={TC} strokeWidth="0.9" strokeDasharray="3 3" />
+        <text x="320" y="176" textAnchor="middle" fontFamily={DISP} fontStyle="italic" fontSize="10.5" fill={TC} opacity="0.9">dance floor</text>
+        {/* tables */}
+        {tables.map(([x, y, occ, cap], i) => (
           <g key={i}>
-            <circle cx={x} cy={y} r="28" fill={P} stroke={INK} strokeWidth="0.9" />
-            {Array.from({ length: 8 }).map((_, j) => {
-              const a = (j / 8) * Math.PI * 2 - Math.PI / 2;
-              return <circle key={j} cx={x + Math.cos(a) * 36} cy={y + Math.sin(a) * 36} r="3.4" fill={INK} />;
+            <circle cx={x} cy={y} r="27" fill="rgba(243,238,227,0.96)" stroke={INK} strokeWidth="1" />
+            {Array.from({ length: cap }).map((_, j) => {
+              const a = (j / cap) * Math.PI * 2 - Math.PI / 2;
+              return <circle key={j} cx={x + Math.cos(a) * 35} cy={y + Math.sin(a) * 35}
+                r="4" fill={j < occ ? "rgba(74,82,50,0.84)" : "rgba(243,238,227,0.92)"}
+                stroke={j < occ ? "rgba(74,82,50,0.4)" : "rgba(43,42,34,0.22)"} strokeWidth="0.7" />;
             })}
             <text x={x} y={y + 4} textAnchor="middle" fontFamily={DISP} fontStyle="italic" fontSize="13" fill={INK}>T{i + 1}</text>
           </g>
         ))}
-        <rect x="280" y="140" width="80" height="60" fill="none" stroke={INK} strokeDasharray="3 3" />
-        <text x="320" y="174" textAnchor="middle" fontFamily={DISP} fontStyle="italic" fontSize="11" fill={INK}>dance</text>
       </svg>
     </div>
   );
@@ -128,18 +149,23 @@ function FeatureCanvas() {
 // ─── Feature card: conflict resolution ────────────────────────────────────
 function FeatureConflict() {
   return (
-    <div style={{ background: P, border: `1px solid ${HL}`, padding: 22, height: 240, display: "flex", flexDirection: "column", justifyContent: "center", gap: 18 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-        <div style={{ background: P2, padding: "10px 14px", border: `1px solid ${INK}`, fontFamily: DISP, fontStyle: "italic", fontSize: 22 }}>Mom</div>
-        <div style={{ width: 28, height: 28, border: `1.5px solid ${TC}`, color: TC, fontFamily: DISP, fontStyle: "italic", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%" }}>×</div>
-        <div style={{ background: P2, padding: "10px 14px", border: `1px solid ${INK}`, fontFamily: DISP, fontStyle: "italic", fontSize: 22 }}>Carla</div>
+    <div className="paper-grain" style={{ border: `1px solid ${HL}`, padding: 22, height: 240, display: "flex", flexDirection: "column", justifyContent: "center", gap: 16, boxShadow: "0 2px 14px rgba(43,42,34,0.07)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <div style={{ background: "rgba(182,90,54,0.1)", padding: "10px 16px", border: "1px solid rgba(182,90,54,0.28)", fontFamily: DISP, fontStyle: "italic", fontSize: 22, borderRadius: 6 }}>Mom</div>
+        {/* expressive hand-drawn × */}
+        <svg width="30" height="30" viewBox="0 0 30 30" style={{ flexShrink: 0 }}>
+          <line x1="5" y1="5" x2="25" y2="25" stroke={TC} strokeWidth="2.5" strokeLinecap="round" />
+          <line x1="25" y1="5" x2="5" y2="25" stroke={TC} strokeWidth="2.5" strokeLinecap="round" />
+        </svg>
+        <div style={{ background: "rgba(182,90,54,0.1)", padding: "10px 16px", border: "1px solid rgba(182,90,54,0.28)", fontFamily: DISP, fontStyle: "italic", fontSize: 22, borderRadius: 6 }}>Carla</div>
       </div>
-      <div style={{ paddingLeft: 4, fontFamily: DISP, fontStyle: "italic", fontSize: 16, color: TC }}>
-        Auto-assign placed them <strong style={{ fontStyle: "normal", color: INK }}>seven tables apart.</strong>
+      <div style={{ fontFamily: DISP, fontStyle: "italic", fontSize: 16, color: I2, lineHeight: 1.45, paddingLeft: 2 }}>
+        Auto-assign placed them{" "}
+        <span style={{ fontStyle: "normal", color: INK, borderBottom: `2px solid ${TC}`, paddingBottom: 1 }}>seven tables apart.</span>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: MONO, fontSize: 10, letterSpacing: "0.12em", color: I3 }}>
-        <span style={{ width: 6, height: 6, borderRadius: "50%", background: OLV, flexShrink: 0 }} />
-        ALL 23 RULES SATISFIED
+      <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: MONO, fontSize: 10, letterSpacing: "0.12em", background: "rgba(74,82,50,0.08)", padding: "8px 12px", borderRadius: 6 }}>
+        <span style={{ width: 8, height: 8, borderRadius: "50%", background: OLV, flexShrink: 0 }} />
+        <span style={{ color: OLV }}>ALL 23 RULES SATISFIED</span>
       </div>
     </div>
   );
@@ -147,35 +173,58 @@ function FeatureConflict() {
 
 // ─── Feature card: multi-device ───────────────────────────────────────────
 function FeatureMobile() {
+  const miniTables: [number, number, number][] = [[22, 22, 5], [62, 22, 6], [102, 22, 4], [42, 56, 6], [82, 56, 3]];
   return (
-    <div style={{ background: P, border: `1px solid ${HL}`, padding: 16, height: 240, display: "flex", justifyContent: "center", alignItems: "center", gap: 24 }}>
-      {/* laptop */}
+    <div className="paper-grain" style={{ border: `1px solid ${HL}`, padding: 20, height: 240, display: "flex", justifyContent: "center", alignItems: "center", gap: 18, boxShadow: "0 2px 14px rgba(43,42,34,0.07)" }}>
+      {/* laptop — screen shows actual warm plan */}
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-        <div style={{ width: 130, height: 84, border: `1px solid ${INK}`, background: P2, position: "relative" }}>
-          <div style={{ position: "absolute", inset: 6 }}>
-            <svg viewBox="0 0 120 70" width="100%" height="100%">
-              {([[20, 20], [60, 20], [100, 20], [40, 50], [80, 50]] as [number,number][]).map(([x, y], i) => (
-                <circle key={i} cx={x} cy={y} r="8" fill="none" stroke={INK} strokeWidth="0.6" />
+        <div style={{ width: 138, height: 90, border: `1px solid ${INK}`, background: "rgba(235,228,213,0.9)", position: "relative", borderRadius: "3px 3px 0 0" }}>
+          <div style={{ position: "absolute", inset: 5, background: P, borderRadius: 2, overflow: "hidden" }}>
+            <svg viewBox="0 0 128 80" width="100%" height="100%">
+              <path d="M 3 4 L 125 3 L 125 77 L 3 77 Z" fill="none" stroke={INK} strokeWidth="0.4" opacity="0.3" />
+              {miniTables.map(([x, y, occ], i) => (
+                <g key={i}>
+                  <circle cx={x} cy={y} r="10" fill="rgba(243,238,227,0.96)" stroke={INK} strokeWidth="0.7" />
+                  {Array.from({ length: 7 }).map((_, j) => {
+                    const a = (j / 7) * Math.PI * 2 - Math.PI / 2;
+                    return <circle key={j} cx={x + Math.cos(a) * 14} cy={y + Math.sin(a) * 14}
+                      r="2.8" fill={j < occ ? "rgba(74,82,50,0.82)" : "rgba(243,238,227,0.9)"}
+                      stroke={INK} strokeWidth="0.4" />;
+                  })}
+                </g>
               ))}
+              <rect x="97" y="44" width="28" height="28" fill="rgba(182,90,54,0.07)" stroke={TC} strokeWidth="0.6" strokeDasharray="2 2" />
             </svg>
           </div>
         </div>
-        <div style={{ width: 150, height: 4, background: INK }} />
-        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.12em", color: I3, marginTop: 8 }}>11:47 PM</div>
+        <div style={{ width: 158, height: 5, background: "rgba(43,42,34,0.8)", borderRadius: "0 0 3px 3px" }} />
+        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.12em", color: I3, marginTop: 9 }}>11:47 PM</div>
       </div>
-      <div style={{ fontFamily: DISP, fontStyle: "italic", fontSize: 18, color: TC }}>→</div>
-      {/* phone */}
+      {/* arrow + label */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
+        <div style={{ fontFamily: DISP, fontStyle: "italic", fontSize: 22, color: TC }}>→</div>
+        <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: "0.1em", color: I3, textAlign: "center", lineHeight: 1.5 }}>SAME<br />PLAN</div>
+      </div>
+      {/* phone — terracotta glow, same warm plan */}
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-        <div style={{ width: 56, height: 100, border: `1px solid ${INK}`, borderRadius: 8, background: P2, padding: 4 }}>
-          <div style={{ width: "100%", height: "100%", background: P, border: `0.4px solid ${INK}` }}>
-            <svg viewBox="0 0 50 90" width="100%" height="100%">
-              {([[15, 22], [35, 22], [15, 50], [35, 50], [15, 78], [35, 78]] as [number,number][]).map(([x, y], i) => (
-                <circle key={i} cx={x} cy={y} r="6" fill="none" stroke={INK} strokeWidth="0.5" />
+        <div style={{ width: 62, height: 110, border: `1px solid rgba(43,42,34,0.7)`, borderRadius: 12, background: "rgba(235,228,213,0.9)", padding: 5, boxShadow: `0 0 0 3px rgba(182,90,54,0.12), 0 4px 18px rgba(43,42,34,0.14)` }}>
+          <div style={{ width: "100%", height: "100%", background: P, borderRadius: 8, overflow: "hidden" }}>
+            <svg viewBox="0 0 52 100" width="100%" height="100%">
+              {([[16, 20], [36, 20], [16, 50], [36, 50], [16, 80], [36, 80]] as [number, number][]).map(([x, y], i) => (
+                <g key={i}>
+                  <circle cx={x} cy={y} r="9" fill="rgba(243,238,227,0.96)" stroke={INK} strokeWidth="0.6" />
+                  {Array.from({ length: 6 }).map((_, j) => {
+                    const a = (j / 6) * Math.PI * 2 - Math.PI / 2;
+                    return <circle key={j} cx={x + Math.cos(a) * 13} cy={y + Math.sin(a) * 13}
+                      r="2.5" fill={j < 4 ? "rgba(74,82,50,0.82)" : "rgba(243,238,227,0.9)"}
+                      stroke={INK} strokeWidth="0.4" />;
+                  })}
+                </g>
               ))}
             </svg>
           </div>
         </div>
-        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.12em", color: I3, marginTop: 8 }}>7:14 AM</div>
+        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.12em", color: I3, marginTop: 9 }}>7:14 AM</div>
       </div>
     </div>
   );
@@ -184,17 +233,20 @@ function FeatureMobile() {
 // ─── Persona vignette: the overwhelmed couple ─────────────────────────────
 function VignetteCouple() {
   const names = ["Aunt June","Uncle Frank","Cousin Beth","Sam +1?","Lin","David","Pat","Robin","Greg","Maya","Jordan","Cory","Kim","Lou","Theo","Carla","Em","Jules","Sara","Ana","Dan","?"];
+  // warm variety: paper, butter, terracotta wash, rose wash
+  const fills = [P, "rgba(232,210,146,0.55)", P, "rgba(182,90,54,0.09)", P, "rgba(232,210,146,0.4)", P, P, "rgba(182,90,54,0.12)", P, "rgba(232,210,146,0.5)", P, "rgba(201,131,112,0.14)", P, "rgba(232,210,146,0.45)", "rgba(182,90,54,0.1)", P, P, "rgba(232,210,146,0.52)", P, P, "rgba(201,131,112,0.11)"];
   return (
-    <div style={{ height: 180, background: P2, overflow: "hidden", borderTop: `1px solid ${HL}` }}>
+    <div style={{ height: 180, background: "rgba(235,228,213,0.7)", overflow: "hidden", borderTop: `1px solid ${HL}` }}>
       <svg viewBox="0 0 320 180" width="100%" height="100%">
         {names.map((name, i) => {
-          const x = 16 + (i % 6) * 50 + (i % 2) * 6;
-          const y = 24 + Math.floor(i / 6) * 38 + (i % 3) * 4;
-          const rot = (i * 13) % 14 - 7;
+          const x = 10 + (i % 6) * 50 + (i % 3) * 5;
+          const y = 18 + Math.floor(i / 6) * 36 + (i % 4) * 6;
+          const rot = (i * 17) % 24 - 12;
           return (
             <g key={i} transform={`translate(${x} ${y}) rotate(${rot})`}>
-              <rect width="46" height="22" fill={P} stroke={INK} strokeWidth="0.5" />
-              <text x="23" y="14" textAnchor="middle" fontFamily={DISP} fontStyle="italic" fontSize="9" fill={INK}>{name}</text>
+              <rect width="50" height="24" rx="1" fill={fills[i] ?? P} stroke="rgba(43,42,34,0.22)" strokeWidth="0.6" />
+              <line x1="0" y1="0" x2="50" y2="0" stroke="rgba(43,42,34,0.07)" strokeWidth="2.5" />
+              <text x="25" y="15.5" textAnchor="middle" fontFamily={DISP} fontStyle="italic" fontSize="9.5" fill={INK}>{name}</text>
             </g>
           );
         })}
@@ -206,24 +258,37 @@ function VignetteCouple() {
 // ─── Persona vignette: the helpful mom ────────────────────────────────────
 function VignetteMom() {
   return (
-    <div style={{ height: 180, background: P2, overflow: "hidden", borderTop: `1px solid ${HL}`, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
-      <div style={{ position: "relative", width: 90, height: 152, border: `1px solid ${INK}`, borderRadius: 12, background: P, padding: 6 }}>
-        <div style={{ width: "100%", height: "100%", background: P2, border: `0.4px solid ${INK}` }}>
-          <svg viewBox="0 0 80 130" width="100%" height="100%">
-            {([[22, 32], [58, 32], [22, 70], [58, 70], [22, 108], [58, 108]] as [number,number][]).map(([x, y], i) => (
+    <div style={{ height: 180, background: "rgba(235,228,213,0.7)", overflow: "hidden", borderTop: `1px solid ${HL}`, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+      {/* phone */}
+      <div style={{ position: "relative", width: 86, height: 146, border: "1px solid rgba(43,42,34,0.65)", borderRadius: 14, background: P, padding: 5, boxShadow: "0 4px 18px rgba(43,42,34,0.14)" }}>
+        <div style={{ width: "100%", height: "100%", background: "rgba(235,228,213,0.7)", borderRadius: 10, overflow: "hidden" }}>
+          <svg viewBox="0 0 76 126" width="100%" height="100%">
+            {([[20, 26], [56, 26], [20, 64], [56, 64], [20, 102], [56, 102]] as [number, number][]).map(([x, y], i) => (
               <g key={i}>
-                <circle cx={x} cy={y} r="9" fill="none" stroke={INK} strokeWidth="0.6" />
-                <text x={x} y={y + 3} textAnchor="middle" fontFamily={DISP} fontStyle="italic" fontSize="7" fill={INK}>T{i + 1}</text>
+                <circle cx={x} cy={y} r="10" fill="rgba(243,238,227,0.96)" stroke={INK} strokeWidth="0.7" />
+                {Array.from({ length: 6 }).map((_, j) => {
+                  const a = (j / 6) * Math.PI * 2 - Math.PI / 2;
+                  return <circle key={j} cx={x + Math.cos(a) * 14} cy={y + Math.sin(a) * 14}
+                    r="2.8" fill={j < 4 ? "rgba(74,82,50,0.82)" : "rgba(243,238,227,0.9)"}
+                    stroke={INK} strokeWidth="0.45" />;
+                })}
+                <text x={x} y={y + 3.5} textAnchor="middle" fontFamily={DISP} fontStyle="italic" fontSize="7.5" fill={INK}>T{i + 1}</text>
               </g>
             ))}
-            {/* tap indicator on T4 */}
-            <circle cx="58" cy="70" r="13" fill="none" stroke={TC} strokeWidth="1" strokeDasharray="2 2" />
-            <circle cx="58" cy="70" r="17" fill="none" stroke={TC} strokeWidth="0.6" strokeDasharray="2 2" opacity="0.6" />
+            {/* terracotta tap ripples on T4 */}
+            <circle cx="56" cy="64" r="3.5" fill={TC} opacity="0.7" />
+            <circle cx="56" cy="64" r="14" fill="rgba(182,90,54,0.1)" stroke={TC} strokeWidth="1.2" strokeDasharray="2 2" />
+            <circle cx="56" cy="64" r="20" fill="none" stroke={TC} strokeWidth="0.7" strokeDasharray="2 2" opacity="0.45" />
           </svg>
         </div>
       </div>
-      <div style={{ position: "absolute", right: 22, top: 28, fontFamily: DISP, fontStyle: "italic", fontSize: 14, color: TC, transform: "rotate(-3deg)", textAlign: "right" }}>
+      {/* annotation */}
+      <div style={{ position: "absolute", right: 14, top: 22, fontFamily: DISP, fontStyle: "italic", fontSize: 15, color: TC, transform: "rotate(-3deg)", textAlign: "right", lineHeight: 1.4 }}>
         Uncle Jim →<br />table 9
+      </div>
+      {/* MOVED badge */}
+      <div style={{ position: "absolute", bottom: 14, right: 14, background: "rgba(74,82,50,0.1)", border: "0.5px solid rgba(74,82,50,0.28)", fontFamily: MONO, fontSize: 8, letterSpacing: "0.1em", color: OLV, padding: "3px 8px", borderRadius: 3 }}>
+        MOVED
       </div>
     </div>
   );
@@ -231,13 +296,22 @@ function VignetteMom() {
 
 // ─── Persona vignette: complicated families ───────────────────────────────
 function VignetteFamily() {
-  const pairs = [["Mom","Carla"],["Dad","Step-dad"],["Cousin J","Cousin K"],["Aunt P","Uncle G"],["Ex","Ex-2"]];
+  const pairs: [string, string, string][] = [
+    ["Mom",      "Carla",    "rgba(182,90,54,0.08)"],
+    ["Dad",      "Step-dad", "transparent"],
+    ["Cousin J", "Cousin K", "rgba(232,210,146,0.22)"],
+    ["Aunt P",   "Uncle G",  "transparent"],
+    ["Ex",       "Ex-2",     "rgba(201,131,112,0.13)"],
+  ];
   return (
-    <div style={{ height: 180, background: P2, overflow: "hidden", borderTop: `1px solid ${HL}`, padding: "14px 18px", display: "flex", flexDirection: "column", gap: 6 }}>
-      {pairs.map(([a, b], i) => (
-        <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, fontFamily: DISP, fontStyle: "italic", fontSize: 14, color: INK }}>
+    <div style={{ height: 180, background: "rgba(235,228,213,0.7)", overflow: "hidden", borderTop: `1px solid ${HL}`, padding: "12px 16px", display: "flex", flexDirection: "column", gap: 5 }}>
+      {pairs.map(([a, b, bg], i) => (
+        <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: DISP, fontStyle: "italic", fontSize: 13.5, color: INK, background: bg, padding: "4px 10px", borderRadius: 4 }}>
           <span style={{ flex: 1, textAlign: "right" }}>{a}</span>
-          <span style={{ color: TC, fontWeight: 500, fontStyle: "normal" }}>×</span>
+          <svg width="16" height="16" viewBox="0 0 16 16" style={{ flexShrink: 0 }}>
+            <line x1="3" y1="3" x2="13" y2="13" stroke={TC} strokeWidth="2.2" strokeLinecap="round" />
+            <line x1="13" y1="3" x2="3" y2="13" stroke={TC} strokeWidth="2.2" strokeLinecap="round" />
+          </svg>
           <span style={{ flex: 1 }}>{b}</span>
         </div>
       ))}
@@ -249,10 +323,10 @@ function VignetteFamily() {
 function ContrastPair() {
   return (
     <div className="grid gap-7 md:grid-cols-[1fr_auto_1fr]" style={{ alignItems: "center" }}>
-      {/* spreadsheet — crossed out */}
+      {/* spreadsheet — coffee-stained, crossed out */}
       <div>
         <div style={{ fontFamily: MONO, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.18em", color: I3, marginBottom: 10 }}>TEMPLATE.XLSX</div>
-        <div style={{ background: "#e8e3d4", border: `0.5px solid ${HL}`, padding: "20px 22px", fontFamily: MONO, fontSize: 12, lineHeight: 1.85, color: "rgba(43,42,34,0.62)", position: "relative", height: 280 }}>
+        <div style={{ background: "#ece6d3", border: `0.5px solid ${HL}`, padding: "20px 22px", fontFamily: MONO, fontSize: 12, lineHeight: 1.85, color: "rgba(43,42,34,0.58)", position: "relative", height: 280, overflow: "hidden" }}>
           <div>A1 │ Aunt June       │ T?  │ ?</div>
           <div>A2 │ Uncle Frank     │ T?  │ ?</div>
           <div>A3 │ Cousin Beth     │ T2  │ OK</div>
@@ -262,7 +336,12 @@ function ContrastPair() {
           <div>A7 │ maybe(?)        │     │</div>
           <div>A8 │ ...142 rows     │     │</div>
           <svg width="100%" height="100%" style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
-            <line x1="4%" y1="10%" x2="96%" y2="92%" stroke={TC} strokeWidth="2.2" />
+            {/* coffee ring stain */}
+            <ellipse cx="76%" cy="28%" rx="40" ry="37" fill="none" stroke="rgba(110,75,30,0.13)" strokeWidth="7" />
+            <ellipse cx="76%" cy="28%" rx="31" ry="28" fill="none" stroke="rgba(110,75,30,0.07)" strokeWidth="3" />
+            {/* big expressive X */}
+            <line x1="4%" y1="8%" x2="96%" y2="92%" stroke={TC} strokeWidth="2.6" strokeLinecap="round" />
+            <line x1="4%" y1="92%" x2="96%" y2="8%" stroke={TC} strokeWidth="2.6" strokeLinecap="round" opacity="0.55" />
           </svg>
         </div>
       </div>
@@ -270,27 +349,32 @@ function ContrastPair() {
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
         <div style={{ fontFamily: DISP, fontStyle: "italic", fontSize: 22, color: TC, whiteSpace: "nowrap" }}>becomes</div>
         <svg width="40" height="18" viewBox="0 0 40 18">
-          <path d="M 0 9 L 36 9 M 30 3 L 36 9 L 30 15" fill="none" stroke={TC} strokeWidth="1.4" />
+          <path d="M 0 9 L 36 9 M 29 3 L 36 9 L 29 15" fill="none" stroke={TC} strokeWidth="1.6" strokeLinecap="round" />
         </svg>
       </div>
-      {/* room plan */}
+      {/* warm floor plan */}
       <div>
         <div style={{ fontFamily: MONO, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.18em", color: TC, marginBottom: 10 }}>A PICTURE OF THE ROOM</div>
-        <div style={{ background: P, border: `1px solid ${INK}`, padding: 18, height: 280 }}>
+        <div className="paper-grain" style={{ border: `1px solid rgba(43,42,34,0.55)`, padding: 18, height: 280 }}>
           <svg viewBox="0 0 380 250" style={{ width: "100%", height: "100%" }}>
-            <rect x="10" y="10" width="360" height="230" fill="none" stroke={INK} strokeWidth="0.6" />
-            {([[80, 80], [200, 80], [320, 80], [80, 180], [200, 180]] as [number,number][]).map(([x, y], i) => (
-              <g key={i}>
-                <circle cx={x} cy={y} r="28" fill={P} stroke={INK} strokeWidth="0.9" />
-                {Array.from({ length: 8 }).map((_, j) => {
-                  const a = (j / 8) * Math.PI * 2 - Math.PI / 2;
-                  return <circle key={j} cx={x + Math.cos(a) * 36} cy={y + Math.sin(a) * 36} r="3.4" fill={INK} />;
-                })}
-                <text x={x} y={y + 4} textAnchor="middle" fontFamily={DISP} fontStyle="italic" fontSize="13" fill={INK}>T{i + 1}</text>
-              </g>
-            ))}
-            <rect x="290" y="150" width="76" height="68" fill="none" stroke={INK} strokeDasharray="3 3" />
-            <text x="328" y="190" textAnchor="middle" fontFamily={DISP} fontStyle="italic" fontSize="12" fill={INK}>dance</text>
+            <path d="M 10 12 L 370 10 L 371 238 L 9 240 Z" fill="none" stroke={INK} strokeWidth="0.7" opacity="0.45" strokeLinejoin="round" />
+            <rect x="292" y="152" width="74" height="66" fill="rgba(182,90,54,0.07)" stroke={TC} strokeWidth="0.9" strokeDasharray="3 3" />
+            <text x="329" y="192" textAnchor="middle" fontFamily={DISP} fontStyle="italic" fontSize="11" fill={TC} opacity="0.88">dance floor</text>
+            {([[80, 80], [200, 80], [320, 80], [80, 185], [200, 185]] as [number, number][]).map(([x, y], i) => {
+              const occ = [8, 7, 6, 10, 5][i];
+              return (
+                <g key={i}>
+                  <circle cx={x} cy={y} r="28" fill="rgba(243,238,227,0.96)" stroke={INK} strokeWidth="0.9" />
+                  {Array.from({ length: 8 }).map((_, j) => {
+                    const a = (j / 8) * Math.PI * 2 - Math.PI / 2;
+                    return <circle key={j} cx={x + Math.cos(a) * 36} cy={y + Math.sin(a) * 36}
+                      r="3.5" fill={j < occ ? "rgba(74,82,50,0.83)" : "rgba(243,238,227,0.92)"}
+                      stroke={INK} strokeWidth="0.5" />;
+                  })}
+                  <text x={x} y={y + 4} textAnchor="middle" fontFamily={DISP} fontStyle="italic" fontSize="13" fill={INK}>T{i + 1}</text>
+                </g>
+              );
+            })}
           </svg>
         </div>
       </div>
