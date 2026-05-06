@@ -336,7 +336,7 @@ function UnassignedDrawerTrigger({ count, children }: { count: number; children:
       <DrawerTrigger asChild>
         <button
           type="button"
-          className="fixed bottom-5 left-1/2 z-30 inline-flex -translate-x-1/2 items-center gap-2 rounded-full bg-ink px-5 py-3 font-mono text-[12px] uppercase tracking-[0.12em] text-paper shadow-elegant lg:hidden"
+          className="fixed bottom-[72px] left-1/2 z-30 inline-flex h-11 -translate-x-1/2 items-center gap-2 rounded-full bg-ink px-5 font-mono text-[12px] uppercase tracking-[0.12em] text-paper shadow-elegant lg:hidden"
         >
           <UsersIcon size={14} />
           Guests to seat
@@ -373,7 +373,7 @@ function UnassignedPanel({ guests, search, setSearch, totalGuests, onAddGuest }:
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search"
-          className="h-8 rounded-none border-0 bg-transparent pl-6 text-sm focus-visible:ring-0"
+          className="h-10 rounded-none border-0 bg-transparent pl-6 text-sm focus-visible:ring-0"
         />
       </div>
       <div className="space-y-0.5">
