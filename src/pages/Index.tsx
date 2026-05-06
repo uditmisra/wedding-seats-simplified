@@ -487,7 +487,7 @@ const Index = () => {
         <Logo size={22} />
         <nav className="hidden items-center gap-9 text-sm text-ink-2 md:flex" aria-label="Main navigation">
           <a className="hover:text-ink" href="#how-it-works">How it works</a>
-          <a className="hover:text-ink" href="#who-its-for">For couples</a>
+          <a className="hover:text-ink" href="#who-its-for">Who it's for</a>
           <Link to="/blog" className="hover:text-ink">Blog</Link>
           <button
             onClick={openSample}
@@ -519,7 +519,7 @@ const Index = () => {
               <span className="font-display-italic">without</span> the spreadsheet.
             </h1>
             <p className="mt-8 max-w-[500px] text-[18px] leading-[1.55] text-ink-2" style={{ fontFamily: DISP }}>
-              Drag guests onto a canvas of the room. Flag the awkward pairings. Auto-assign handles the rest.
+              Drag guests onto a canvas of the room. Flag who can't sit near whom — divorced parents, exes, everyone with an agenda. Auto-assign places everyone around every rule you've set.
             </p>
 
             {/* CTA form */}
@@ -647,7 +647,7 @@ const Index = () => {
 
         {/* ── § 3 · Three things done well ─────────────────────────────── */}
         <section aria-labelledby="product-heading" className="mt-48 border-t hairline pt-14">
-          <p className="label-mono mb-8" style={{ color: TC }}>— The product</p>
+          <p className="label-mono mb-8" style={{ color: TC }}>— What it does</p>
           <h2 id="product-heading" className="m-0 mb-14 font-display text-[42px] leading-[1.0] tracking-[-0.025em] md:text-[56px] lg:text-[64px]">
             The room. The rules. <span className="font-display-italic">The link.</span>
           </h2>
@@ -701,13 +701,13 @@ const Index = () => {
         <section id="who-its-for" aria-labelledby="personas-heading" className="mt-48 border-t hairline pt-14">
           <p className="label-mono mb-8" style={{ color: TC }}>— Who it's for</p>
           <h2 id="personas-heading" className="m-0 mb-14 font-display text-[42px] leading-[1.0] tracking-[-0.025em] md:text-[56px] lg:text-[64px]">
-            Built for the people <span className="font-display-italic">doing</span> this.
+            Couples. Helpers. <span className="font-display-italic">The one who got handed the list.</span>
           </h2>
           <div className="grid gap-7 md:grid-cols-3">
             {[
-              { visual: <VignetteCouple />, title: "150 guests. No plan yet.", body: "You have the list. You have the floor plan PDF from the venue. What you don't have is a picture of the room. Start here." },
-              { visual: <VignetteMom />,    title: "The mom who wants to help.", body: "Your daughter sent you a link. You can see the tables. Move Uncle Jim to table 9 and she'll see it instantly. No phone calls." },
-              { visual: <VignetteFamily />, title: "Complicated families.", body: "Five pairs who can't be near each other. Flag them once. Auto-assign works around every one of them. Nobody makes a scene." },
+              { visual: <VignetteCouple />, title: "150 guests. No plan yet.", body: "You have the guest list. You have the PDF of the venue. What you're missing is a picture of the actual room that you can drag people around in. That's this." },
+              { visual: <VignetteMom />,    title: "Mum wants to help. Let her.", body: "She has the link. She can see the tables. She moves Uncle Jim to table 9 and you see it instantly. No phone calls, no emailing spreadsheets back and forth." },
+              { visual: <VignetteFamily />, title: "Divorced parents. That ex.", body: "You know the pairs. Flag them once — Mom and Carla, Dad and Step-dad, the two cousins who haven't spoken since 2019. Auto-assign works around all of it. Nobody makes a scene." },
             ].map((p, i) => (
               <article key={i} style={{ background: P, border: `1px solid ${HL}` }}>
                 {p.visual}
@@ -730,13 +730,13 @@ const Index = () => {
               </h2>
             </div>
             <div style={{ borderBottom: "0.5px solid rgba(43,42,34,0.18)" }}>
-              <FAQPair q="Is this free?" a="Yes. No trial, no upgrade wall, no credit card. Free seating chart maker — actually free." />
-              <FAQPair q="Do I need an account?" a="No. Bookmark the link — that's your account. Open it on any device." />
-              <FAQPair q="Can other people edit it?" a="Anyone with the link can. Share it with your partner, your parents, your maid of honour. Don't share it with your weird coworker." />
-              <FAQPair q="Does it work on my phone?" a="Yes. Nothing to download. Start on your laptop, check in or make tweaks from your phone anytime." />
-              <FAQPair q="How does drag-and-drop work?" a="You see the venue. Drag names onto tables. Rearrange between tables by dragging. It works the way your brain does — spatially, not in rows and columns." />
-              <FAQPair q="Is this better than a wedding seating chart template?" a="Templates give you rows. This gives you the room. You can flag who can't sit together, auto-assign around those rules, and share with your whole crew." />
-              <FAQPair q="Will I lose my work?" a="No. Saves automatically. Your link works on any device, any time." />
+              <FAQPair q="Is it actually free?" a="Yes. No trial period, no credit card, no upgrade wall hiding the useful features. Free." />
+              <FAQPair q="Do I need to make an account?" a="No. Your plan link is your account. Bookmark it, text it to yourself, open it on any device — it's always there." />
+              <FAQPair q="Can my partner edit it too?" a="Anyone with the link can edit. Share it with your partner, your parents, your maid of honour. You don't need to coordinate who's 'in charge' of the spreadsheet." />
+              <FAQPair q="What if I already started in a spreadsheet?" a="Paste your guest list directly into Wedding Seater — it'll parse names automatically. You don't have to start from scratch." />
+              <FAQPair q="How does the drag-and-drop work?" a="You see a canvas of the room. Drag a name from the guest list onto a table. Move someone by dragging them somewhere else. It works the way your brain does — as a picture, not a grid of cells." />
+              <FAQPair q="What about the awkward pairings?" a="Flag who can't sit near whom — divorced parents, feuding relatives, exes. Auto-assign respects every rule when it places guests. You can also move anyone manually." />
+              <FAQPair q="Will I lose my work?" a="No. Saves automatically. Your link works on any device, any time. Start on your laptop at 11pm, check it from your phone in bed." />
             </div>
           </div>
         </section>
