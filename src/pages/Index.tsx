@@ -115,30 +115,30 @@ function StepCardShare() {
 
 // ─── Feature card: the canvas ─────────────────────────────────────────────
 function FeatureCanvas() {
-  // varied occupancy so it looks like a real plan in progress
-  const tables: [number, number, number, number][] = [
-    [80, 78, 8, 8], [200, 78, 7, 8], [320, 78, 6, 8],
-    [80, 168, 10, 10], [200, 168, 3, 8],
+  const tables: [number, number, number, number, string, string][] = [
+    [80,  78, 8,  8,  OLV, "Fam."],
+    [200, 78, 7,  8,  TC,  "Coll."],
+    [320, 78, 5,  8,  OLV, "Work"],
+    [80, 168, 10, 10, TC,  "Head"],
+    [200,168,  3,  8, OLV, "Fr."],
   ];
   return (
-    <div className="paper-grain" style={{ border: `1px solid ${HL}`, padding: 16, height: 240, overflow: "hidden", boxShadow: "0 2px 14px rgba(43,42,34,0.07)" }}>
-      <svg viewBox="0 0 380 220" style={{ width: "100%", height: "100%" }}>
-        {/* room outline — slightly imprecise */}
-        <path d="M 10 12 L 371 10 L 370 208 L 9 210 Z" fill="none" stroke={INK} strokeWidth="0.75" opacity="0.4" strokeLinejoin="round" />
-        {/* dance floor — terracotta wash */}
-        <rect x="281" y="141" width="79" height="59" fill="rgba(182,90,54,0.07)" stroke={TC} strokeWidth="0.9" strokeDasharray="3 3" />
-        <text x="320" y="176" textAnchor="middle" fontFamily={DISP} fontStyle="italic" fontSize="10.5" fill={TC} opacity="0.9">dance floor</text>
-        {/* tables */}
-        {tables.map(([x, y, occ, cap], i) => (
+    <div className="paper-grain" style={{ border: `1px solid ${HL}`, padding: 16, height: 240, overflow: "hidden", position: "relative", boxShadow: "0 2px 14px rgba(43,42,34,0.07)" }}>
+      <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.14em", color: I3, textTransform: "uppercase", marginBottom: 5, textAlign: "center" }}>Maya &amp; Jordan · Seating draft</div>
+      <svg viewBox="0 0 380 206" style={{ width: "100%", height: "calc(100% - 22px)" }}>
+        <path d="M 12 8 L 370 7 L 369 198 L 11 200 Z" fill="none" stroke={INK} strokeWidth="0.7" opacity="0.35" strokeLinejoin="round" />
+        <rect x="284" y="138" width="78" height="54" fill="rgba(182,90,54,0.07)" stroke={TC} strokeWidth="0.9" strokeDasharray="3 3" />
+        <text x="323" y="170" textAnchor="middle" fontFamily={DISP} fontStyle="italic" fontSize="10" fill={TC} opacity="0.85">dance floor</text>
+        {tables.map(([x, y, occ, cap, dotC, lbl], i) => (
           <g key={i}>
-            <circle cx={x} cy={y} r="27" fill="rgba(243,238,227,0.96)" stroke={INK} strokeWidth="1" />
+            <circle cx={x} cy={y} r="25" fill="rgba(243,238,227,0.97)" stroke={INK} strokeWidth="0.9" />
             {Array.from({ length: cap }).map((_, j) => {
               const a = (j / cap) * Math.PI * 2 - Math.PI / 2;
-              return <circle key={j} cx={x + Math.cos(a) * 35} cy={y + Math.sin(a) * 35}
-                r="4" fill={j < occ ? "rgba(74,82,50,0.84)" : "rgba(243,238,227,0.92)"}
-                stroke={j < occ ? "rgba(74,82,50,0.4)" : "rgba(43,42,34,0.22)"} strokeWidth="0.7" />;
+              return <circle key={j} cx={x + Math.cos(a) * 33} cy={y + Math.sin(a) * 33}
+                r="3.8" fill={j < occ ? dotC : "rgba(243,238,227,0.9)"}
+                stroke="rgba(43,42,34,0.2)" strokeWidth="0.6" />;
             })}
-            <text x={x} y={y + 4} textAnchor="middle" fontFamily={DISP} fontStyle="italic" fontSize="13" fill={INK}>T{i + 1}</text>
+            <text x={x} y={y + 3.5} textAnchor="middle" fontFamily={DISP} fontStyle="italic" fontSize="9.5" fill={INK}>{lbl}</text>
           </g>
         ))}
       </svg>
@@ -321,60 +321,81 @@ function VignetteFamily() {
 
 // ─── Comparison: spreadsheet → room ──────────────────────────────────────
 function ContrastPair() {
+  const sheetRows: [string, string, string, string, string][] = [
+    ["1", "Aunt June",           "T?",    "?",   ""],
+    ["2", "Uncle Frank",         "T?",    "Yes", ""],
+    ["3", "Cousin Beth",         "T2",    "Yes", ""],
+    ["4", "Cousin Beth",         "T5",    "Yes", "DUP!"],
+    ["5", "Sam (+ guest?)",      "",      "?",   ""],
+    ["6", "=VLOOKUP(A6,...)",    "#REF!", "",    "!!"],
+    ["7", "Jordan's colleague?", "",      "?",   ""],
+    ["8", "... 134 more rows",   "",      "",    ""],
+  ];
+  const floorTables: [number, number, number, number, string, string][] = [
+    [72,  72, 8,  8,  OLV, "Fam."],
+    [186, 72, 7,  8,  TC,  "Coll."],
+    [300, 72, 5,  8,  OLV, "Work"],
+    [72, 178, 10, 10, TC,  "Head"],
+    [186,178,  4,  8, OLV, "Fr."],
+  ];
   return (
-    <div className="grid gap-7 md:grid-cols-[1fr_auto_1fr]" style={{ alignItems: "center" }}>
-      {/* spreadsheet — coffee-stained, crossed out */}
+    <div className="grid gap-8 md:grid-cols-2">
+      {/* Left: messy spreadsheet with grid cells */}
       <div>
-        <div style={{ fontFamily: MONO, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.18em", color: I3, marginBottom: 10 }}>TEMPLATE.XLSX</div>
-        <div style={{ background: "#ece6d3", border: `0.5px solid ${HL}`, padding: "20px 22px", fontFamily: MONO, fontSize: 12, lineHeight: 1.85, color: "rgba(43,42,34,0.58)", position: "relative", height: 280, overflow: "hidden" }}>
-          <div>A1 │ Aunt June       │ T?  │ ?</div>
-          <div>A2 │ Uncle Frank     │ T?  │ ?</div>
-          <div>A3 │ Cousin Beth     │ T2  │ OK</div>
-          <div>A4 │ Cousin Beth     │ T5  │ DUP</div>
-          <div>A5 │ Sam (plus 1?)   │     │ ?</div>
-          <div>A6 │ =VLOOKUP(...)   │ #ERR│ !!</div>
-          <div>A7 │ maybe(?)        │     │</div>
-          <div>A8 │ ...142 rows     │     │</div>
+        <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.18em", color: "rgba(43,42,34,0.4)", textTransform: "uppercase", marginBottom: 10, textDecoration: "line-through" }}>template.xlsx</div>
+        <div style={{ background: "#f7f4ee", border: `1px solid rgba(43,42,34,0.2)`, height: 280, overflow: "hidden", position: "relative", fontFamily: MONO, lineHeight: 1 }}>
+          {/* column headers */}
+          <div style={{ display: "grid", gridTemplateColumns: "26px 1fr 52px 48px 62px", background: "rgba(43,42,34,0.06)", borderBottom: "1px solid rgba(43,42,34,0.14)" }}>
+            {(["", "NAME", "TABLE", "RSVP", "NOTES"] as string[]).map((h, j) => (
+              <div key={j} style={{ padding: "6px 8px", borderRight: j < 4 ? "1px solid rgba(43,42,34,0.11)" : "none", fontSize: 9, letterSpacing: "0.1em", color: "rgba(43,42,34,0.45)" }}>{h}</div>
+            ))}
+          </div>
+          {/* data rows */}
+          {sheetRows.map(([n, name, table, rsvp, notes], i) => {
+            const isErr = table === "#REF!" || notes === "DUP!";
+            return (
+              <div key={i} style={{ display: "grid", gridTemplateColumns: "26px 1fr 52px 48px 62px", borderBottom: "1px solid rgba(43,42,34,0.09)", background: isErr ? "rgba(182,90,54,0.08)" : "transparent" }}>
+                <div style={{ padding: "7px 8px", borderRight: "1px solid rgba(43,42,34,0.09)", color: "rgba(43,42,34,0.28)", fontSize: 9 }}>{n}</div>
+                <div style={{ padding: "7px 8px", borderRight: "1px solid rgba(43,42,34,0.09)", fontSize: 11, color: "rgba(43,42,34,0.62)" }}>{name}</div>
+                <div style={{ padding: "7px 8px", borderRight: "1px solid rgba(43,42,34,0.09)", fontSize: 11, color: table === "T?" || table === "" ? "rgba(43,42,34,0.3)" : table === "#REF!" ? TC : "rgba(43,42,34,0.62)" }}>{table}</div>
+                <div style={{ padding: "7px 8px", borderRight: "1px solid rgba(43,42,34,0.09)", fontSize: 11, color: rsvp === "?" ? "rgba(43,42,34,0.35)" : "rgba(43,42,34,0.62)" }}>{rsvp}</div>
+                <div style={{ padding: "7px 8px", fontSize: 11, color: notes === "DUP!" || notes === "!!" ? TC : "rgba(43,42,34,0.4)" }}>{notes}</div>
+              </div>
+            );
+          })}
+          {/* coffee ring + X overlay */}
           <svg width="100%" height="100%" style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
-            {/* coffee ring stain */}
-            <ellipse cx="76%" cy="28%" rx="40" ry="37" fill="none" stroke="rgba(110,75,30,0.13)" strokeWidth="7" />
-            <ellipse cx="76%" cy="28%" rx="31" ry="28" fill="none" stroke="rgba(110,75,30,0.07)" strokeWidth="3" />
-            {/* big expressive X */}
-            <line x1="4%" y1="8%" x2="96%" y2="92%" stroke={TC} strokeWidth="2.6" strokeLinecap="round" />
-            <line x1="4%" y1="92%" x2="96%" y2="8%" stroke={TC} strokeWidth="2.6" strokeLinecap="round" opacity="0.55" />
+            <ellipse cx="80%" cy="30%" rx="38" ry="34" fill="none" stroke="rgba(110,75,30,0.11)" strokeWidth="9" />
+            <ellipse cx="80%" cy="30%" rx="29" ry="25" fill="none" stroke="rgba(110,75,30,0.05)" strokeWidth="3" />
+            <line x1="5%" y1="12%" x2="95%" y2="88%" stroke={TC} strokeWidth="2.5" strokeLinecap="round" opacity="0.65" />
+            <line x1="5%" y1="88%" x2="95%" y2="12%" stroke={TC} strokeWidth="2.5" strokeLinecap="round" opacity="0.4" />
           </svg>
         </div>
       </div>
-      {/* arrow */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-        <div style={{ fontFamily: DISP, fontStyle: "italic", fontSize: 22, color: TC, whiteSpace: "nowrap" }}>becomes</div>
-        <svg width="40" height="18" viewBox="0 0 40 18">
-          <path d="M 0 9 L 36 9 M 29 3 L 36 9 L 29 15" fill="none" stroke={TC} strokeWidth="1.6" strokeLinecap="round" />
-        </svg>
-      </div>
-      {/* warm floor plan */}
+
+      {/* Right: warm named floor plan */}
       <div>
-        <div style={{ fontFamily: MONO, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.18em", color: TC, marginBottom: 10 }}>A PICTURE OF THE ROOM</div>
-        <div className="paper-grain" style={{ border: `1px solid rgba(43,42,34,0.55)`, padding: 18, height: 280 }}>
-          <svg viewBox="0 0 380 250" style={{ width: "100%", height: "100%" }}>
-            <path d="M 10 12 L 370 10 L 371 238 L 9 240 Z" fill="none" stroke={INK} strokeWidth="0.7" opacity="0.45" strokeLinejoin="round" />
-            <rect x="292" y="152" width="74" height="66" fill="rgba(182,90,54,0.07)" stroke={TC} strokeWidth="0.9" strokeDasharray="3 3" />
-            <text x="329" y="192" textAnchor="middle" fontFamily={DISP} fontStyle="italic" fontSize="11" fill={TC} opacity="0.88">dance floor</text>
-            {([[80, 80], [200, 80], [320, 80], [80, 185], [200, 185]] as [number, number][]).map(([x, y], i) => {
-              const occ = [8, 7, 6, 10, 5][i];
-              return (
-                <g key={i}>
-                  <circle cx={x} cy={y} r="28" fill="rgba(243,238,227,0.96)" stroke={INK} strokeWidth="0.9" />
-                  {Array.from({ length: 8 }).map((_, j) => {
-                    const a = (j / 8) * Math.PI * 2 - Math.PI / 2;
-                    return <circle key={j} cx={x + Math.cos(a) * 36} cy={y + Math.sin(a) * 36}
-                      r="3.5" fill={j < occ ? "rgba(74,82,50,0.83)" : "rgba(243,238,227,0.92)"}
-                      stroke={INK} strokeWidth="0.5" />;
-                  })}
-                  <text x={x} y={y + 4} textAnchor="middle" fontFamily={DISP} fontStyle="italic" fontSize="13" fill={INK}>T{i + 1}</text>
-                </g>
-              );
-            })}
+        <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.18em", color: TC, textTransform: "uppercase", marginBottom: 10 }}>Seatly → a picture of the room</div>
+        <div className="paper-grain" style={{ border: `1px solid rgba(43,42,34,0.28)`, height: 280, overflow: "hidden", position: "relative" }}>
+          <div style={{ textAlign: "center", paddingTop: 12 }}>
+            <span style={{ fontFamily: DISP, fontStyle: "italic", fontSize: 15, color: INK, letterSpacing: "0.02em" }}>Maya &amp; Jordan</span>
+          </div>
+          <svg viewBox="0 0 340 228" style={{ width: "100%", height: "calc(100% - 32px)" }}>
+            <path d="M 12 8 L 328 7 L 327 221 L 11 223 Z" fill="none" stroke={INK} strokeWidth="0.7" opacity="0.35" />
+            <rect x="258" y="148" width="62" height="66" fill="rgba(182,90,54,0.07)" stroke={TC} strokeWidth="0.9" strokeDasharray="3 2" />
+            <text x="289" y="186" textAnchor="middle" fontFamily={DISP} fontStyle="italic" fontSize="9" fill={TC}>dance floor</text>
+            {floorTables.map(([x, y, occ, cap, dotC, lbl], i) => (
+              <g key={i}>
+                <circle cx={x} cy={y} r="26" fill="rgba(243,238,227,0.97)" stroke={INK} strokeWidth="0.9" />
+                {Array.from({ length: cap }).map((_, j) => {
+                  const a = (j / cap) * Math.PI * 2 - Math.PI / 2;
+                  return <circle key={j} cx={x + Math.cos(a) * 34} cy={y + Math.sin(a) * 34}
+                    r="4" fill={j < occ ? dotC : "rgba(243,238,227,0.9)"}
+                    stroke="rgba(43,42,34,0.2)" strokeWidth="0.5" />;
+                })}
+                <text x={x} y={y + 3.5} textAnchor="middle" fontFamily={DISP} fontStyle="italic" fontSize="9.5" fill={INK}>{lbl}</text>
+              </g>
+            ))}
           </svg>
         </div>
       </div>
@@ -629,7 +650,7 @@ const Index = () => {
         <section id="how-it-works" aria-labelledby="how-heading" className="mt-48 border-t hairline pt-14">
           <p className="label-mono mb-8" style={{ color: TC }}>— How it works</p>
           <h2 id="how-heading" className="m-0 mb-14 font-display text-[42px] leading-[1.0] tracking-[-0.025em] md:text-[56px] lg:text-[64px]">
-            How the seating chart <span className="font-display-italic">maker</span> works.
+            Name it. Flag it. <span className="font-display-italic">Share it.</span>
           </h2>
           <div className="grid gap-10 md:grid-cols-3 md:gap-7">
             {[
@@ -651,7 +672,7 @@ const Index = () => {
         <section aria-labelledby="product-heading" className="mt-48 border-t hairline pt-14">
           <p className="label-mono mb-8" style={{ color: TC }}>— The product</p>
           <h2 id="product-heading" className="m-0 mb-14 font-display text-[42px] leading-[1.0] tracking-[-0.025em] md:text-[56px] lg:text-[64px]">
-            Three things. <span className="font-display-italic">Done well.</span>
+            The room. The rules. <span className="font-display-italic">The link.</span>
           </h2>
           <div className="grid gap-10 md:grid-cols-3 md:gap-7">
             {[
@@ -675,22 +696,25 @@ const Index = () => {
             Wedding seating chart <span className="font-display-italic">template</span> vs. the real thing.
           </h2>
           <ContrastPair />
-          {/* editorial comparison table */}
-          <div className="mt-16" style={{ border: `0.5px solid rgba(43,42,34,0.2)` }}>
+          {/* comparison table */}
+          <div className="mt-16" style={{ border: `1px solid rgba(43,42,34,0.18)`, overflow: "hidden", borderRadius: 4 }}>
+            {/* header row */}
+            <div className="grid" style={{ gridTemplateColumns: "1.2fr 2.8fr 2.8fr", background: "rgba(43,42,34,0.04)", borderBottom: "1px solid rgba(43,42,34,0.16)" }}>
+              <div style={{ padding: "12px 20px", borderRight: "1px solid rgba(43,42,34,0.12)" }} />
+              <div style={{ padding: "12px 20px", fontFamily: MONO, fontSize: 10, letterSpacing: "0.14em", color: "rgba(43,42,34,0.38)", textTransform: "uppercase", borderRight: "1px solid rgba(43,42,34,0.12)", textDecoration: "line-through" }}>Template.xlsx</div>
+              <div style={{ padding: "12px 20px", fontFamily: MONO, fontSize: 10, letterSpacing: "0.14em", color: TC, textTransform: "uppercase" }}>Seatly</div>
+            </div>
             {[
-              ["Layout",           "Rows and columns.",                          "Tables, dance floor, doors."],
-              ["Awkward pairings", "You track them in your head and hope.",       "Flag once. Auto-assign handles the rest."],
-              ["Collaboration",    "Email chains. Overwritten cells.",            "One link. Live edits."],
-              ["Time",             "3 weekends.",                                 "An afternoon."],
-              ["Price",            "Free (costs your sanity).",                   "Free (costs nothing)."],
+              ["Layout",        "Rows and columns.",                        "Tables, dance floor, doors."],
+              ["Pairings",      "Track it in your head. Hope for the best.", "Flag once. Auto-assign handles the rest."],
+              ["Collaboration", "Email chains. Overwritten cells.",          "One link. Live edits."],
+              ["Time",          "Three weekends.",                           "An afternoon."],
+              ["Price",         "Free. (Costs your sanity.)",                "Free. (Costs nothing.)"],
             ].map((row, i) => (
-              <div key={i} className="grid" style={{
-                gridTemplateColumns: "1.1fr 3fr 3fr",
-                borderTop: i === 0 ? "none" : "0.5px solid rgba(43,42,34,0.18)",
-              }}>
-                <div style={{ padding: "20px 24px", fontFamily: MONO, fontSize: 11, letterSpacing: "0.18em", color: "rgba(43,42,34,0.55)", textTransform: "uppercase", borderRight: "0.5px solid rgba(43,42,34,0.18)" }}>{row[0]}</div>
-                <div style={{ padding: "20px 24px", fontFamily: DISP, fontStyle: "italic", fontSize: 17, color: "rgba(43,42,34,0.62)", borderRight: "0.5px solid rgba(43,42,34,0.18)" }}>{row[1]}</div>
-                <div style={{ padding: "20px 24px", fontFamily: DISP, fontSize: 17, color: INK }}>{row[2]}</div>
+              <div key={i} className="grid" style={{ gridTemplateColumns: "1.2fr 2.8fr 2.8fr", borderTop: "1px solid rgba(43,42,34,0.12)" }}>
+                <div style={{ padding: "18px 20px", fontFamily: MONO, fontSize: 10, letterSpacing: "0.14em", color: "rgba(43,42,34,0.45)", textTransform: "uppercase", borderRight: "1px solid rgba(43,42,34,0.12)", background: "rgba(43,42,34,0.02)" }}>{row[0]}</div>
+                <div style={{ padding: "18px 20px", fontFamily: DISP, fontStyle: "italic", fontSize: 16, color: "rgba(43,42,34,0.45)", borderRight: "1px solid rgba(43,42,34,0.12)", background: "rgba(43,42,34,0.02)" }}>{row[1]}</div>
+                <div style={{ padding: "18px 20px", fontFamily: DISP, fontSize: 16, color: INK, background: "rgba(74,82,50,0.028)" }}>{row[2]}</div>
               </div>
             ))}
           </div>
