@@ -375,7 +375,7 @@ function ContrastPair() {
 
       {/* Right: warm named floor plan */}
       <div>
-        <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.18em", color: TC, textTransform: "uppercase", marginBottom: 10 }}>Seatly → a picture of the room</div>
+        <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.18em", color: TC, textTransform: "uppercase", marginBottom: 10 }}>Wedding Seater → a picture of the room</div>
         <div className="paper-grain" style={{ border: `1px solid rgba(43,42,34,0.28)`, height: 280, overflow: "hidden", position: "relative" }}>
           <div style={{ textAlign: "center", paddingTop: 12 }}>
             <span style={{ fontFamily: DISP, fontStyle: "italic", fontSize: 15, color: INK, letterSpacing: "0.02em" }}>Maya &amp; Jordan</span>
@@ -702,7 +702,7 @@ const Index = () => {
             <div className="grid" style={{ gridTemplateColumns: "1.2fr 2.8fr 2.8fr", background: "rgba(43,42,34,0.04)", borderBottom: "1px solid rgba(43,42,34,0.16)" }}>
               <div style={{ padding: "12px 20px", borderRight: "1px solid rgba(43,42,34,0.12)" }} />
               <div style={{ padding: "12px 20px", fontFamily: MONO, fontSize: 10, letterSpacing: "0.14em", color: "rgba(43,42,34,0.38)", textTransform: "uppercase", borderRight: "1px solid rgba(43,42,34,0.12)", textDecoration: "line-through" }}>Template.xlsx</div>
-              <div style={{ padding: "12px 20px", fontFamily: MONO, fontSize: 10, letterSpacing: "0.14em", color: TC, textTransform: "uppercase" }}>Seatly</div>
+              <div style={{ padding: "12px 20px", fontFamily: MONO, fontSize: 10, letterSpacing: "0.14em", color: TC, textTransform: "uppercase" }}>Wedding Seater</div>
             </div>
             {[
               ["Layout",        "Rows and columns.",                        "Tables, dance floor, doors."],

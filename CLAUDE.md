@@ -1,4 +1,4 @@
-# Seatly — CLAUDE.md
+# Wedding Seater — CLAUDE.md
 
 This file is the working PRD for ongoing Claude sessions. It captures product
 context, the full design surface inventory, per-surface specs, and the gap
@@ -9,7 +9,7 @@ source of truth before touching any surface.
 
 ## Product
 
-**Seatly** is a wedding seating planner. Couples drag guests onto tables,
+**Wedding Seater** is a wedding seating planner. Couples drag guests onto tables,
 resolve who can't sit near whom, and share a link with whoever's helping.
 
 **Audience**: stressed-out couples actively planning a wedding. Copy needs to
@@ -92,7 +92,7 @@ smaller breakpoints we adapt gracefully.
 
 ### Landing — `LandingA` (1280×1700)
 
-- **Nav** (28×56px padding inline): Seatly wordmark display 22 + 5×5
+- **Nav** (28×56px padding inline): Wedding Seater wordmark display 22 + 5×5
   terracotta dot (translateY -2). Right cluster: ghost text links + ghost
   "Open a plan" pill (8×16 padding, 13px) + UserMenu.
 - **Hero** (40px top padding, grid `1.1fr 1fr` with 64px gap):
@@ -155,7 +155,7 @@ smaller breakpoints we adapt gracefully.
 
 ### Dashboard — `AuthDashboardA` (1280×820)
 
-- Top nav (28×56): Seatly wordmark + UserMenu avatar.
+- Top nav (28×56): Wedding Seater wordmark + UserMenu avatar.
 - Hero (40×56 padding): h1 Newsreader 56 "Your *plans.*" + 17 ink-2 body
   ("Pick up where you left off, or start something new.").
 - Plan grid (gap 24, 3 columns): same `<PlanCard>` pattern as the landing's
@@ -174,7 +174,7 @@ smaller breakpoints we adapt gracefully.
 
 ### Planner shell + tabs — `PlannerGuestsA` (1280×820)
 
-- **Header** padding 18×32: left cluster — Seatly display 18 + 4×4
+- **Header** padding 18×32: left cluster — Wedding Seater display 18 + 4×4
   terracotta dot, 1px×20 hairline divider, plan name display 17 / 1 +
   mono 10 ink-3 "14.09.2026 · PLM-2840". Right cluster — mono 11 ink-3
   "Saved · just now", ghost "Share link ↗" pill (7×14 padding, 12px), 28×28
@@ -240,7 +240,7 @@ smaller breakpoints we adapt gracefully.
 ### Constraints panel — `ConstraintsA`
 
 - Two columns: 1fr main + 320px right rail.
-- **Main**: h2 "The *non-negotiables.*" + body "Tell Seatly who must sit
+- **Main**: h2 "The *non-negotiables.*" + body "Tell Wedding Seater who must sit
   together..." + two sections.
 - Section: hairline border, paper bg, header row with colored dot + display
   20 "Must sit / Keep" + italic emphasis. "+ Add rule" ghost pill (right).
@@ -483,7 +483,7 @@ The hero export — wall chart for the venue.
   caption at `radius + 22` below.
 - **Compass** at `(950, 250)` — a 16r ring with a north arrow.
 - **Footer** (mono 9, ink-3, letter-spacing `0.2em`):
-  `FIG · 01 — FLOOR PLAN — 1:50` / `92 GUESTS · 10 TABLES` / `SEATLY.APP / PLM-2840`.
+  `FIG · 01 — FLOOR PLAN — 1:50` / `92 GUESTS · 10 TABLES` / `WEDDING SEATER.APP / PLM-2840`.
 
 #### 2. Alphabetical index (A4 portrait · `480 × 680` px)
 
@@ -496,7 +496,7 @@ The hero export — wall chart for the venue.
   - Each row 20px tall. Even-row separator: 0.4px dotted hairline.
   - Name in Newsreader 11, ink. Table number in italic Newsreader 13,
     terracotta, right-aligned, `min-width: 20`.
-- **Footer**: mono 7, 0.25em letter-spacing: `SEATLY · {NAMES}` / `PG nn / mm` / `SEATLY.APP / {CODE}`.
+- **Footer**: mono 7, 0.25em letter-spacing: `WEDDING SEATER · {NAMES}` / `PG nn / mm` / `WEDDING SEATER.APP / {CODE}`.
 - **Pagination**: when guests exceed the per-page capacity (~68), additional
   pages render the same component with `pageIndex` / `pageCount` props.
   Pages 2+ skip the masthead.
