@@ -32,7 +32,7 @@ const DISP = '"Newsreader", "Times New Roman", serif';
 // ─── Step card: naming the plan ───────────────────────────────────────────
 function StepCardName() {
   return (
-    <div className="paper-grain-strong" style={{ border: `1px solid ${HL}`, height: 260, overflow: "hidden", position: "relative", boxShadow: "0 12px 40px -12px rgba(43,42,34,0.22), inset 0 1px 0 rgba(255,255,255,0.55)" }}>
+    <div className="paper-grain-strong" style={{ border: `1px solid ${HL}`, minHeight: 260, overflow: "hidden", position: "relative", boxShadow: "0 12px 40px -12px rgba(43,42,34,0.22), inset 0 1px 0 rgba(255,255,255,0.55)" }}>
       {/* room outline — minimal, same treatment as FeatureCanvas */}
       <svg width="100%" height="100%" viewBox="0 0 370 260" style={{ position: "absolute", inset: 0, pointerEvents: "none" }} preserveAspectRatio="xMidYMid meet">
         <rect x="13" y="13" width="344" height="234" fill="none" stroke={INK} strokeWidth="0.9" opacity="0.18" />
@@ -62,7 +62,7 @@ function StepCardName() {
 // ─── Step card: flagging rules — editorial chip style (matches FeatureConflict) ──
 function StepCardFlag() {
   return (
-    <div className="paper-grain-strong" style={{ border: `1px solid ${HL}`, height: 260, overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 12px 40px -12px rgba(43,42,34,0.22), inset 0 1px 0 rgba(255,255,255,0.55)" }}>
+    <div className="paper-grain-strong" style={{ border: `1px solid ${HL}`, minHeight: 260, display: "flex", flexDirection: "column", boxShadow: "0 12px 40px -12px rgba(43,42,34,0.22), inset 0 1px 0 rgba(255,255,255,0.55)" }}>
       <div style={{ padding: "20px 22px 0", flex: 1 }}>
         <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.14em", color: TC, textTransform: "uppercase", marginBottom: 18 }}>KEEP APART</div>
         {/* Rule 1: Mom × Carla — chip style matching FeatureConflict */}
@@ -100,7 +100,7 @@ function StepCardFlag() {
 // ─── Step card: sharing — the moment of sending, not the dashboard view ──────
 function StepCardShare() {
   return (
-    <div className="paper-grain-strong" style={{ border: `1px solid ${HL}`, height: 260, overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 12px 40px -12px rgba(43,42,34,0.22), inset 0 1px 0 rgba(255,255,255,0.55)" }}>
+    <div className="paper-grain-strong" style={{ border: `1px solid ${HL}`, minHeight: 260, display: "flex", flexDirection: "column", boxShadow: "0 12px 40px -12px rgba(43,42,34,0.22), inset 0 1px 0 rgba(255,255,255,0.55)" }}>
       <div style={{ padding: "20px 22px 0", fontFamily: MONO, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.14em", color: TC }}>SEND · THE LINK</div>
       {/* message thread — the act of sharing, not the collaboration dashboard */}
       <div style={{ flex: 1, padding: "14px 22px 0", display: "flex", flexDirection: "column", gap: 10 }}>
@@ -131,7 +131,7 @@ function StepCardShare() {
 // ─── Feature card: the canvas ─────────────────────────────────────────────
 function FeatureCanvas() {
   return (
-    <div className="paper-grain-strong" style={{ border: `1px solid ${HL}`, height: 260, overflow: "hidden", position: "relative", boxShadow: "0 12px 40px -12px rgba(43,42,34,0.22), inset 0 1px 0 rgba(255,255,255,0.55)" }}>
+    <div className="paper-grain-strong" style={{ border: `1px solid ${HL}`, minHeight: 260, overflow: "hidden", position: "relative", boxShadow: "0 12px 40px -12px rgba(43,42,34,0.22), inset 0 1px 0 rgba(255,255,255,0.55)" }}>
       {/* room outline + dance floor — SVG layer */}
       <svg width="100%" height="100%" viewBox="0 0 370 260" style={{ position: "absolute", inset: 0, pointerEvents: "none" }} preserveAspectRatio="xMidYMid meet">
         <rect x="13" y="13" width="344" height="234" fill="none" stroke={INK} strokeWidth="0.9" opacity="0.22" />
@@ -156,7 +156,7 @@ function FeatureCanvas() {
 // ─── Feature card: conflict resolution ────────────────────────────────────
 function FeatureConflict() {
   return (
-    <div className="paper-grain" style={{ border: `1px solid ${HL}`, height: 260, overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 12px 40px -12px rgba(43,42,34,0.22), inset 0 1px 0 rgba(255,255,255,0.55)" }}>
+    <div className="paper-grain" style={{ border: `1px solid ${HL}`, minHeight: 260, display: "flex", flexDirection: "column", boxShadow: "0 12px 40px -12px rgba(43,42,34,0.22), inset 0 1px 0 rgba(255,255,255,0.55)" }}>
       {/* constraint card */}
       <div style={{ padding: "28px 26px 20px", flex: 1 }}>
         <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.12em", color: TC, textTransform: "uppercase", marginBottom: 20 }}>KEEP APART</div>
@@ -193,7 +193,7 @@ function FeatureMobile() {
     { init: "R", bg: "#7a6a3e", name: "Mom (Robin)",  status: "MOVED TABLE 9",     statusC: I3,  statusBg: "rgba(43,42,34,0.04)" },
   ];
   return (
-    <div className="paper-grain" style={{ border: `1px solid ${HL}`, height: 260, overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 12px 40px -12px rgba(43,42,34,0.22), inset 0 1px 0 rgba(255,255,255,0.55)" }}>
+    <div className="paper-grain" style={{ border: `1px solid ${HL}`, minHeight: 260, display: "flex", flexDirection: "column", boxShadow: "0 12px 40px -12px rgba(43,42,34,0.22), inset 0 1px 0 rgba(255,255,255,0.55)" }}>
       <div style={{ padding: "22px 24px 0" }}>
         {/* link stamp */}
         <div style={{ background: "rgba(232,210,146,0.32)", border: "0.5px dashed rgba(43,42,34,0.28)", padding: "10px 14px", fontFamily: MONO, fontSize: 11.5, color: INK, display: "flex", alignItems: "center", gap: 8, marginBottom: 22, borderRadius: 4 }}>
@@ -590,7 +590,7 @@ const Index = () => {
           </div>
 
           {/* Hero floor plan visual */}
-          <div className="relative md:h-[560px]">
+          <div className="relative h-[320px] md:h-[560px]">
             <FloorPlanVignette />
             <div className="absolute -bottom-3 left-6 rounded-full border hairline bg-paper px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.08em] text-ink-3">
               Plan · Draft · 142 Guests · 17 Tables
