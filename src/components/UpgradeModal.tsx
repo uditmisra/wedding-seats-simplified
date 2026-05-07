@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -9,8 +10,8 @@ import { Loader2 } from "lucide-react";
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  headline?: React.ReactNode;
-  subhead?: React.ReactNode;
+  headline?: ReactNode;
+  subhead?: ReactNode;
 }
 
 export function UpgradeModal({ open, onOpenChange, headline, subhead }: Props) {
