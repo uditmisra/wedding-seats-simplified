@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Guest, TableDef, Assignment, ConstraintDef } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Pin, UserPlus, X } from "lucide-react";
+import { Search, Pin, UserPlus, X, Move, Check } from "lucide-react";
 import { tableConflicts } from "@/lib/seating";
 import { FloorPlan } from "./FloorPlan";
 import { SeatMenu } from "./SeatMenu";
@@ -28,6 +28,7 @@ interface Props {
   canEdit?: boolean;
   onGoToGuests?: () => void;
   onGoToTables?: () => void;
+  onActivityLog?: (action: string, subject?: string, detail?: string) => void;
 }
 
 // Composite collision strategy:
@@ -64,10 +65,11 @@ function firstFreeSeat(table: TableDef, seated: Assignment[], excludeId?: string
   return null;
 }
 
-export function SeatingView({ planId, scenarioId, guests, tables, assignments, setAssignments, constraints, refresh, onGoToGuests, onGoToTables, canEdit = true }: Props) {
+export function SeatingView({ planId, scenarioId, guests, tables, assignments, setAssignments, constraints, refresh, onGoToGuests, onGoToTables, canEdit = true, onActivityLog }: Props) {
   const [search, setSearch] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [view, setView] = useState<"list" | "floor" | "grouped">("floor");
+  const [arrangeMode, setArrangeMode] = useState(false);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 3 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 6 } }),
@@ -227,6 +229,14 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
     refresh();
   };
 
+  const handleTableMove = async (tableId: string, x: number, y: number) => {
+    if (!canEdit) return;
+    const tbl = tableById.get(tableId);
+    await supabase.from("tables_def").update({ x: Math.round(x), y: Math.round(y) }).eq("id", tableId);
+    if (tbl) onActivityLog?.("moved table", tbl.name);
+    refresh();
+  };
+
   if (tables.length === 0 && guests.length === 0) {
     return (
       <EmptyCanvas
@@ -245,21 +255,36 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
       onDragCancel={() => setActiveId(null)}
       autoScroll={{ threshold: { x: 0.1, y: 0.15 } }}
     >
-      <div className="mb-4 flex justify-end">
+      <div className="mb-4 flex items-center justify-between gap-3">
         <div className="inline-flex rounded-full border-hairline border bg-paper p-0.5 text-[13px]">
-          <button onClick={() => setView("floor")}
+          <button onClick={() => { setView("floor"); setArrangeMode(false); }}
             className={`rounded-full px-3.5 py-1 transition ${view === "floor" ? "bg-ink text-paper" : "text-ink-3 hover:text-ink"}`}>
             Plan
           </button>
-          <button onClick={() => setView("grouped")}
+          <button onClick={() => { setView("grouped"); setArrangeMode(false); }}
             className={`rounded-full px-3.5 py-1 transition ${view === "grouped" ? "bg-ink text-paper" : "text-ink-3 hover:text-ink"}`}>
             Grouped
           </button>
-          <button onClick={() => setView("list")}
+          <button onClick={() => { setView("list"); setArrangeMode(false); }}
             className={`rounded-full px-3.5 py-1 transition ${view === "list" ? "bg-ink text-paper" : "text-ink-3 hover:text-ink"}`}>
             List
           </button>
         </div>
+        {/* Arrange mode toggle — only in floor view and for editors */}
+        {view === "floor" && canEdit && tables.length > 0 && (
+          <button
+            onClick={() => setArrangeMode(m => !m)}
+            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] transition ${
+              arrangeMode
+                ? "border-terracotta bg-terracotta/10 text-terracotta"
+                : "border-hairline bg-paper text-ink-3 hover:text-ink"
+            }`}
+          >
+            {arrangeMode ? <Check size={12} /> : <Move size={12} />}
+            <span className="hidden sm:inline">{arrangeMode ? "Done arranging" : "Arrange room"}</span>
+            <span className="sm:hidden">{arrangeMode ? "Done" : "Arrange"}</span>
+          </button>
+        )}
       </div>
 
       {view === "floor" ? (
@@ -269,14 +294,32 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
           )}
           <FloorPlan
             tables={tables} assignments={assignments} guests={guests} constraints={constraints} scenarioId={scenarioId}
-            onUnassign={handleUnassign} onTogglePin={handleTogglePin} onMoveTo={handleMoveTo} onSwapWith={handleSwap}
+            onUnassign={async (a) => {
+              const g = guestById.get(a.guest_id);
+              const t = tableById.get(a.table_id);
+              await handleUnassign(a);
+              if (g && t) onActivityLog?.("unseated", g.name, `from ${t.name}`);
+            }}
+            onTogglePin={handleTogglePin}
+            onMoveTo={async (a, targetTableId) => {
+              const g = guestById.get(a.guest_id);
+              const t = tableById.get(targetTableId);
+              await handleMoveTo(a, targetTableId);
+              if (g && t) onActivityLog?.("moved", g.name, `to ${t.name}`);
+            }}
+            onSwapWith={handleSwap}
             unassigned={allUnassigned}
             canEdit={canEdit}
+            arrangeMode={arrangeMode}
+            onTableMove={handleTableMove}
             onAssign={async (guestId, tableId, seatIndex) => {
               const g = guestById.get(guestId);
               const t = tableById.get(tableId);
               await placeGuestAtSeat(guestId, tableId, seatIndex);
-              if (g && t) toast.success(`${g.name} seated at ${t.name} · Seat ${seatIndex + 1}`);
+              if (g && t) {
+                toast.success(`${g.name} seated at ${t.name} · Seat ${seatIndex + 1}`);
+                onActivityLog?.("seated", g.name, `at ${t.name}, seat ${seatIndex + 1}`);
+              }
             }}
           />
           {isBelowLg && (

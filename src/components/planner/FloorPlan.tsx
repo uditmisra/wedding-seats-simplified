@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import type { Guest, TableDef, Assignment, ConstraintDef } from "@/lib/types";
 import { tableConflicts } from "@/lib/seating";
-import { Plus, Minus, Maximize2, RotateCcw } from "lucide-react";
+import { Plus, Minus, Maximize2, RotateCcw, Move } from "lucide-react";
 import { SeatMenu } from "./SeatMenu";
 import { SeatPicker } from "./SeatPicker";
 import { guestColor } from "@/lib/guestColor";
@@ -21,13 +21,16 @@ interface Props {
   unassigned?: Guest[];
   onAssign?: (guestId: string, tableId: string, seatIndex: number) => void;
   canEdit?: boolean;
+  /** When true, tables can be dragged to new positions */
+  arrangeMode?: boolean;
+  onTableMove?: (id: string, x: number, y: number) => void;
 }
 
 const MIN_ZOOM = 0.4;
 const MAX_ZOOM = 2.5;
 
 const noop = () => {};
-export function FloorPlan({ tables, assignments, guests, constraints, highlights, scenarioId, onUnassign = noop, onTogglePin = noop, onMoveTo = noop, onSwapWith = noop, unassigned = [], onAssign, canEdit = true }: Props) {
+export function FloorPlan({ tables, assignments, guests, constraints, highlights, scenarioId, onUnassign = noop, onTogglePin = noop, onMoveTo = noop, onSwapWith = noop, unassigned = [], onAssign, canEdit = true, arrangeMode = false, onTableMove }: Props) {
   const guestById = useMemo(() => new Map(guests.map(g => [g.id, g])), [guests]);
 
   // Cell size grows with the largest table on the floor so big tables don't crowd neighbours.
@@ -38,8 +41,16 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
   const cellH = Math.ceil(maxH);
   const cols = tables.length <= 2 ? Math.max(1, tables.length) : tables.length <= 6 ? 3 : 4;
   const rows = Math.max(1, Math.ceil(tables.length / Math.max(1, cols)));
-  const width = cols * cellW;
-  const height = rows * cellH;
+  // When tables have stored positions, use a large enough canvas. Otherwise use grid.
+  const hasCustomPos = tables.some(t => t.x > 0 || t.y > 0);
+  const width = hasCustomPos ? Math.max(cols * cellW, ...tables.map(t => t.x + cellW / 2 + 80)) : cols * cellW;
+  const height = hasCustomPos ? Math.max(rows * cellH, ...tables.map(t => t.y + cellH / 2 + 80)) : rows * cellH;
+
+  // Live positions during arrange-mode drag (overrides stored positions while dragging)
+  const [livePos, setLivePos] = useState<Map<string, { cx: number; cy: number }>>(new Map());
+  const tableDragRef = useRef<{
+    id: string; startCx: number; startCy: number; startPx: number; startPy: number
+  } | null>(null);
 
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const { setNodeRef: setCanvasDropRef } = useDroppable({ id: "__canvas__" });
@@ -66,6 +77,11 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
   useEffect(() => {
     try { localStorage.setItem(stateKey, JSON.stringify(view)); } catch {}
   }, [view, stateKey]);
+
+  // Clear live positions when leaving arrange mode
+  useEffect(() => {
+    if (!arrangeMode) setLivePos(new Map());
+  }, [arrangeMode]);
 
   // On mobile, auto-fit the canvas to the viewport width on first load
   // (no saved state). Runs after mount so the viewport is measurable.
@@ -163,12 +179,17 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
   const cursor = panning ? "grabbing" : spaceDown ? "grab" : "default";
   const dotSize = 24 * view.z;
 
-  // Pre-compute table positions/seats once
+  // Pre-compute table positions/seats once.
+  // Priority: live drag position → stored DB position → auto-grid fallback.
   const layout = tables.map((t, i) => {
     const col = i % cols;
     const row = Math.floor(i / cols);
-    const cx = col * cellW + cellW / 2;
-    const cy = row * cellH + cellH / 2;
+    const gridCx = col * cellW + cellW / 2;
+    const gridCy = row * cellH + cellH / 2;
+    const live = livePos.get(t.id);
+    const stored = (t.x > 0 || t.y > 0) ? { cx: t.x, cy: t.y } : null;
+    const cx = live?.cx ?? stored?.cx ?? gridCx;
+    const cy = live?.cy ?? stored?.cy ?? gridCy;
     const d = dims[i];
     return { t, i, cx, cy, seats: computeSeats(t, cx, cy, d), box: d.box, dims: d };
   });
@@ -234,7 +255,7 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
 
             {/* Seat drop zones + seats overlay (sharing transform) */}
             <div className="absolute inset-0 pointer-events-none">
-              {layout.map(({ t, seats }) => {
+              {!arrangeMode && layout.map(({ t, seats }) => {
                 const seated = assignments.filter(a => a.table_id === t.id);
                 const seatMap = new Map<number, Assignment>();
                 seated.forEach(a => { if (a.seat_index != null) seatMap.set(a.seat_index, a); });
@@ -276,7 +297,64 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
                   </div>
                 );
               })}
+              {/* Arrange mode drag handles — cover each table, capture pointer for dragging */}
+              {arrangeMode && layout.map(({ t, i, cx, cy, box }) => {
+                const isDragging = tableDragRef.current?.id === t.id;
+                return (
+                  <div
+                    key={`arrange-${t.id}`}
+                    className="absolute pointer-events-auto flex items-center justify-center rounded-xl transition-[border-color,box-shadow]"
+                    style={{
+                      left: cx, top: cy,
+                      width: box.w + 24, height: box.h + 24,
+                      transform: "translate(-50%, -50%)",
+                      border: isDragging
+                        ? "2px dashed hsl(var(--terracotta))"
+                        : "2px dashed hsl(var(--hairline))",
+                      cursor: isDragging ? "grabbing" : "grab",
+                      background: isDragging ? "hsl(var(--terracotta) / 0.04)" : "transparent",
+                      boxShadow: isDragging ? "0 8px 24px -8px hsl(var(--terracotta) / 0.3)" : "none",
+                      touchAction: "none",
+                      userSelect: "none",
+                    }}
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                      const gridCx = (i % cols) * cellW + cellW / 2;
+                      const gridCy = Math.floor(i / cols) * cellH + cellH / 2;
+                      const stored = (t.x > 0 || t.y > 0) ? { cx: t.x, cy: t.y } : null;
+                      const startCx = livePos.get(t.id)?.cx ?? stored?.cx ?? gridCx;
+                      const startCy = livePos.get(t.id)?.cy ?? stored?.cy ?? gridCy;
+                      tableDragRef.current = { id: t.id, startCx, startCy, startPx: e.clientX, startPy: e.clientY };
+                      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+                    }}
+                    onPointerMove={(e) => {
+                      if (!tableDragRef.current || tableDragRef.current.id !== t.id) return;
+                      const { startCx, startCy, startPx, startPy } = tableDragRef.current;
+                      const dx = (e.clientX - startPx) / view.z;
+                      const dy = (e.clientY - startPy) / view.z;
+                      setLivePos(m => new Map(m).set(t.id, { cx: startCx + dx, cy: startCy + dy }));
+                    }}
+                    onPointerUp={() => {
+                      if (!tableDragRef.current || tableDragRef.current.id !== t.id) return;
+                      const pos = livePos.get(t.id);
+                      if (pos) onTableMove?.(t.id, pos.cx, pos.cy);
+                      tableDragRef.current = null;
+                    }}
+                    onPointerCancel={() => { tableDragRef.current = null; }}
+                  >
+                    <Move size={14} className="text-ink-3 opacity-50 pointer-events-none" />
+                  </div>
+                );
+              })}
             </div>
+          </div>
+        )}
+
+        {/* Arrange mode hint banner */}
+        {arrangeMode && (
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 rounded-full bg-ink/90 backdrop-blur px-4 py-2 text-paper pointer-events-none">
+            <Move size={12} />
+            <span className="font-mono text-[11px] uppercase tracking-[0.12em]">Drag tables to arrange</span>
           </div>
         )}
 

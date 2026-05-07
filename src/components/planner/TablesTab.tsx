@@ -21,9 +21,10 @@ interface Props {
   refresh: () => void;
   autoOpen?: "new" | "bulk" | null;
   onAutoOpenHandled?: () => void;
+  onActivityLog?: (action: string, subject?: string, detail?: string) => void;
 }
 
-export function TablesTab({ planId, scenarioId, tables, assignments, refresh, autoOpen, onAutoOpenHandled }: Props) {
+export function TablesTab({ planId, scenarioId, tables, assignments, refresh, autoOpen, onAutoOpenHandled, onActivityLog }: Props) {
   const [editing, setEditing] = useState<TableDef | "new" | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
 
@@ -97,6 +98,7 @@ export function TablesTab({ planId, scenarioId, tables, assignments, refresh, au
                     const fill = seatedByTable.get(t.id) ?? 0;
                     if (fill > 0 && !confirm(`${fill} guests are seated at this table. Delete anyway?`)) return;
                     await supabase.from("tables_def").delete().eq("id", t.id);
+                    onActivityLog?.("deleted table", t.name);
                     refresh();
                   }}
                 />
@@ -125,7 +127,7 @@ export function TablesTab({ planId, scenarioId, tables, assignments, refresh, au
         </aside>
       </div>
 
-      {editing && <TableEditor planId={planId} scenarioId={scenarioId} table={editing === "new" ? null : editing} count={tables.length} onClose={() => { setEditing(null); refresh(); }} />}
+      {editing && <TableEditor planId={planId} scenarioId={scenarioId} table={editing === "new" ? null : editing} count={tables.length} onActivityLog={onActivityLog} onClose={() => { setEditing(null); refresh(); }} />}
       {bulkOpen && <BulkAddDialog planId={planId} scenarioId={scenarioId} count={tables.length} onClose={() => { setBulkOpen(false); refresh(); }} />}
     </div>
   );
@@ -205,14 +207,22 @@ function TableCard({
   );
 }
 
-function TableEditor({ planId, scenarioId, table, count, onClose }: { planId: string; scenarioId: string; table: TableDef | null; count: number; onClose: () => void }) {
+function TableEditor({ planId, scenarioId, table, count, onClose, onActivityLog }: {
+  planId: string; scenarioId: string; table: TableDef | null; count: number; onClose: () => void;
+  onActivityLog?: (action: string, subject?: string, detail?: string) => void;
+}) {
   const [name, setName] = useState(table?.name ?? `Table ${count + 1}`);
   const [capacity, setCapacity] = useState(table?.capacity ?? 8);
   const [shape, setShape] = useState<Shape>(table?.shape ?? "round");
   const save = async () => {
     if (!name.trim()) { toast.error("Name required"); return; }
-    if (table) await supabase.from("tables_def").update({ name, capacity, shape }).eq("id", table.id);
-    else await supabase.from("tables_def").insert({ plan_id: planId, scenario_id: scenarioId, name, capacity, shape });
+    if (table) {
+      await supabase.from("tables_def").update({ name, capacity, shape }).eq("id", table.id);
+      onActivityLog?.("updated table", name);
+    } else {
+      await supabase.from("tables_def").insert({ plan_id: planId, scenario_id: scenarioId, name, capacity, shape });
+      onActivityLog?.("added table", name, `${capacity} seats`);
+    }
     onClose();
   };
   return (

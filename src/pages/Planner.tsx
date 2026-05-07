@@ -20,14 +20,16 @@ import { SharePopover } from "@/components/planner/SharePopover";
 import { UserMenu } from "@/components/UserMenu";
 import { Logo } from "@/components/Logo";
 import { analytics } from "@/lib/analytics";
-import { Link as LinkIcon, Check, Wand2, GitCompareArrows, ShieldAlert, Download, Mail, Bookmark, MoreHorizontal, Pencil, Eye, Sparkles } from "lucide-react";
+import { Link as LinkIcon, Check, Wand2, GitCompareArrows, ShieldAlert, Download, Mail, Bookmark, MoreHorizontal, Pencil, Eye, Sparkles, Clock } from "lucide-react";
 import { ClaimPlanModal } from "@/components/ClaimPlanModal";
 import { SignInNudge } from "@/components/SignInNudge";
+import { ActivityDrawer } from "@/components/planner/ActivityDrawer";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { addRecentPlan } from "@/lib/recentPlans";
 import { tableConflicts, unmetMustWith } from "@/lib/seating";
 import { useAuth } from "@/hooks/useAuth";
+import { logActivity, displayName } from "@/lib/activity";
 
 const TAB_DEFS = [
   { value: "guests", numeral: "I", label: "Guests" },
@@ -53,6 +55,7 @@ const Planner = () => {
   const [hasOwner, setHasOwner] = useState<boolean | null>(null);
   const [claiming, setClaiming] = useState(false);
   const [claimModalOpen, setClaimModalOpen] = useState(false);
+  const [activityOpen, setActivityOpen] = useState(false);
 
   const onboardingActive = !loading && plan && (guests.length === 0 || tables.length === 0);
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
@@ -183,6 +186,11 @@ const Planner = () => {
 
   const goImport = () => { setGuestsAutoOpen("import"); setTab("guests"); setOnboardingDismissed(true); };
 
+  const log = (action: string, subject?: string, detail?: string) => {
+    if (!plan) return;
+    logActivity(plan.id, user?.id ?? null, displayName(user), action, subject, detail);
+  };
+
   // Always show all tabs so visitors can browse the plan; edit-gated UI inside
   // each tab still prevents anonymous changes (and RLS blocks server-side).
   const visibleTabs = TAB_DEFS;
@@ -242,6 +250,14 @@ const Planner = () => {
               >
                 {planInitials}
               </span>
+              <button
+                onClick={() => setActivityOpen(true)}
+                className="flex size-9 items-center justify-center rounded-full border hairline bg-paper text-ink-3 hover:bg-paper-2 hover:text-ink transition"
+                aria-label="Activity log"
+                title="Activity log"
+              >
+                <Clock size={15} />
+              </button>
               <UserMenu />
             </div>
           </TooltipProvider>
@@ -377,13 +393,14 @@ const Planner = () => {
               canEdit={canEdit}
               onGoToGuests={() => setTab("guests")}
               onGoToTables={() => setTab("tables")}
+              onActivityLog={log}
             />
           </TabsContent>
           <TabsContent value="guests" className="mt-6 animate-tab-in">
-                <GuestsTab planId={plan.id} guests={guests} refresh={refresh} autoOpen={guestsAutoOpen} onAutoOpenHandled={() => setGuestsAutoOpen(null)} />
+                <GuestsTab planId={plan.id} guests={guests} refresh={refresh} autoOpen={guestsAutoOpen} onAutoOpenHandled={() => setGuestsAutoOpen(null)} onActivityLog={log} />
           </TabsContent>
           <TabsContent value="tables" className="mt-6 animate-tab-in">
-                <TablesTab planId={plan.id} scenarioId={scenarioId ?? ""} tables={tables} assignments={assignments} refresh={refresh} autoOpen={tablesAutoOpen} onAutoOpenHandled={() => setTablesAutoOpen(null)} />
+                <TablesTab planId={plan.id} scenarioId={scenarioId ?? ""} tables={tables} assignments={assignments} refresh={refresh} autoOpen={tablesAutoOpen} onAutoOpenHandled={() => setTablesAutoOpen(null)} onActivityLog={log} />
           </TabsContent>
           <TabsContent value="compare" className="mt-6 animate-tab-in">
                 <CompareScenarios scenarios={scenarios} currentScenarioId={scenarioId} currentTables={tables} currentAssignments={assignments} guests={guests} constraints={constraints} />
@@ -420,6 +437,8 @@ const Planner = () => {
         onClaim={handleClaimFromModal}
         onDecline={() => setClaimModalOpen(false)}
       />
+
+      <ActivityDrawer planId={plan.id} open={activityOpen} onOpenChange={setActivityOpen} />
 
       {/* Mobile bottom tab bar — design surface MobileGuestsA tab strip */}
       {!showOnboarding && (

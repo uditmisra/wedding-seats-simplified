@@ -24,6 +24,7 @@ interface Props {
   refresh: () => void;
   autoOpen?: "new" | "import" | null;
   onAutoOpenHandled?: () => void;
+  onActivityLog?: (action: string, subject?: string, detail?: string) => void;
 }
 
 const RSVPS: RSVP[] = ["pending", "attending", "maybe", "declined"];
@@ -87,7 +88,7 @@ function initials(name: string): string {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map(s => s[0]?.toUpperCase() ?? "").join("");
 }
 
-export function GuestsTab({ planId, guests, refresh, autoOpen, onAutoOpenHandled }: Props) {
+export function GuestsTab({ planId, guests, refresh, autoOpen, onAutoOpenHandled, onActivityLog }: Props) {
   const [editing, setEditing] = useState<Guest | "new" | null>(null);
   const [importRows, setImportRows] = useState<Record<string, unknown>[] | null>(null);
   const [importHeaders, setImportHeaders] = useState<string[]>([]);
@@ -240,6 +241,7 @@ export function GuestsTab({ planId, guests, refresh, autoOpen, onAutoOpenHandled
 
     analytics.guestsAdded({ count: inserted?.length ?? 0, method: "paste" });
     toast.success(`Imported ${inserted?.length ?? 0} guests`);
+    onActivityLog?.("imported", `${inserted?.length ?? 0} guests`);
     setImportRows(null); setImportHeaders([]); setMapping({});
     refresh();
   };
@@ -487,6 +489,7 @@ export function GuestsTab({ planId, guests, refresh, autoOpen, onAutoOpenHandled
                             onClick={async e => {
                               e.stopPropagation();
                               await supabase.from("guests").delete().eq("id", g.id);
+                              onActivityLog?.("removed guest", g.name);
                               if (selectedId === g.id) setSelectedId(null);
                               refresh();
                             }}
@@ -539,6 +542,7 @@ export function GuestsTab({ planId, guests, refresh, autoOpen, onAutoOpenHandled
           guests={guests}
           guest={editing === "new" ? null : editing}
           onClose={() => { setEditing(null); refresh(); }}
+          onActivityLog={onActivityLog}
         />
       )}
 
@@ -645,7 +649,10 @@ function optional(r: Record<string, unknown>, key: string | undefined): string |
   return String(v).trim();
 }
 
-function GuestEditor({ planId, guests, guest, onClose }: { planId: string; guests: Guest[]; guest: Guest | null; onClose: () => void }) {
+function GuestEditor({ planId, guests, guest, onClose, onActivityLog }: {
+  planId: string; guests: Guest[]; guest: Guest | null; onClose: () => void;
+  onActivityLog?: (action: string, subject?: string, detail?: string) => void;
+}) {
   const [form, setForm] = useState<Partial<Guest>>(guest ?? { rsvp: "pending", is_kid: false });
   const [showMore, setShowMore] = useState(!!guest);
   const partySuggestions = useMemo(() => guests.map(g => g.party ?? "").filter(Boolean) as string[], [guests]);
@@ -655,8 +662,10 @@ function GuestEditor({ planId, guests, guest, onClose }: { planId: string; guest
     if (!form.name?.trim()) { toast.error("Name required"); return; }
     if (guest) {
       await supabase.from("guests").update({ ...form }).eq("id", guest.id);
+      onActivityLog?.("updated guest", form.name);
     } else {
       await supabase.from("guests").insert({ ...form, plan_id: planId, name: form.name });
+      onActivityLog?.("added guest", form.name, form.party ? `· ${form.party}` : undefined);
     }
     onClose();
   };

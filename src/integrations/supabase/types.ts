@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_log: {
+        Row: {
+          id: string
+          plan_id: string
+          user_id: string | null
+          user_display: string
+          action: string
+          subject: string | null
+          detail: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          plan_id: string
+          user_id?: string | null
+          user_display?: string
+          action: string
+          subject?: string | null
+          detail?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          plan_id?: string
+          user_id?: string | null
+          user_display?: string
+          action?: string
+          subject?: string | null
+          detail?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_log_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       assignments: {
         Row: {
           guest_id: string
