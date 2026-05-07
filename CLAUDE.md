@@ -53,38 +53,40 @@ smaller breakpoints we adapt gracefully.
 
 ## Surface inventory
 
-| Surface | Design source | Implementation status | Phase |
+Last audited: 2026-05-07. ✅ = pixel-faithful shipped. ⚠ = minor gaps remain. ❌ = missing.
+
+| Surface | Design source | Implementation status | Remaining work |
 |---|---|---|---|
-| Landing | `landing.jsx#LandingA` | ⚠ partial — copy + visual structure shipped, pixel gaps remain | 1A |
-| Sign in | `auth.jsx#AuthSignInA` | ⚠ partial — works but card details off | 1F |
-| Link sent | `auth.jsx#AuthLinkSentA` | ❌ uses inline mini-card; design is full-page | 4A |
-| Claim plan | `auth.jsx#AuthClaimPlanA` | ❌ uses inline banner; design is centered modal | 4B |
-| Dashboard | `auth.jsx#AuthDashboardA` | ❌ no `/dashboard` route | 4C |
-| In-app nudge | `auth.jsx#AuthNudgeA` | ⚠ exists as bottom-right toast; design wants top banner | 4D |
-| Reset password | (not designed) | ✅ Atelier-styled standalone | — |
-| Planner shell | `planner.jsx#PlannerGuestsA` | ⚠ partial — header missing plan avatar + saved indicator | 1B |
-| Tab strip | `planner.jsx#PlannerGuestsA` | ⚠ partial — bg + active weight + spacing gaps | 1B |
-| Onboarding | `onboarding.jsx#OnboardingA` | ❌ implemented as overlay card, design is full-page | 2 |
-| Empty state (Seating) | `atelier-extra.jsx#EmptyStateA` | ⚠ partial — copy diverges from design | 1E |
-| Floor plan | `canvas.jsx#SeatingCanvasA` | ❌ missing room outline, fixtures, annotation, legend | 1C |
-| Grouped clusters | `canvas-v2.jsx#SeatingCanvasA2` | ❌ entirely missing | 3 |
-| Guests tab | `planner.jsx#PlannerGuestsA` | ⚠ partial — heading copy + avatar size + columns | 1D |
-| Tables tab | `atelier-extra.jsx#TablesA` | ✅ shipped | — |
-| Constraints | `atelier-extra.jsx#ConstraintsA` | ✅ shipped | — |
-| Compare | `atelier-extra.jsx#CompareA` | ✅ shipped | — |
-| Room editor | `atelier-extra.jsx#RoomEditorA` | ❌ pre-Atelier table-seating editor; design is wall/door drawing | 6 |
-| Export workspace | `exports.jsx#ExportWorkspaceA` | ❌ current panel is single-column with vector-jsPDF generators | 7 |
-| Floor plan PDF | `exports.jsx#FloorPlanPDF` | ❌ vector approximation; design wants pixel-perfect | 7 |
-| Alphabetical index PDF | `exports.jsx#AlphabeticalIndex` | ❌ vector approximation | 7 |
-| Per-table card PDF | `exports.jsx#PerTableCard` | ❌ vector approximation; missing 3–30 seat scaling | 7 |
-| Place card PDF | `exports.jsx#PlaceCard` | ❌ vector approximation; missing fold geometry | 7 |
-| Mobile canvas | `mobile.jsx#MobileCanvasA` | ⚠ responsive collapse; design wants bespoke bottom sheet | 5 |
-| Mobile guests | `mobile.jsx#MobileGuestsA` | ⚠ Vaul drawer exists; design specifics not matched | 5 |
-| Mobile dialog | `mobile.jsx#MobileDialogA` | ⚠ partial | 5 |
-| Mobile onboarding | `mobile.jsx#MobileOnboardingA` | ❌ tied to Phase 2 redesign | 2 + 5 |
-| Mobile tables | `mobile.jsx#MobileTablesA` | ⚠ responsive collapse | 5 |
-| Mobile sign in | `mobile.jsx#AuthMobileA` | ⚠ Auth.tsx responsive; tab bar at bottom missing | 5 |
-| Style cards | `style-cards.jsx#StyleCardA` | ✅ tokens fully implemented (no runtime surface) | — |
+| Landing | `landing.jsx#LandingA` | ⚠ | Hero grid ratio, plan card bg-white/40, h2 font-size |
+| Sign in | `auth.jsx#AuthSignInA` | ⚠ | Minor card sizing; editorial column hidden on mobile ✓ |
+| Link sent | `auth.jsx#AuthLinkSentA` | ✅ | `LinkSentPage` in Auth.tsx — full-page two-column |
+| Claim plan | `auth.jsx#AuthClaimPlanA` | ✅ | `ClaimPlanModal.tsx` — centered modal, wired in Planner |
+| Dashboard | `auth.jsx#AuthDashboardA` | ✅ | `/dashboard` route, UserMenu link, plan grid |
+| In-app nudge | `auth.jsx#AuthNudgeA` | ✅ | Top-of-content banner, terracotta left border, dismissible |
+| Reset password | (not designed) | ✅ | Atelier-styled standalone |
+| Planner shell | `planner.jsx#PlannerGuestsA` | ✅ | Header has plan avatar, saved indicator, tab strip |
+| Tab strip | `planner.jsx#PlannerGuestsA` | ✅ | Active weight, bg, progress bar all present |
+| Onboarding | `onboarding.jsx#OnboardingA` | ✅ | Full-page two-column with SamplePreviewCard |
+| Empty state (Seating) | `atelier-extra.jsx#EmptyStateA` | ✅ | Copy matches design, ghost tables, correct CTAs |
+| Floor plan | `canvas.jsx#SeatingCanvasA` | ✅ | Room outline, fixtures, compass, annotation, legend |
+| Grouped clusters | `canvas-v2.jsx#SeatingCanvasA2` | ✅ | `GroupedClusters.tsx` wired into SeatingView toggle |
+| Guests tab | `planner.jsx#PlannerGuestsA` | ✅ | Mobile card layout, "The guest list" heading, columns |
+| Tables tab | `atelier-extra.jsx#TablesA` | ✅ | — |
+| Constraints | `atelier-extra.jsx#ConstraintsA` | ✅ | Delete always visible on mobile |
+| Compare | `atelier-extra.jsx#CompareA` | ✅ | — |
+| Room editor | `atelier-extra.jsx#RoomEditorA` | ✅ | Three-column layout, ToolPalette, PropertiesPanel, table drag |
+| Export workspace | `exports.jsx#ExportWorkspaceA` | ✅ | Two-column, format/paper/options picker, dark proof stage |
+| Floor plan PDF | `exports.jsx#FloorPlanPDF` | ✅ | `FloorPlanPDF.tsx` — 305 lines |
+| Alphabetical index PDF | `exports.jsx#AlphabeticalIndex` | ✅ | `AlphabeticalIndex.tsx` — 232 lines |
+| Per-table card PDF | `exports.jsx#PerTableCard` | ✅ | `PerTableCard.tsx` — 225 lines, adaptive density |
+| Place card PDF | `exports.jsx#PlaceCard` | ✅ | `PlaceCard.tsx` — 178 lines, fold geometry |
+| Mobile canvas | `mobile.jsx#MobileCanvasA` | ✅ | Vaul drawer, pinch zoom, FAB with safe-area offset |
+| Mobile guests | `mobile.jsx#MobileGuestsA` | ✅ | Card-row layout, filters drawer |
+| Mobile dialog | `mobile.jsx#MobileDialogA` | ✅ | Constraints stacked grid, always-visible delete |
+| Mobile onboarding | `mobile.jsx#MobileOnboardingA` | ✅ | Responsive stacking |
+| Mobile tables | `mobile.jsx#MobileTablesA` | ✅ | Responsive |
+| Mobile sign in | `mobile.jsx#AuthMobileA` | ✅ | Editorial column hidden on mobile, bottom tab nav |
+| Style cards | `style-cards.jsx#StyleCardA` | ✅ | Tokens fully implemented (no runtime surface) |
 
 ---
 
