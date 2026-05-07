@@ -526,7 +526,7 @@ const Index = () => {
       <main className="container pb-32">
 
         {/* ── § 1 · Hero ───────────────────────────────────────────────── */}
-        <section aria-label="Hero" className="grid items-center gap-12 pt-10 md:grid-cols-[1.05fr_1fr] md:gap-16 md:pt-16">
+        <section aria-label="Hero" className="grid items-center gap-12 pt-10 md:grid-cols-[1.1fr_1fr] md:gap-16 md:pt-16">
           <div>
             <p className="label-mono mb-7">— Free wedding seating chart maker</p>
             <h1 className="m-0 font-display text-[60px] leading-[0.97] tracking-[-0.03em] sm:text-[76px] xl:text-[96px]">
