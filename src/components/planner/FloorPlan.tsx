@@ -61,10 +61,21 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
   const [panning, setPanning] = useState(false);
   const [spaceDown, setSpaceDown] = useState(false);
   const panRef = useRef<{ sx: number; sy: number; ox: number; oy: number } | null>(null);
+  const pinchRef = useRef<{ dist: number; midX: number; midY: number } | null>(null);
 
   useEffect(() => {
     try { localStorage.setItem(stateKey, JSON.stringify(view)); } catch {}
   }, [view, stateKey]);
+
+  // On mobile, auto-fit the canvas to the viewport width on first load
+  // (no saved state). Runs after mount so the viewport is measurable.
+  useEffect(() => {
+    if (typeof window === "undefined" || window.innerWidth >= 768) return;
+    try { if (localStorage.getItem(stateKey)) return; } catch {}
+    const id = requestAnimationFrame(fit);
+    return () => cancelAnimationFrame(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -125,6 +136,30 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
   };
   const onPointerUp = () => { setPanning(false); panRef.current = null; };
 
+  // Pinch-to-zoom — only fires when 2 fingers are on the canvas.
+  // Single-touch drags still reach @dnd-kit's TouchSensor unaffected.
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      const t0 = e.touches[0], t1 = e.touches[1];
+      pinchRef.current = {
+        dist: Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY),
+        midX: (t0.clientX + t1.clientX) / 2,
+        midY: (t0.clientY + t1.clientY) / 2,
+      };
+    }
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length !== 2 || !pinchRef.current) return;
+    e.preventDefault();
+    const t0 = e.touches[0], t1 = e.touches[1];
+    const newDist = Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY);
+    const factor = newDist / pinchRef.current.dist;
+    const rect = viewportRef.current!.getBoundingClientRect();
+    zoomBy(factor, pinchRef.current.midX - rect.left, pinchRef.current.midY - rect.top);
+    pinchRef.current = { ...pinchRef.current, dist: newDist };
+  };
+  const onTouchEnd = () => { pinchRef.current = null; };
+
   const cursor = panning ? "grabbing" : spaceDown ? "grab" : "default";
   const dotSize = 24 * view.z;
 
@@ -147,6 +182,9 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
         data-canvas-bg="1"
         className="paper-grain relative w-full overflow-hidden touch-none select-none"
         style={{
@@ -244,15 +282,16 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
 
         {/* Zoom + view controls */}
         <div className="absolute bottom-3 right-3 flex items-center gap-1 bg-paper/90 backdrop-blur rounded-full border hairline shadow-soft px-1 py-1">
-          <button onClick={() => zoomBy(1/1.2)} className="w-7 h-7 rounded-full hover:bg-paper-2 flex items-center justify-center text-ink-3" aria-label="Zoom out"><Minus size={13}/></button>
+          <button onClick={() => zoomBy(1/1.2)} className="w-10 h-10 rounded-full hover:bg-paper-2 flex items-center justify-center text-ink-3" aria-label="Zoom out"><Minus size={14}/></button>
           <button onClick={reset} className="px-2 font-mono text-[11px] tabular-nums text-ink-3 hover:text-ink min-w-[42px]" aria-label="Reset zoom">{Math.round(view.z * 100)}%</button>
-          <button onClick={() => zoomBy(1.2)} className="w-7 h-7 rounded-full hover:bg-paper-2 flex items-center justify-center text-ink-3" aria-label="Zoom in"><Plus size={13}/></button>
+          <button onClick={() => zoomBy(1.2)} className="w-10 h-10 rounded-full hover:bg-paper-2 flex items-center justify-center text-ink-3" aria-label="Zoom in"><Plus size={14}/></button>
           <span className="w-px h-4 bg-hairline mx-0.5"/>
-          <button onClick={fit} className="w-7 h-7 rounded-full hover:bg-paper-2 flex items-center justify-center text-ink-3" aria-label="Fit to content" title="Fit to content"><Maximize2 size={12}/></button>
-          <button onClick={reset} className="w-7 h-7 rounded-full hover:bg-paper-2 flex items-center justify-center text-ink-3" aria-label="Reset view" title="Reset view"><RotateCcw size={12}/></button>
+          <button onClick={fit} className="w-10 h-10 rounded-full hover:bg-paper-2 flex items-center justify-center text-ink-3" aria-label="Fit to content" title="Fit to content"><Maximize2 size={13}/></button>
+          <button onClick={reset} className="w-10 h-10 rounded-full hover:bg-paper-2 flex items-center justify-center text-ink-3" aria-label="Reset view" title="Reset view"><RotateCcw size={13}/></button>
         </div>
 
-        <div className="absolute bottom-3 left-3 flex gap-3 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-3 bg-paper/85 backdrop-blur rounded-full px-3 py-1.5 border hairline">
+        {/* Legend — hidden on mobile to avoid overlap with FAB and zoom controls */}
+        <div className="absolute bottom-3 left-3 hidden sm:flex gap-3 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-3 bg-paper/85 backdrop-blur rounded-full px-3 py-1.5 border hairline">
           <span className="flex items-center gap-1.5"><Dot color="hsl(var(--olive))" filled/>full</span>
           <span className="flex items-center gap-1.5"><Dot color="hsl(var(--terracotta))" filled/>seating</span>
           <span className="flex items-center gap-1.5"><Dot color="hsl(var(--rose))" filled/>conflict</span>
