@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useBelowLg } from "@/hooks/use-mobile";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Plus, RotateCw, Trash2, X, Maximize2, AlertTriangle, Wand2 } from "lucide-react";
@@ -31,6 +32,7 @@ interface Props {
  * exact spot, rotated, and edited. Positions live in tables_def.x / .y / .rotation.
  */
 export function RoomEditor({ planId, scenarioId, tables, assignments, refresh }: Props) {
+  const isBelowLg = useBelowLg();
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [drag, setDrag] = useState<{ id: string; mode: "move" | "rotate"; offsetX: number; offsetY: number; startAngle: number; startRot: number; shift: boolean } | null>(null);
@@ -297,6 +299,25 @@ export function RoomEditor({ planId, scenarioId, tables, assignments, refresh }:
     if (data) setSelectedId(data.id);
     refresh();
   };
+
+  // Room drawing tools require mouse precision — not usable on touch.
+  // Show a friendly notice below lg: instead of a broken drag canvas.
+  if (isBelowLg) {
+    return (
+      <div className="paper-grain rounded-2xl border hairline flex flex-col items-center justify-center gap-5 px-8 py-16 text-center">
+        <div className="label-mono" style={{ color: "var(--terracotta)" }}>ROOM EDITOR</div>
+        <h2 className="m-0 font-display text-[28px] leading-[1.1]">
+          Best on a <span className="font-display-italic">larger screen.</span>
+        </h2>
+        <p className="max-w-[300px] text-[15px] leading-[1.6] text-ink-2">
+          Room editing needs a mouse for precise wall drawing and table placement. Switch to a desktop or laptop to set up the room.
+        </p>
+        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-3">
+          Everything you've added is saved and waiting.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="overflow-hidden rounded-2xl border hairline">
