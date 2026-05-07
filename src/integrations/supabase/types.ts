@@ -385,6 +385,7 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          environment: string
           id: string
           is_grandfathered: boolean
           is_paid: boolean
@@ -394,6 +395,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          environment?: string
           id: string
           is_grandfathered?: boolean
           is_paid?: boolean
@@ -403,6 +405,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          environment?: string
           id?: string
           is_grandfathered?: boolean
           is_paid?: boolean
@@ -570,6 +573,10 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      user_is_paid: {
+        Args: { _env?: string; _user_id: string }
+        Returns: boolean
       }
       validate_plan_code: { Args: { _code: string }; Returns: boolean }
     }

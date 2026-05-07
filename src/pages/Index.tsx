@@ -792,8 +792,13 @@ const Index = () => {
       </main>
 
       {/* ── Footer ───────────────────────────────────────────────────────── */}
-      <footer className="container flex items-center justify-between py-8 font-mono text-[10px] uppercase tracking-[0.18em] text-ink-3">
+      <footer className="container flex flex-wrap items-center justify-between gap-y-3 py-8 font-mono text-[10px] uppercase tracking-[0.18em] text-ink-3">
         <Logo size={16} />
+        <nav className="flex gap-5">
+          <a href="/terms" className="hover:text-ink">Terms</a>
+          <a href="/privacy" className="hover:text-ink">Privacy</a>
+          <a href="/refunds" className="hover:text-ink">Refunds</a>
+        </nav>
         <span>© Wedding Seater · 2026</span>
       </footer>
 
