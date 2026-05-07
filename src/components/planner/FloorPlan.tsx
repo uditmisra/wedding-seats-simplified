@@ -151,22 +151,36 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
       return { x: px - (px - v.x) * k, y: py - (py - v.y) * k, z: nz };
     });
   };
-  const onWheel = (e: React.WheelEvent) => {
-    if (e.ctrlKey || e.metaKey) {
+
+  // Stable ref keeps zoomBy current without re-adding the listener on every render
+  const zoomByRef = useRef(zoomBy);
+  zoomByRef.current = zoomBy;
+
+  // Native (non-passive) wheel handler — React's synthetic onWheel is passive by
+  // default so e.preventDefault() there is a no-op, causing the page to scroll.
+  useEffect(() => {
+    const el = viewportRef.current; if (!el) return;
+    const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
-      const rect = viewportRef.current!.getBoundingClientRect();
-      zoomBy(Math.exp(-e.deltaY * 0.0015), e.clientX - rect.left, e.clientY - rect.top);
-    } else {
-      e.preventDefault();
-      setView(v => ({ ...v, x: v.x - e.deltaX, y: v.y - e.deltaY }));
-    }
-  };
+      if (e.ctrlKey || e.metaKey) {
+        const rect = el.getBoundingClientRect();
+        zoomByRef.current(Math.exp(-e.deltaY * 0.0015), e.clientX - rect.left, e.clientY - rect.top);
+      } else {
+        setView(v => ({ ...v, x: v.x - e.deltaX, y: v.y - e.deltaY }));
+      }
+    };
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    return () => el.removeEventListener("wheel", handleWheel);
+  }, []); // stable — uses refs and functional setView
+
   const onPointerDown = (e: React.PointerEvent) => {
-    const isPan = e.button === 1 || spaceDown || (e.button === 0 && (e.target === viewportRef.current || (e.target as HTMLElement).dataset.canvasBg === "1"));
+    const target = e.target as HTMLElement;
+    const isInteractive = !!target.closest("button, input, select, textarea, [data-interactive]");
+    const isPan = e.button === 1 || spaceDown || (e.button === 0 && !isInteractive);
     if (!isPan) return;
     setPanning(true);
     panRef.current = { sx: e.clientX, sy: e.clientY, ox: view.x, oy: view.y };
-    (e.target as Element).setPointerCapture(e.pointerId);
+    viewportRef.current?.setPointerCapture(e.pointerId);
   };
   const onPointerMove = (e: React.PointerEvent) => {
     if (!panning || !panRef.current) return;
@@ -224,7 +238,6 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
     <div className="relative rounded-2xl border hairline overflow-hidden bg-paper">
       <div
         ref={setViewportRef}
-        onWheel={onWheel}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -232,10 +245,9 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
-        data-canvas-bg="1"
         className="paper-grain relative w-full overflow-hidden touch-none select-none"
         style={{
-          height: "70vh", minHeight: 420, cursor,
+          height: "calc(100vh - 240px)", minHeight: 400, cursor,
         }}
       >
         {tables.length === 0 ? (
@@ -319,7 +331,7 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
                 return (
                   <div key={`lbl-${t.id}`} className="absolute pointer-events-none text-center" style={{ left: cx, top: cy, transform: "translate(-50%, -50%)" }}>
                     <div className="font-display text-[14px] leading-none text-ink">{t.name}</div>
-                    <div className="font-mono text-[9px] uppercase tracking-[0.12em] text-ink-3 mt-1 tabular-nums">{seated.length} / {t.capacity}</div>
+                    <div className="font-mono text-[9px] uppercase tracking-[0.12em] text-ink-2 mt-1 tabular-nums">{seated.length} / {t.capacity}</div>
                   </div>
                 );
               })}
@@ -382,21 +394,21 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
         )}
 
         {/* Zoom + view controls */}
-        <div className="absolute bottom-3 right-3 flex items-center gap-1 bg-paper/90 backdrop-blur rounded-full border hairline shadow-soft px-1 py-1">
-          <button onClick={() => zoomBy(1/1.2)} className="w-10 h-10 rounded-full hover:bg-paper-2 flex items-center justify-center text-ink-3" aria-label="Zoom out"><Minus size={14}/></button>
-          <button onClick={reset} className="px-2 font-mono text-[11px] tabular-nums text-ink-3 hover:text-ink min-w-[42px]" aria-label="Reset zoom">{Math.round(view.z * 100)}%</button>
-          <button onClick={() => zoomBy(1.2)} className="w-10 h-10 rounded-full hover:bg-paper-2 flex items-center justify-center text-ink-3" aria-label="Zoom in"><Plus size={14}/></button>
+        <div className="absolute bottom-3 right-3 flex items-center gap-1 bg-paper/95 backdrop-blur rounded-full border border-ink/15 shadow-soft px-1 py-1">
+          <button onClick={() => zoomBy(1/1.2)} className="w-10 h-10 rounded-full hover:bg-paper-2 flex items-center justify-center text-ink-2 hover:text-ink" aria-label="Zoom out"><Minus size={14}/></button>
+          <button onClick={reset} className="px-2 font-mono text-[11px] tabular-nums text-ink-2 hover:text-ink min-w-[42px]" aria-label="Reset zoom">{Math.round(view.z * 100)}%</button>
+          <button onClick={() => zoomBy(1.2)} className="w-10 h-10 rounded-full hover:bg-paper-2 flex items-center justify-center text-ink-2 hover:text-ink" aria-label="Zoom in"><Plus size={14}/></button>
           <span className="w-px h-4 bg-hairline mx-0.5"/>
-          <button onClick={fit} className="w-10 h-10 rounded-full hover:bg-paper-2 flex items-center justify-center text-ink-3" aria-label="Fit to content" title="Fit to content"><Maximize2 size={13}/></button>
-          <button onClick={reset} className="w-10 h-10 rounded-full hover:bg-paper-2 flex items-center justify-center text-ink-3" aria-label="Reset view" title="Reset view"><RotateCcw size={13}/></button>
+          <button onClick={fit} className="w-10 h-10 rounded-full hover:bg-paper-2 flex items-center justify-center text-ink-2 hover:text-ink" aria-label="Fit to content" title="Fit to content"><Maximize2 size={13}/></button>
+          <button onClick={reset} className="w-10 h-10 rounded-full hover:bg-paper-2 flex items-center justify-center text-ink-2 hover:text-ink" aria-label="Reset view" title="Reset view"><RotateCcw size={13}/></button>
         </div>
 
         {/* Legend — hidden on mobile to avoid overlap with FAB and zoom controls */}
-        <div className="absolute bottom-3 left-3 hidden sm:flex gap-3 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-3 bg-paper/85 backdrop-blur rounded-full px-3 py-1.5 border hairline">
+        <div className="absolute bottom-3 left-3 hidden sm:flex gap-3 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-2 bg-paper/95 backdrop-blur rounded-full px-3 py-1.5 border border-ink/15 shadow-soft">
           <span className="flex items-center gap-1.5"><Dot color="hsl(var(--olive))" filled/>full</span>
           <span className="flex items-center gap-1.5"><Dot color="hsl(var(--terracotta))" filled/>seating</span>
           <span className="flex items-center gap-1.5"><Dot color="hsl(var(--rose))" filled/>conflict</span>
-          <span className="flex items-center gap-1.5"><Dot color="hsl(var(--ink-4))"/>open</span>
+          <span className="flex items-center gap-1.5"><Dot color="hsl(var(--ink-3))"/>open</span>
         </div>
       </div>
     </div>
@@ -525,8 +537,8 @@ function Seat({ tableId, seatIndex, x, y, assignment, guest, table, allTables, t
           <button
             type="button"
             onContextMenu={(e) => { e.preventDefault(); setPickerOpen(true); }}
-            className={`w-[30px] h-[30px] rounded-full border transition-[transform,background-color,border-color] duration-100 flex items-center justify-center font-mono text-[9px] text-ink-3 ${
-              isOver ? "bg-terracotta/15 border-terracotta scale-110" : "border-ink/40 bg-paper/60 hover:border-ink/70 hover:bg-paper"
+            className={`w-[30px] h-[30px] rounded-full border transition-[transform,background-color,border-color] duration-100 flex items-center justify-center font-mono text-[9px] text-ink-2 ${
+              isOver ? "bg-terracotta/15 border-terracotta scale-110" : "border-ink/60 bg-paper hover:border-ink hover:bg-paper-2"
             }`}
             aria-label={`Seat ${seatIndex + 1} — empty. Click to assign.`}
           >
@@ -535,8 +547,8 @@ function Seat({ tableId, seatIndex, x, y, assignment, guest, table, allTables, t
         </SeatPicker>
       ) : (
         <div
-          className={`w-[30px] h-[30px] rounded-full border transition-[transform,background-color,border-color] duration-100 flex items-center justify-center font-mono text-[9px] text-ink-3 ${
-            isOver ? "bg-terracotta/15 border-terracotta scale-110" : "border-ink/40 bg-paper/60"
+          className={`w-[30px] h-[30px] rounded-full border transition-[transform,background-color,border-color] duration-100 flex items-center justify-center font-mono text-[9px] text-ink-2 ${
+            isOver ? "bg-terracotta/15 border-terracotta scale-110" : "border-ink/60 bg-paper"
           }`}
         >
           {seatIndex + 1}
@@ -594,8 +606,8 @@ function RoomGeometry({ roomX, roomY, roomW, roomH, fixtures }: { roomX: number;
         x={roomX} y={roomY} width={roomW} height={roomH}
         fill="none"
         stroke="hsl(var(--ink))"
-        strokeWidth={1.2}
-        opacity={0.6}
+        strokeWidth={1.5}
+        opacity={0.85}
       />
 
       {fixtures.filter(f => f.visible).map(f => {

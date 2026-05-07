@@ -34,10 +34,22 @@ interface Props {
   onAutoAssign?: () => void;
 }
 
+// Snap DragOverlay to cursor center so the card's grab-offset doesn't shift
+// which seat gets selected — identical behaviour regardless of card height.
+const snapCenterToCursor = (({ activatorEvent, draggingNodeRect, transform }: any) => {
+  if (draggingNodeRect && activatorEvent && "clientX" in activatorEvent) {
+    const offsetX = activatorEvent.clientX - draggingNodeRect.left;
+    const offsetY = activatorEvent.clientY - draggingNodeRect.top;
+    return { ...transform, x: transform.x + offsetX - draggingNodeRect.width / 2, y: transform.y + offsetY - draggingNodeRect.height / 2 };
+  }
+  return transform;
+}) as any;
+
 // Composite collision strategy:
-// 1. Unassign panel — strict pointer-within (intentional gesture).
-// 2. Floor plan canvas — pointer-within the canvas wrapper, then closest-center
-//    among seats (Voronoi-style: no pixel precision required).
+// 1. Unassign panel — pointer-within (intentional gesture).
+// 2. Floor plan canvas — pointer-within wrapper, then nearest-seat-to-pointer.
+//    Using pointer coordinates (not draggable element center) means grab position
+//    on the card has zero effect on which seat gets targeted.
 // 3. List view seat rows — pointer-within individual rows (full-width, easy to hit).
 const seatingCollision: CollisionDetection = (args) => {
   const unassignHit = pointerWithin({
@@ -50,10 +62,22 @@ const seatingCollision: CollisionDetection = (args) => {
   if (canvasContainers.length > 0) {
     const inCanvas = pointerWithin({ ...args, droppableContainers: canvasContainers });
     if (!inCanvas.length) return [];
-    return closestCenter({
-      ...args,
-      droppableContainers: args.droppableContainers.filter(c => String(c.id).startsWith("seat:")),
-    });
+
+    const ptr = args.pointerCoordinates;
+    const seatContainers = args.droppableContainers.filter(c => String(c.id).startsWith("seat:"));
+    if (!ptr) return closestCenter({ ...args, droppableContainers: seatContainers });
+
+    let best: { id: string; dist: number } | null = null;
+    for (const container of seatContainers) {
+      const rect = args.droppableRects.get(container.id);
+      if (!rect) continue;
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dist = Math.hypot(cx - ptr.x, cy - ptr.y);
+      if (!best || dist < best.dist) best = { id: String(container.id), dist };
+    }
+    if (!best || best.dist > 90) return [];
+    return [{ id: best.id, data: { value: best.dist, droppableContainer: seatContainers.find(c => String(c.id) === best!.id)! } }];
   }
 
   return pointerWithin({
@@ -261,15 +285,15 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="inline-flex rounded-full border-hairline border bg-paper p-0.5 text-[13px]">
           <button onClick={() => { setView("floor"); setArrangeMode(false); }}
-            className={`rounded-full px-3.5 py-1 transition ${view === "floor" ? "bg-ink text-paper" : "text-ink-3 hover:text-ink"}`}>
+            className={`rounded-full px-3.5 py-1 transition ${view === "floor" ? "bg-ink text-paper" : "text-ink-2 hover:text-ink"}`}>
             Plan
           </button>
           <button onClick={() => { setView("grouped"); setArrangeMode(false); }}
-            className={`rounded-full px-3.5 py-1 transition ${view === "grouped" ? "bg-ink text-paper" : "text-ink-3 hover:text-ink"}`}>
+            className={`rounded-full px-3.5 py-1 transition ${view === "grouped" ? "bg-ink text-paper" : "text-ink-2 hover:text-ink"}`}>
             Grouped
           </button>
           <button onClick={() => { setView("list"); setArrangeMode(false); }}
-            className={`rounded-full px-3.5 py-1 transition ${view === "list" ? "bg-ink text-paper" : "text-ink-3 hover:text-ink"}`}>
+            className={`rounded-full px-3.5 py-1 transition ${view === "list" ? "bg-ink text-paper" : "text-ink-2 hover:text-ink"}`}>
             List
           </button>
         </div>
@@ -277,7 +301,7 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
           {canEdit && onAutoAssign && guests.length > 0 && tables.length > 0 && !arrangeMode && (
             <button
               onClick={onAutoAssign}
-              className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-paper px-3 py-1.5 text-[12px] text-ink-3 transition hover:text-ink"
+              className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-paper px-3 py-1.5 text-[12px] text-ink-2 transition hover:text-ink"
             >
               <Wand2 size={12} />
               <span className="hidden sm:inline">Auto-seat</span>
@@ -290,7 +314,7 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
               className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] transition ${
                 arrangeMode
                   ? "border-terracotta bg-terracotta/10 text-terracotta"
-                  : "border-hairline bg-paper text-ink-3 hover:text-ink"
+                  : "border-hairline bg-paper text-ink-2 hover:text-ink"
               }`}
             >
               {arrangeMode ? <Check size={12} /> : <Move size={12} />}
@@ -376,7 +400,7 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
           </div>
         </div>
       )}
-      <DragOverlay>
+      <DragOverlay modifiers={[snapCenterToCursor]}>
         {activeId ? <GuestPill guest={guestById.get(activeId)!} dragging overlay/> : null}
       </DragOverlay>
     </DndContext>
@@ -424,7 +448,7 @@ function UnassignedPanel({ guests, search, setSearch, totalGuests, onAddGuest }:
         <h3 className="m-0 font-display text-[20px] leading-none">
           Guests to <span className="font-display-italic">seat</span>
         </h3>
-        <span className="font-mono text-[11px] tabular-nums text-ink-3">{guests.length}</span>
+        <span className="font-mono text-[11px] tabular-nums text-ink-2">{guests.length}</span>
       </div>
       <div className="relative mb-3 border-b hairline">
         <Search className="absolute left-1 top-2 text-ink-3" size={13} />
@@ -444,7 +468,7 @@ function UnassignedPanel({ guests, search, setSearch, totalGuests, onAddGuest }:
           </div>
         )}
         {guests.length === 0 && totalGuests > 0 && (
-          <div className="py-6 text-center font-display-italic text-[13px] text-ink-3">All seated.</div>
+          <div className="py-6 text-center font-display-italic text-[13px] text-ink-2">All seated.</div>
         )}
       </div>
     </div>
@@ -462,7 +486,7 @@ function GuestPill({ guest, dragging, pinned, overlay }: { guest: Guest; draggin
         {dot}
         <div className="min-w-0 flex-1 truncate">
           <span className="font-medium">{guest.name}</span>
-          {guest.party && <span className="ml-1.5 text-xs text-ink-3">{guest.party}</span>}
+          {guest.party && <span className="ml-1.5 text-xs text-ink-2">{guest.party}</span>}
         </div>
         {guest.meal && <span className="size-1.5 rounded-full bg-terracotta" title={guest.meal} />}
         {pinned && <Pin size={11} className="text-olive" />}
@@ -485,7 +509,7 @@ function GuestPill({ guest, dragging, pinned, overlay }: { guest: Guest; draggin
       {dot}
       <div className="min-w-0 flex-1 truncate">
         <span className="font-medium">{guest.name}</span>
-        {guest.party && <span className="ml-1.5 text-xs text-ink-3">{guest.party}</span>}
+        {guest.party && <span className="ml-1.5 text-xs text-ink-2">{guest.party}</span>}
       </div>
       {guest.meal && <span className="size-1.5 rounded-full bg-terracotta" title={guest.meal} />}
       {pinned && <Pin size={11} className="text-olive" />}
