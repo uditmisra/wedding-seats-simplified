@@ -179,10 +179,17 @@ export function CompareScenarios({ scenarios, currentScenarioId, currentTables, 
   const removeTable = async (row: Row, side: "left" | "right") => {
     const t = side === "left" ? row.left : row.right;
     if (!t) return;
-    if (!confirm(`Remove "${t.name}" from ${side === "left" ? current?.name : other?.name}?`)) return;
-    await supabase.from("tables_def").delete().eq("id", t.id);
-    toast.success("Removed");
-    await reloadOther();
+    const scenarioName = side === "left" ? current?.name : other?.name;
+    toast(`Remove "${t.name}" from ${scenarioName}?`, {
+      action: {
+        label: "Remove",
+        onClick: async () => {
+          await supabase.from("tables_def").delete().eq("id", t.id);
+          await reloadOther();
+        },
+      },
+    });
+    return;
   };
 
   const summary = {

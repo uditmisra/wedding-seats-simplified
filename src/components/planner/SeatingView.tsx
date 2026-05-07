@@ -274,7 +274,7 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
           </button>
         </div>
         <div className="flex items-center gap-2">
-          {canEdit && onAutoAssign && guests.length > 0 && tables.length > 0 && (
+          {canEdit && onAutoAssign && guests.length > 0 && tables.length > 0 && !arrangeMode && (
             <button
               onClick={onAutoAssign}
               className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-paper px-3 py-1.5 text-[12px] text-ink-3 transition hover:text-ink"

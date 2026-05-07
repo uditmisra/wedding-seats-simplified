@@ -141,6 +141,7 @@ export function OnboardingFlow({
                     guests={guests}
                     constraints={constraints}
                     refresh={refresh}
+                    compact
                   />
                 </div>
               </>

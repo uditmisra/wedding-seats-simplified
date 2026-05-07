@@ -10,6 +10,9 @@ interface Props {
   guests: Guest[];
   constraints: ConstraintDef[];
   refresh: () => void;
+  /** Hides the auto-assign rail — used when embedded in onboarding */
+  compact?: boolean;
+  onAutoAssign?: () => void;
 }
 
 const AVATAR_COLORS = [
@@ -46,7 +49,7 @@ function loadPrefs(planId: string): Prefs {
 
 const defaultPrefs: Prefs = { keepPinned: true, groupByParty: true, mixSides: false, honorRules: true };
 
-export function ConstraintsPanel({ planId, guests, constraints, refresh }: Props) {
+export function ConstraintsPanel({ planId, guests, constraints, refresh, compact = false, onAutoAssign }: Props) {
   const [adding, setAdding] = useState<ConstraintKind | null>(null);
   const [a, setA] = useState("");
   const [b, setB] = useState("");
@@ -154,6 +157,7 @@ export function ConstraintsPanel({ planId, guests, constraints, refresh }: Props
         </Section>
       </div>
 
+      {!compact && (
       <aside className="lg:sticky lg:top-20">
         <div className="rounded-2xl border hairline bg-paper-2/40 p-5">
           <div className="label-mono mb-2">Auto-assign</div>
@@ -163,16 +167,16 @@ export function ConstraintsPanel({ planId, guests, constraints, refresh }: Props
           <p className="m-0 mb-4 text-[12px] text-ink-3">
             You&apos;ll get a preview before anything moves. Pinned guests stay put.
           </p>
-          <Button
-            className="w-full rounded-full"
-            onClick={() => {
-              // Surfaces the existing AutoAssignDialog via the Planner header
-              const btn = document.querySelector<HTMLButtonElement>("[data-auto-seat-trigger]");
-              btn?.click();
-            }}
-          >
-            Run auto-assign
-          </Button>
+          {onAutoAssign && (
+            <Button className="w-full rounded-full" onClick={onAutoAssign}>
+              Run auto-assign
+            </Button>
+          )}
+          {!onAutoAssign && (
+            <p className="text-[12px] text-ink-3 font-mono">
+              ↑ Use Auto-seat in the Seating tab.
+            </p>
+          )}
 
           <div className="mt-5 border-t hairline pt-4">
             <div className="label-mono mb-3">Preferences</div>
@@ -225,6 +229,7 @@ export function ConstraintsPanel({ planId, guests, constraints, refresh }: Props
           </div>
         </div>
       </aside>
+      )}
     </div>
   );
 }

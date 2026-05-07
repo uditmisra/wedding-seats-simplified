@@ -96,10 +96,19 @@ export function TablesTab({ planId, scenarioId, tables, assignments, refresh, au
                   onEdit={() => setEditing(t)}
                   onDelete={async () => {
                     const fill = seatedByTable.get(t.id) ?? 0;
-                    if (fill > 0 && !confirm(`${fill} guests are seated at this table. Delete anyway?`)) return;
-                    await supabase.from("tables_def").delete().eq("id", t.id);
-                    onActivityLog?.("deleted table", t.name);
-                    refresh();
+                    const doDelete = async () => {
+                      await supabase.from("tables_def").delete().eq("id", t.id);
+                      onActivityLog?.("deleted table", t.name);
+                      refresh();
+                    };
+                    if (fill > 0) {
+                      toast(`${fill} guest${fill === 1 ? "" : "s"} seated at ${t.name}`, {
+                        description: "Delete the table and unassign them?",
+                        action: { label: "Delete", onClick: doDelete },
+                      });
+                    } else {
+                      await doDelete();
+                    }
                   }}
                 />
               ))}

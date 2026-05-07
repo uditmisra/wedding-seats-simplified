@@ -59,7 +59,7 @@ const Planner = () => {
   const [claimModalOpen, setClaimModalOpen] = useState(false);
   const [activityOpen, setActivityOpen] = useState(false);
 
-  const onboardingActive = !loading && plan && (guests.length === 0 && tables.length === 0);
+  const onboardingActive = !loading && plan && (guests.length === 0 || tables.length === 0);
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
   const showOnboarding = canEdit && onboardingActive && !onboardingDismissed;
 
@@ -415,7 +415,7 @@ const Planner = () => {
                 <CompareScenarios scenarios={scenarios} currentScenarioId={scenarioId} currentTables={tables} currentAssignments={assignments} guests={guests} constraints={constraints} />
           </TabsContent>
           <TabsContent value="constraints" className="mt-6 animate-tab-in">
-                <ConstraintsPanel planId={plan.id} guests={guests} constraints={constraints} refresh={refresh} />
+                <ConstraintsPanel planId={plan.id} guests={guests} constraints={constraints} refresh={refresh} onAutoAssign={() => setAutoOpen(true)} />
           </TabsContent>
           <TabsContent value="export" className="mt-6 animate-tab-in">
                 <ExportPanel plan={plan} guests={guests} tables={tables} assignments={assignments} constraints={constraints} />
