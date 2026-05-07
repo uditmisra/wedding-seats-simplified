@@ -330,6 +330,7 @@ export type Database = {
           id: string
           name: string
           owner_id: string | null
+          room_config: import("@/lib/roomConfig").RoomConfig | null
           updated_at: string
         }
         Insert: {
@@ -339,6 +340,7 @@ export type Database = {
           id?: string
           name?: string
           owner_id?: string | null
+          room_config?: import("@/lib/roomConfig").RoomConfig | null
           updated_at?: string
         }
         Update: {
@@ -347,6 +349,7 @@ export type Database = {
           event_date?: string | null
           id?: string
           name?: string
+          room_config?: import("@/lib/roomConfig").RoomConfig | null
           owner_id?: string | null
           updated_at?: string
         }

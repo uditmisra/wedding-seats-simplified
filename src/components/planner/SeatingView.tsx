@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { useBelowLg } from "@/hooks/use-mobile";
 import { guestColor } from "@/lib/guestColor";
+import type { RoomConfig } from "@/lib/roomConfig";
 
 interface Props {
   planId: string;
@@ -29,6 +30,7 @@ interface Props {
   onGoToGuests?: () => void;
   onGoToTables?: () => void;
   onActivityLog?: (action: string, subject?: string, detail?: string) => void;
+  roomConfig?: RoomConfig | null;
 }
 
 // Composite collision strategy:
@@ -65,7 +67,7 @@ function firstFreeSeat(table: TableDef, seated: Assignment[], excludeId?: string
   return null;
 }
 
-export function SeatingView({ planId, scenarioId, guests, tables, assignments, setAssignments, constraints, refresh, onGoToGuests, onGoToTables, canEdit = true, onActivityLog }: Props) {
+export function SeatingView({ planId, scenarioId, guests, tables, assignments, setAssignments, constraints, refresh, onGoToGuests, onGoToTables, canEdit = true, onActivityLog, roomConfig }: Props) {
   const [search, setSearch] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [view, setView] = useState<"list" | "floor" | "grouped">("floor");
@@ -312,6 +314,7 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
             canEdit={canEdit}
             arrangeMode={arrangeMode}
             onTableMove={handleTableMove}
+            roomConfig={roomConfig}
             onAssign={async (guestId, tableId, seatIndex) => {
               const g = guestById.get(guestId);
               const t = tableById.get(tableId);

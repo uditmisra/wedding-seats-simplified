@@ -2,11 +2,14 @@ export type RSVP = "attending" | "declined" | "pending" | "maybe";
 export type Shape = "round" | "rectangle" | "square" | "long" | "head";
 export type ConstraintKind = "with" | "not_with";
 
+import type { RoomConfig } from "./roomConfig";
+
 export interface Plan {
   id: string;
   code: string;
   name: string;
   event_date: string | null;
+  room_config: RoomConfig | null;
 }
 
 export interface Scenario {

@@ -6,6 +6,7 @@ import { Plus, Minus, Maximize2, RotateCcw, Move } from "lucide-react";
 import { SeatMenu } from "./SeatMenu";
 import { SeatPicker } from "./SeatPicker";
 import { guestColor } from "@/lib/guestColor";
+import { type RoomConfig, type Fixture, DEFAULT_ROOM_CONFIG, roomLayout } from "@/lib/roomConfig";
 
 interface Props {
   tables: TableDef[];
@@ -24,27 +25,49 @@ interface Props {
   /** When true, tables can be dragged to new positions */
   arrangeMode?: boolean;
   onTableMove?: (id: string, x: number, y: number) => void;
+  roomConfig?: RoomConfig | null;
 }
 
 const MIN_ZOOM = 0.4;
 const MAX_ZOOM = 2.5;
 
+const PAD_X = 70;
+const PAD_TOP = 90;
+const PAD_BOTTOM = 110;
+const TABLE_GAP = 44; // breathing room between table bounding boxes in auto-grid
+
 const noop = () => {};
-export function FloorPlan({ tables, assignments, guests, constraints, highlights, scenarioId, onUnassign = noop, onTogglePin = noop, onMoveTo = noop, onSwapWith = noop, unassigned = [], onAssign, canEdit = true, arrangeMode = false, onTableMove }: Props) {
+export function FloorPlan({ tables, assignments, guests, constraints, highlights, scenarioId, onUnassign = noop, onTogglePin = noop, onMoveTo = noop, onSwapWith = noop, unassigned = [], onAssign, canEdit = true, arrangeMode = false, onTableMove, roomConfig }: Props) {
   const guestById = useMemo(() => new Map(guests.map(g => [g.id, g])), [guests]);
 
-  // Cell size grows with the largest table on the floor so big tables don't crowd neighbours.
+  // Cell size grows with the largest table so big tables don't crowd neighbours.
   const dims = tables.map(tableDims);
-  const maxW = Math.max(220, ...dims.map(d => d.box.w + 80));
-  const maxH = Math.max(220, ...dims.map(d => d.box.h + 80));
-  const cellW = Math.ceil(maxW);
-  const cellH = Math.ceil(maxH);
+  const maxW = Math.max(180, ...dims.map(d => d.box.w));
+  const maxH = Math.max(180, ...dims.map(d => d.box.h));
   const cols = tables.length <= 2 ? Math.max(1, tables.length) : tables.length <= 6 ? 3 : 4;
   const rows = Math.max(1, Math.ceil(tables.length / Math.max(1, cols)));
-  // When tables have stored positions, use a large enough canvas. Otherwise use grid.
+
+  // Resolve canvas dimensions and room rectangle.
+  // When roomConfig is provided, canvas scales from real-world dimensions.
+  // Otherwise, size to fit the table grid with proper padding so tables land inside the room outline.
+  const cfg = roomConfig ?? DEFAULT_ROOM_CONFIG;
+  const rl = roomLayout(cfg, PAD_X, PAD_TOP, PAD_BOTTOM);
+
+  // If any table has a stored position, use the configured canvas.
+  // Otherwise use an auto-sized canvas that guarantees tables fit inside the room outline.
   const hasCustomPos = tables.some(t => t.x > 0 || t.y > 0);
-  const width = hasCustomPos ? Math.max(cols * cellW, ...tables.map(t => t.x + cellW / 2 + 80)) : cols * cellW;
-  const height = hasCustomPos ? Math.max(rows * cellH, ...tables.map(t => t.y + cellH / 2 + 80)) : rows * cellH;
+  let width: number, height: number, roomX: number, roomY: number, roomW: number, roomH: number;
+  if (hasCustomPos || roomConfig) {
+    ({ canvasW: width, canvasH: height, roomX, roomY, roomW, roomH } = rl);
+  } else {
+    // Auto-size: room must contain all tables with TABLE_GAP breathing room
+    roomW = Math.max(cols * (maxW + TABLE_GAP) - TABLE_GAP, 400);
+    roomH = Math.max(rows * (maxH + TABLE_GAP) - TABLE_GAP, 300);
+    roomX = PAD_X;
+    roomY = PAD_TOP;
+    width  = roomW + 2 * PAD_X;
+    height = roomH + PAD_TOP + PAD_BOTTOM;
+  }
 
   // Live positions during arrange-mode drag (overrides stored positions while dragging)
   const [livePos, setLivePos] = useState<Map<string, { cx: number; cy: number }>>(new Map());
@@ -180,12 +203,15 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
   const dotSize = 24 * view.z;
 
   // Pre-compute table positions/seats once.
-  // Priority: live drag position → stored DB position → auto-grid fallback.
+  // Priority: live drag position → stored DB position → auto-grid (inside room bounds).
   const layout = tables.map((t, i) => {
     const col = i % cols;
     const row = Math.floor(i / cols);
-    const gridCx = col * cellW + cellW / 2;
-    const gridCy = row * cellH + cellH / 2;
+    // Auto-grid: divide room rectangle into equal cells, center table in each cell
+    const gridCellW = roomW / cols;
+    const gridCellH = roomH / rows;
+    const gridCx = roomX + col * gridCellW + gridCellW / 2;
+    const gridCy = roomY + row * gridCellH + gridCellH / 2;
     const live = livePos.get(t.id);
     const stored = (t.x > 0 || t.y > 0) ? { cx: t.x, cy: t.y } : null;
     const cx = live?.cx ?? stored?.cx ?? gridCx;
@@ -235,8 +261,8 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
                 </filter>
               </defs>
 
-              {/* Room geometry — outline, fixtures, compass, annotation */}
-              <RoomGeometry width={width} height={height} />
+              {/* Room geometry — outline + data-driven fixtures */}
+              <RoomGeometry roomX={roomX} roomY={roomY} roomW={roomW} roomH={roomH} fixtures={cfg.fixtures} />
 
               {layout.map(({ t, i, cx, cy, dims: d }) => {
                 const seated = assignments.filter(a => a.table_id === t.id);
@@ -319,11 +345,8 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
                     }}
                     onPointerDown={(e) => {
                       e.stopPropagation();
-                      const gridCx = (i % cols) * cellW + cellW / 2;
-                      const gridCy = Math.floor(i / cols) * cellH + cellH / 2;
-                      const stored = (t.x > 0 || t.y > 0) ? { cx: t.x, cy: t.y } : null;
-                      const startCx = livePos.get(t.id)?.cx ?? stored?.cx ?? gridCx;
-                      const startCy = livePos.get(t.id)?.cy ?? stored?.cy ?? gridCy;
+                      const startCx = livePos.get(t.id)?.cx ?? cx;
+                      const startCy = livePos.get(t.id)?.cy ?? cy;
                       tableDragRef.current = { id: t.id, startCx, startCy, startPx: e.clientX, startPy: e.clientY };
                       (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
                     }}
@@ -556,120 +579,125 @@ function Dot({ color, filled = true }: { color: string; filled?: boolean }) {
   );
 }
 
-/**
- * Decorative room geometry — outline, fixtures (dance floor / DJ / bar / entry),
- * a hand-written annotation, and a compass. None of this is in the data model;
- * it grounds the floor-plan metaphor visually. Positions are relative to the
- * laid-out table grid.
- */
-function RoomGeometry({ width, height }: { width: number; height: number }) {
-  // Insets so the room outline frames the tables with breathing room.
-  const padX = 60, padTop = 80, padBottom = 100;
-  const x = padX, y = padTop;
-  const w = Math.max(200, width - padX * 2);
-  const h = Math.max(200, height - padTop - padBottom);
-
-  // Fixture placements relative to the room rect.
-  const danceX = x + w - 160, danceY = y + h - 200, danceW = 130, danceH = 180;
-  const djX = x + w - 90, djY = y + 24, djW = 70, djH = 36;
-  const barX = x + 30, barY = y + h - 60, barW = 130, barH = 36;
-  const entryX = x + w / 2 - 50, entryY = y - 8, entryW = 100, entryH = 16;
+function RoomGeometry({ roomX, roomY, roomW, roomH, fixtures }: { roomX: number; roomY: number; roomW: number; roomH: number; fixtures: Fixture[] }) {
+  const toCanvas = (f: Fixture) => ({
+    x: roomX + f.x_pct * roomW,
+    y: roomY + f.y_pct * roomH,
+    w: (f.w_pct ?? 0.1) * roomW,
+    h: (f.h_pct ?? 0.06) * roomH,
+  });
 
   return (
     <g pointerEvents="none">
       {/* Room outline */}
       <rect
-        x={x} y={y} width={w} height={h}
+        x={roomX} y={roomY} width={roomW} height={roomH}
         fill="none"
         stroke="hsl(var(--ink))"
         strokeWidth={1.2}
         opacity={0.6}
       />
 
-      {/* Entry */}
-      <rect x={entryX} y={entryY} width={entryW} height={entryH}
-        fill="hsl(var(--paper))" stroke="hsl(var(--ink))" strokeWidth={1} opacity={0.85} />
-      <text x={entryX + entryW / 2} y={entryY + entryH - 5}
-        textAnchor="middle"
-        fontFamily='"Geist Mono", monospace'
-        fontSize={9}
-        letterSpacing="0.16em"
-        fill="hsl(var(--ink-2))">ENTRY</text>
+      {fixtures.filter(f => f.visible).map(f => {
+        const p = toCanvas(f);
+        const cx = p.x + p.w / 2;
+        const cy = p.y + p.h / 2;
 
-      {/* DJ booth */}
-      <rect x={djX} y={djY} width={djW} height={djH}
-        fill="hsl(var(--paper-2))" stroke="hsl(var(--ink))" strokeWidth={0.8} />
-      <text x={djX + djW / 2} y={djY + djH / 2 + 3}
-        textAnchor="middle"
-        fontFamily='"Geist Mono", monospace'
-        fontSize={9}
-        letterSpacing="0.18em"
-        fill="hsl(var(--ink-2))">DJ</text>
+        if (f.type === "compass") {
+          return (
+            <g key={f.id} transform={`translate(${p.x}, ${p.y})`}>
+              <circle r={14} fill="none" stroke="hsl(var(--ink-3))" strokeWidth={0.6} />
+              <path d="M 0 -11 L 3 4 L 0 0 L -3 4 Z" fill="hsl(var(--ink))" />
+              <text y={-17} textAnchor="middle"
+                fontFamily='"Geist Mono", monospace'
+                fontSize={9} fill="hsl(var(--ink-3))">{f.label}</text>
+            </g>
+          );
+        }
 
-      {/* Bar */}
-      <rect x={barX} y={barY} width={barW} height={barH}
-        fill="hsl(var(--paper-2))" stroke="hsl(var(--ink))" strokeWidth={0.8} />
-      <text x={barX + barW / 2} y={barY + barH / 2 + 4}
-        textAnchor="middle"
-        fontFamily="Newsreader, serif"
-        fontStyle="italic"
-        fontSize={13}
-        fill="hsl(var(--ink-2))">bar</text>
+        if (f.type === "dance_floor") {
+          return (
+            <g key={f.id}>
+              <rect x={p.x} y={p.y} width={p.w} height={p.h}
+                fill="hsl(var(--terracotta) / 0.06)"
+                stroke="hsl(var(--terracotta))"
+                strokeWidth={1}
+                strokeDasharray="4 4" />
+              <text x={cx} y={cy + 5}
+                textAnchor="middle"
+                fontFamily="Newsreader, serif"
+                fontStyle="italic"
+                fontSize={13}
+                fill="hsl(var(--terracotta))">{f.label}</text>
+            </g>
+          );
+        }
 
-      {/* Dance floor */}
-      <rect
-        x={danceX} y={danceY} width={danceW} height={danceH}
-        fill="hsl(var(--terracotta) / 0.06)"
-        stroke="hsl(var(--terracotta))"
-        strokeWidth={1}
-        strokeDasharray="4 4"
-      />
-      <text
-        x={danceX + danceW / 2}
-        y={danceY + danceH / 2 + 6}
-        textAnchor="middle"
-        fontFamily="Newsreader, serif"
-        fontStyle="italic"
-        fontSize={14}
-        fill="hsl(var(--terracotta))"
-      >dance floor</text>
+        if (f.type === "entry") {
+          return (
+            <g key={f.id}>
+              <rect x={p.x} y={p.y} width={p.w} height={p.h}
+                fill="hsl(var(--paper))" stroke="hsl(var(--ink))" strokeWidth={1} opacity={0.9} />
+              <text x={cx} y={p.y + p.h - 4}
+                textAnchor="middle"
+                fontFamily='"Geist Mono", monospace'
+                fontSize={9}
+                letterSpacing="0.16em"
+                fill="hsl(var(--ink-2))">{f.label}</text>
+            </g>
+          );
+        }
 
-      {/* Compass — top-right of the room */}
-      <g transform={`translate(${x + w - 30}, ${y + 28})`}>
-        <circle r={14} fill="none" stroke="hsl(var(--ink-3))" strokeWidth={0.6} />
-        <path d="M 0 -11 L 3 4 L 0 0 L -3 4 Z" fill="hsl(var(--ink))" />
-        <text y={-17} textAnchor="middle"
-          fontFamily='"Geist Mono", monospace'
-          fontSize={9} fill="hsl(var(--ink-3))">N</text>
-      </g>
+        if (f.type === "dj") {
+          return (
+            <g key={f.id}>
+              <rect x={p.x} y={p.y} width={p.w} height={p.h}
+                fill="hsl(var(--paper-2))" stroke="hsl(var(--ink))" strokeWidth={0.8} />
+              <text x={cx} y={cy + 4}
+                textAnchor="middle"
+                fontFamily='"Geist Mono", monospace'
+                fontSize={9}
+                letterSpacing="0.18em"
+                fill="hsl(var(--ink-2))">{f.label}</text>
+            </g>
+          );
+        }
 
-      {/* Hand-written annotation */}
-      <g transform={`translate(${x + w - 220}, ${y + 90}) rotate(-3)`}>
-        <text
-          fontFamily="Newsreader, serif"
-          fontStyle="italic"
-          fontSize={14}
-          fill="hsl(var(--terracotta))"
-          opacity={0.85}
-        >
-          <tspan x={0} dy={0}>let&apos;s keep the college tables</tspan>
-          <tspan x={0} dy={18}>close to the bar</tspan>
-        </text>
-        <path
-          d="M -10 30 Q 20 50, 60 65"
-          stroke="hsl(var(--terracotta))"
-          fill="none"
-          strokeWidth={1}
-          opacity={0.7}
-        />
-        <path
-          d="M 54 60 L 60 65 L 53 68"
-          stroke="hsl(var(--terracotta))"
-          fill="none"
-          strokeWidth={1}
-          opacity={0.7}
-        />
-      </g>
+        if (f.type === "annotation") {
+          const words = f.label.split(" ");
+          const mid = Math.ceil(words.length / 2);
+          const line1 = words.slice(0, mid).join(" ");
+          const line2 = words.slice(mid).join(" ");
+          return (
+            <g key={f.id} transform={`translate(${p.x}, ${p.y}) rotate(-2)`}>
+              <text
+                fontFamily="Newsreader, serif"
+                fontStyle="italic"
+                fontSize={13}
+                fill="hsl(var(--terracotta))"
+                opacity={0.85}
+              >
+                <tspan x={0} dy={0}>{line1}</tspan>
+                {line2 && <tspan x={0} dy={17}>{line2}</tspan>}
+              </text>
+            </g>
+          );
+        }
+
+        // Default: box fixture (bar, stage, bathroom, catering, coat_check, photo_booth)
+        return (
+          <g key={f.id}>
+            <rect x={p.x} y={p.y} width={p.w} height={p.h}
+              fill="hsl(var(--paper-2))" stroke="hsl(var(--ink))" strokeWidth={0.8} rx={3} />
+            <text x={cx} y={cy + 4}
+              textAnchor="middle"
+              fontFamily="Newsreader, serif"
+              fontStyle="italic"
+              fontSize={12}
+              fill="hsl(var(--ink-2))">{f.label}</text>
+          </g>
+        );
+      })}
     </g>
   );
 }

@@ -82,6 +82,39 @@ const MAPPING_TOOL = {
   },
 };
 
+const ROOM_TOOL = {
+  type: "function",
+  function: {
+    name: "parse_room",
+    description: "Extract a venue room configuration from a free-form description. width_m and height_m are the room dimensions in metres. fixtures is a list of venue features (dance floor, bar, DJ booth, stage, entry/exits, etc.) placed as fractions of the room (x_pct=0 is left wall, x_pct=1 is right wall; y_pct=0 is top/far wall, y_pct=1 is bottom/near wall). fixture type must be one of: entry, dance_floor, dj, bar, stage, bathroom, catering, coat_check, photo_booth, annotation, compass. Place features plausibly — dance floors typically at back, bars near entry, DJ near dance floor. All pct values 0–1. Include a compass if cardinal direction is mentioned.",
+    parameters: {
+      type: "object",
+      properties: {
+        width_m: { type: "number", minimum: 4, maximum: 100, description: "Room width in metres" },
+        height_m: { type: "number", minimum: 4, maximum: 100, description: "Room depth/length in metres" },
+        fixtures: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id: { type: "string" },
+              type: { type: "string", enum: ["entry", "dance_floor", "dj", "bar", "stage", "bathroom", "catering", "coat_check", "photo_booth", "annotation", "compass"] },
+              label: { type: "string" },
+              x_pct: { type: "number", minimum: -0.05, maximum: 1.05 },
+              y_pct: { type: "number", minimum: -0.05, maximum: 1.05 },
+              w_pct: { type: "number", minimum: 0.03, maximum: 0.7 },
+              h_pct: { type: "number", minimum: 0.02, maximum: 0.7 },
+              visible: { type: "boolean" },
+            },
+            required: ["id", "type", "label", "x_pct", "y_pct", "visible"],
+          },
+        },
+      },
+      required: ["width_m", "height_m", "fixtures"],
+    },
+  },
+};
+
 const SYSTEM = "You are a friendly wedding planning assistant. Extract structured data carefully and conservatively. If unsure about an optional field, omit it rather than guessing.";
 
 const MAX_BYTES = 64 * 1024;
@@ -141,6 +174,9 @@ serve(async (req) => {
       const safeHeaders = (headers ?? []).slice(0, MAX_HEADERS);
       const safeSamples = (samples ?? []).slice(0, MAX_SAMPLES);
       userPrompt = `Headers: ${JSON.stringify(safeHeaders)}\n\nFirst rows:\n${JSON.stringify(safeSamples, null, 2)}\n\nReturn a mapping object whose keys are exactly these headers.`;
+    } else if (mode === "room") {
+      tool = ROOM_TOOL;
+      userPrompt = `Parse this venue description into a room configuration:\n\n${String(input ?? "").slice(0, MAX_INPUT_CHARS)}\n\nRemember: x_pct=0 is left wall, x_pct=1 is right wall, y_pct=0 is far/top wall, y_pct=1 is near/bottom wall. Give each fixture a short unique id (e.g. "entry", "dance_floor", "bar_1").`;
     } else {
       return new Response(JSON.stringify({ error: "Invalid mode" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }

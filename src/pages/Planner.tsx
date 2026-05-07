@@ -24,6 +24,7 @@ import { Link as LinkIcon, Check, Wand2, GitCompareArrows, ShieldAlert, Download
 import { ClaimPlanModal } from "@/components/ClaimPlanModal";
 import { SignInNudge } from "@/components/SignInNudge";
 import { ActivityDrawer } from "@/components/planner/ActivityDrawer";
+import { RoomSetupPanel } from "@/components/planner/RoomSetupPanel";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { addRecentPlan } from "@/lib/recentPlans";
@@ -36,8 +37,9 @@ const TAB_DEFS = [
   { value: "tables", numeral: "II", label: "Tables" },
   { value: "constraints", numeral: "III", label: "Rules" },
   { value: "seating", numeral: "IV", label: "Seating" },
-  { value: "compare", numeral: "V", label: "Compare" },
-  { value: "export", numeral: "VI", label: "Export" },
+  { value: "room", numeral: "V", label: "Room" },
+  { value: "compare", numeral: "VI", label: "Compare" },
+  { value: "export", numeral: "VII", label: "Export" },
 ] as const;
 
 const Planner = () => {
@@ -394,6 +396,7 @@ const Planner = () => {
               onGoToGuests={() => setTab("guests")}
               onGoToTables={() => setTab("tables")}
               onActivityLog={log}
+              roomConfig={plan.room_config}
             />
           </TabsContent>
           <TabsContent value="guests" className="mt-6 animate-tab-in">
@@ -401,6 +404,14 @@ const Planner = () => {
           </TabsContent>
           <TabsContent value="tables" className="mt-6 animate-tab-in">
                 <TablesTab planId={plan.id} scenarioId={scenarioId ?? ""} tables={tables} assignments={assignments} refresh={refresh} autoOpen={tablesAutoOpen} onAutoOpenHandled={() => setTablesAutoOpen(null)} onActivityLog={log} />
+          </TabsContent>
+          <TabsContent value="room" className="mt-6 animate-tab-in">
+                <RoomSetupPanel
+                  planId={plan.id}
+                  roomConfig={plan.room_config}
+                  canEdit={canEdit}
+                  onSaved={(cfg) => plan && setPlan({ ...plan, room_config: cfg })}
+                />
           </TabsContent>
           <TabsContent value="compare" className="mt-6 animate-tab-in">
                 <CompareScenarios scenarios={scenarios} currentScenarioId={scenarioId} currentTables={tables} currentAssignments={assignments} guests={guests} constraints={constraints} />
