@@ -18,6 +18,8 @@ interface Props {
   setAssignments: React.Dispatch<React.SetStateAction<Assignment[]>>;
   constraints: ConstraintDef[];
   onClose: () => void;
+  /** Demo mode — skip Supabase writes; setAssignments is the only persistence. */
+  demoMode?: boolean;
 }
 
 interface TableRow {
@@ -26,7 +28,7 @@ interface TableRow {
   conflicts: ConstraintDef[];
 }
 
-export function AutoAssignDialog({ planId, scenarioId, guests, tables, assignments, setAssignments, constraints, onClose }: Props) {
+export function AutoAssignDialog({ planId, scenarioId, guests, tables, assignments, setAssignments, constraints, onClose, demoMode = false }: Props) {
   const [includeMaybe, setIncludeMaybe] = useState(false);
   const [keepExisting, setKeepExisting] = useState(true);
   const [preview, setPreview] = useState<Map<string, string> | null>(null);
@@ -87,12 +89,14 @@ export function AutoAssignDialog({ planId, scenarioId, guests, tables, assignmen
     ];
     setAssignments(optimistic);
 
-    if (keepExisting) {
-      await supabase.from("assignments").delete().eq("scenario_id", scenarioId).eq("pinned", false);
-    } else {
-      await supabase.from("assignments").delete().eq("scenario_id", scenarioId);
+    if (!demoMode) {
+      if (keepExisting) {
+        await supabase.from("assignments").delete().eq("scenario_id", scenarioId).eq("pinned", false);
+      } else {
+        await supabase.from("assignments").delete().eq("scenario_id", scenarioId);
+      }
+      if (rows.length) await supabase.from("assignments").insert(rows);
     }
-    if (rows.length) await supabase.from("assignments").insert(rows);
     setLoading(false);
     const eligibleCount = guests.filter(g => g.rsvp === "attending" || (includeMaybe && g.rsvp === "maybe")).length;
     try {

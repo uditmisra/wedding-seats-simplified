@@ -32,6 +32,9 @@ interface Props {
   onActivityLog?: (action: string, subject?: string, detail?: string) => void;
   roomConfig?: RoomConfig | null;
   onAutoAssign?: () => void;
+  /** Demo mode — skip Supabase writes; rely on setAssignments + setTables for state. */
+  demoMode?: boolean;
+  setTables?: React.Dispatch<React.SetStateAction<TableDef[]>>;
 }
 
 // Snap DragOverlay to cursor center so the card's grab-offset doesn't shift
@@ -92,7 +95,7 @@ function firstFreeSeat(table: TableDef, seated: Assignment[], excludeId?: string
   return null;
 }
 
-export function SeatingView({ planId, scenarioId, guests, tables, assignments, setAssignments, constraints, refresh, onGoToGuests, onGoToTables, canEdit = true, onActivityLog, roomConfig, onAutoAssign }: Props) {
+export function SeatingView({ planId, scenarioId, guests, tables, assignments, setAssignments, constraints, refresh, onGoToGuests, onGoToTables, canEdit = true, onActivityLog, roomConfig, onAutoAssign, demoMode = false, setTables }: Props) {
   const [search, setSearch] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [view, setView] = useState<"list" | "floor" | "grouped">("floor");
@@ -113,7 +116,7 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
   // objects in place + called refresh() unconditionally, which made seats
   // appear filled for a frame then snap back to empty (the "vanish" bug).
   useEffect(() => {
-    if (!canEdit) return;
+    if (!canEdit || demoMode) return;
     const orphans = assignments.filter(a => a.seat_index == null);
     if (orphans.length === 0) return;
     const updates: { id: string; seat_index: number }[] = [];
@@ -194,6 +197,7 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
     });
 
     // ── Background persist ────────────────────────────────────
+    if (demoMode) return; // demo: optimistic state is the source of truth
     const ops: PromiseLike<unknown>[] = [];
     if (occupant) {
       if (existing) {
@@ -220,8 +224,11 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
     if (!overId) return;
     if (overId === "__unassign__") {
       setAssignments(prev => prev.filter(a => a.guest_id !== guestId));
-      await supabase.from("assignments").delete().eq("guest_id", guestId).eq("scenario_id", scenarioId);
-      refresh(); return;
+      if (!demoMode) {
+        await supabase.from("assignments").delete().eq("guest_id", guestId).eq("scenario_id", scenarioId);
+        refresh();
+      }
+      return;
     }
     if (overId.startsWith("seat:")) {
       const [, tid, idxStr] = overId.split(":");
@@ -231,11 +238,19 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
 
   const handleUnassign = async (a: Assignment) => {
     if (!canEdit) return;
+    if (demoMode) {
+      setAssignments(prev => prev.filter(x => x.id !== a.id));
+      return;
+    }
     await supabase.from("assignments").delete().eq("id", a.id);
     refresh();
   };
   const handleTogglePin = async (a: Assignment) => {
     if (!canEdit) return;
+    if (demoMode) {
+      setAssignments(prev => prev.map(x => x.id === a.id ? { ...x, pinned: !x.pinned } : x));
+      return;
+    }
     await supabase.from("assignments").update({ pinned: !a.pinned }).eq("id", a.id);
     refresh();
   };
@@ -244,11 +259,23 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
     const tbl = tableById.get(targetTableId); if (!tbl) return;
     const seated = assignments.filter(x => x.table_id === targetTableId);
     const idx = firstFreeSeat(tbl, seated);
+    if (demoMode) {
+      setAssignments(prev => prev.map(x => x.id === a.id ? { ...x, table_id: targetTableId, seat_index: idx } : x));
+      return;
+    }
     await supabase.from("assignments").update({ table_id: targetTableId, seat_index: idx }).eq("id", a.id);
     refresh();
   };
   const handleSwap = async (a: Assignment, b: Assignment) => {
     if (!canEdit) return;
+    if (demoMode) {
+      setAssignments(prev => prev.map(x => {
+        if (x.id === a.id) return { ...x, table_id: b.table_id, seat_index: b.seat_index };
+        if (x.id === b.id) return { ...x, table_id: a.table_id, seat_index: a.seat_index };
+        return x;
+      }));
+      return;
+    }
     await Promise.all([
       supabase.from("assignments").update({ table_id: b.table_id, seat_index: b.seat_index }).eq("id", a.id),
       supabase.from("assignments").update({ table_id: a.table_id, seat_index: a.seat_index }).eq("id", b.id),
@@ -259,6 +286,10 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
   const handleTableMove = async (tableId: string, x: number, y: number) => {
     if (!canEdit) return;
     const tbl = tableById.get(tableId);
+    if (demoMode) {
+      setTables?.(prev => prev.map(t => t.id === tableId ? { ...t, x: Math.round(x), y: Math.round(y) } : t));
+      return;
+    }
     await supabase.from("tables_def").update({ x: Math.round(x), y: Math.round(y) }).eq("id", tableId);
     if (tbl) onActivityLog?.("moved table", tbl.name);
     refresh();
