@@ -11,8 +11,10 @@ export interface TemplateEntry {
 
 import { template as welcome } from './welcome.tsx'
 import { template as shareInvite } from './share-invite.tsx'
+import { template as grandfather } from './grandfather.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'welcome': welcome,
   'share-invite': shareInvite,
+  'grandfather': grandfather,
 }

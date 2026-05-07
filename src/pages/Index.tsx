@@ -528,7 +528,7 @@ const Index = () => {
         {/* ── § 1 · Hero ───────────────────────────────────────────────── */}
         <section aria-label="Hero" className="grid items-center gap-12 pt-10 md:grid-cols-[1.1fr_1fr] md:gap-16 md:pt-16">
           <div>
-            <p className="label-mono mb-7">— Free wedding seating chart maker</p>
+            <p className="label-mono mb-7">— A wedding seating planner</p>
             <h1 className="m-0 font-display text-[60px] leading-[0.97] tracking-[-0.03em] sm:text-[76px] xl:text-[96px]">
               Your seating chart,<br />
               <span className="font-display-italic">without</span> the spreadsheet.
@@ -537,28 +537,26 @@ const Index = () => {
               You already know who can't sit near whom. You've been carrying it in your head for weeks. This is where you put it down — and get the whole thing sorted in one afternoon.
             </p>
 
-            {/* CTA form */}
-            <div className="mt-10 max-w-lg rounded-xl border hairline bg-white/30 p-5">
-              <Label htmlFor="plan-name" className="label-mono">Name your plan</Label>
-              <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-                <Input
-                  id="plan-name"
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && createPlan()}
-                  placeholder="Maya & Jordan's wedding"
-                  className="h-12 rounded-full border-hairline bg-transparent px-4 text-[15px]"
-                />
-                <Button
-                  onClick={createPlan}
-                  disabled={loading}
-                  className="h-12 rounded-full px-6 text-[15px]"
+            {/* Two-CTA block — demo (primary) + paid (secondary) */}
+            <div className="mt-10 max-w-lg">
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Link
+                  to="/demo"
+                  className="inline-flex h-12 flex-1 items-center justify-center gap-1.5 rounded-full bg-ink px-6 text-[15px] font-medium text-paper transition hover:bg-ink-2"
                 >
-                  {loading ? <Loader2 size={14} className="animate-spin" /> : <>Start your seating chart <span className="ml-1 font-display-italic">→</span></>}
-                </Button>
+                  Try the demo
+                  <span className="font-display-italic">→</span>
+                </Link>
+                <Link
+                  to="/auth?intent=pay"
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-ink/20 bg-paper px-5 text-[15px] text-ink transition hover:bg-paper-2"
+                >
+                  <span>Start your chart</span>
+                  <span className="font-mono text-[13px] text-ink-2">£10</span>
+                </Link>
               </div>
-              <p className="mt-3 font-mono text-[10.5px] uppercase tracking-[0.12em] text-ink-3">
-                Free · No account · Takes about an afternoon.
+              <p className="mt-3 font-mono text-[10.5px] uppercase tracking-[0.12em] text-ink-2">
+                One payment · Less than one place setting at your reception
               </p>
             </div>
 
@@ -768,15 +766,24 @@ const Index = () => {
               Name it. Start dragging. You'll be done before your wine gets warm.
             </p>
             <div className="mt-10 flex flex-col items-center gap-4">
-              <Button
-                onClick={createPlan}
-                disabled={loading}
-                className="h-13 rounded-full px-8 text-[16px]"
-              >
-                {loading ? <Loader2 size={14} className="animate-spin" /> : <>Start your seating chart <span className="ml-1 font-display-italic">→</span></>}
-              </Button>
-              <p className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-ink-3">
-                Free forever · No account needed
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Link
+                  to="/demo"
+                  className="inline-flex h-13 items-center justify-center gap-1.5 rounded-full bg-ink px-7 text-[16px] font-medium text-paper transition hover:bg-ink-2"
+                >
+                  Try the demo
+                  <span className="font-display-italic">→</span>
+                </Link>
+                <Link
+                  to="/auth?intent=pay"
+                  className="inline-flex h-13 items-center justify-center gap-2 rounded-full border border-ink/20 bg-paper px-6 text-[16px] text-ink transition hover:bg-paper-2"
+                >
+                  <span>Start your chart</span>
+                  <span className="font-mono text-[14px] text-ink-2">£10</span>
+                </Link>
+              </div>
+              <p className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-ink-2">
+                One payment · Less than one place setting at your reception
               </p>
               <button
                 onClick={() => setShowCodeOpen(true)}
