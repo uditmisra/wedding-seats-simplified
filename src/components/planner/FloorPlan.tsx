@@ -26,6 +26,8 @@ interface Props {
   arrangeMode?: boolean;
   onTableMove?: (id: string, x: number, y: number) => void;
   roomConfig?: RoomConfig | null;
+  /** Pixels of viewport chrome to subtract from 100vh. Default 240 (Planner). */
+  chromeHeight?: number;
 }
 
 const MIN_ZOOM = 0.4;
@@ -37,7 +39,7 @@ const PAD_BOTTOM = 110;
 const TABLE_GAP = 44; // breathing room between table bounding boxes in auto-grid
 
 const noop = () => {};
-export function FloorPlan({ tables, assignments, guests, constraints, highlights, scenarioId, onUnassign = noop, onTogglePin = noop, onMoveTo = noop, onSwapWith = noop, unassigned = [], onAssign, canEdit = true, arrangeMode = false, onTableMove, roomConfig }: Props) {
+export function FloorPlan({ tables, assignments, guests, constraints, highlights, scenarioId, onUnassign = noop, onTogglePin = noop, onMoveTo = noop, onSwapWith = noop, unassigned = [], onAssign, canEdit = true, arrangeMode = false, onTableMove, roomConfig, chromeHeight = 240 }: Props) {
   const guestById = useMemo(() => new Map(guests.map(g => [g.id, g])), [guests]);
 
   // Cell size grows with the largest table so big tables don't crowd neighbours.
@@ -247,7 +249,7 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
         onTouchEnd={onTouchEnd}
         className="paper-grain relative w-full overflow-hidden touch-none select-none"
         style={{
-          height: "calc(100vh - 240px)", minHeight: 400, cursor,
+          height: `calc(100vh - ${chromeHeight}px)`, minHeight: 400, cursor,
         }}
       >
         {tables.length === 0 ? (
