@@ -9,10 +9,8 @@ import { Loader2 } from "lucide-react";
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  /** Optional headline override, e.g. "Unlock your exports." */
-  headline?: string;
-  /** Optional subhead override. */
-  subhead?: string;
+  headline?: React.ReactNode;
+  subhead?: React.ReactNode;
 }
 
 export function UpgradeModal({ open, onOpenChange, headline, subhead }: Props) {
