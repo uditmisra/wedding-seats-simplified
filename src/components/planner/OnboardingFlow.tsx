@@ -2,11 +2,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SmartGuestInput } from "./SmartGuestInput";
 import { SmartTableInput } from "./SmartTableInput";
+import { ConstraintsPanel } from "./ConstraintsPanel";
 import { Upload, Download, ArrowLeft, ArrowRight, Wand2, LayoutGrid } from "lucide-react";
 import { downloadGuestTemplate } from "@/lib/template";
 import { SamplePreviewCard } from "./onboarding/SamplePreviewCard";
+import type { Guest, ConstraintDef } from "@/lib/types";
 
-type Step = 1 | 2 | 3;
+type Step = 1 | 2 | 3 | 4;
 
 interface Props {
   planId: string;
@@ -16,6 +18,8 @@ interface Props {
   eventDate?: string | null;
   guestCount: number;
   tableCount: number;
+  guests: Guest[];
+  constraints: ConstraintDef[];
   onImport: () => void;
   onAutoAssign: () => void;
   onFinish: () => void;
@@ -36,21 +40,23 @@ export function OnboardingFlow({
   eventDate,
   guestCount,
   tableCount,
+  guests,
+  constraints,
   onImport,
   onAutoAssign,
   onFinish,
   refresh,
 }: Props) {
-  const [step, setStep] = useState<Step>(guestCount > 0 ? (tableCount > 0 ? 3 : 2) : 1);
+  const [step, setStep] = useState<Step>(
+    guestCount > 0 ? (tableCount > 0 ? 3 : 2) : 1
+  );
 
-  const totalSteps = 3;
+  const totalSteps = 4;
   const goNext = () => {
-    if (step === 1) setStep(2);
-    else if (step === 2) setStep(3);
+    if (step < 4) setStep((s) => (s + 1) as Step);
   };
   const goBack = () => {
-    if (step === 3) setStep(2);
-    else if (step === 2) setStep(1);
+    if (step > 1) setStep((s) => (s - 1) as Step);
   };
   const continueDisabled =
     (step === 1 && guestCount === 0) ||
@@ -102,11 +108,11 @@ export function OnboardingFlow({
             {step === 2 && (
               <>
                 <h2 className="m-0 font-display text-[40px] leading-[1.02] tracking-[-0.02em] sm:text-[56px]">
-                  Set up the <span className="font-display-italic">room.</span>
+                  Add your <span className="font-display-italic">tables.</span>
                 </h2>
                 <p className="mt-4 max-w-md text-[15px] leading-[1.55] text-ink-2 md:text-[16px]">
-                  Type how the room looks — &ldquo;10 round tables of 8, plus a head table
-                  for 6&rdquo;. We&apos;ll lay it out.
+                  Describe what you have — &ldquo;10 round tables of 8, plus a head table
+                  for 6&rdquo;. We&apos;ll add them. You can arrange the room layout in the Room tab.
                 </p>
 
                 <div className="mt-10">
@@ -123,11 +129,31 @@ export function OnboardingFlow({
             {step === 3 && (
               <>
                 <h2 className="m-0 font-display text-[40px] leading-[1.02] tracking-[-0.02em] sm:text-[56px]">
+                  Any <span className="font-display-italic">non-negotiables?</span>
+                </h2>
+                <p className="mt-4 max-w-md text-[15px] leading-[1.55] text-ink-2 md:text-[16px]">
+                  Divorced parents, cousins who don&apos;t speak, the friends who
+                  absolutely must sit together. Add them now so auto-assign gets it right.
+                </p>
+                <div className="mt-8">
+                  <ConstraintsPanel
+                    planId={planId}
+                    guests={guests}
+                    constraints={constraints}
+                    refresh={refresh}
+                  />
+                </div>
+              </>
+            )}
+
+            {step === 4 && (
+              <>
+                <h2 className="m-0 font-display text-[40px] leading-[1.02] tracking-[-0.02em] sm:text-[56px]">
                   Time to <span className="font-display-italic">seat them.</span>
                 </h2>
                 <p className="mt-4 max-w-md text-[15px] leading-[1.55] text-ink-2 md:text-[16px]">
                   {guestCount > 0 && tableCount > 0
-                    ? `${guestCount} guests, ${tableCount} tables. Want a first draft in a few seconds?`
+                    ? `${guestCount} guests, ${tableCount} tables${constraints.length > 0 ? `, ${constraints.length} rule${constraints.length === 1 ? "" : "s"}` : ""}. Want a first draft?`
                     : "Add guests and tables first — then come back to seat them."}
                 </p>
 
@@ -140,7 +166,7 @@ export function OnboardingFlow({
                     <Wand2 className="text-terracotta" size={22} />
                     <div className="mt-2 font-display text-lg">Do a first pass for me</div>
                     <div className="mt-1 text-sm text-ink-3">
-                      Groups families together, keeps the people who shouldn&apos;t sit near each other apart, fills tables evenly.
+                      Groups families together, respects your rules, fills tables evenly.
                     </div>
                   </button>
                   <button
@@ -182,14 +208,14 @@ export function OnboardingFlow({
               ))}
             </div>
 
-            {step < 3 ? (
+            {step < 4 ? (
               <Button
                 size="sm"
                 className="rounded-full"
                 onClick={goNext}
                 disabled={continueDisabled}
               >
-                Continue
+                {step === 3 && constraints.length === 0 ? "Skip" : "Continue"}
                 <ArrowRight size={13} className="ml-1.5" />
               </Button>
             ) : (

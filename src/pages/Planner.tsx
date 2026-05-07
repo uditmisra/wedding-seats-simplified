@@ -20,7 +20,7 @@ import { SharePopover } from "@/components/planner/SharePopover";
 import { UserMenu } from "@/components/UserMenu";
 import { Logo } from "@/components/Logo";
 import { analytics } from "@/lib/analytics";
-import { Link as LinkIcon, Check, Wand2, GitCompareArrows, ShieldAlert, Download, Mail, Bookmark, MoreHorizontal, Pencil, Eye, Sparkles, Clock } from "lucide-react";
+import { Link as LinkIcon, Check, GitCompareArrows, ShieldAlert, Download, Mail, Bookmark, MoreHorizontal, Pencil, Eye, Sparkles, Clock } from "lucide-react";
 import { ClaimPlanModal } from "@/components/ClaimPlanModal";
 import { SignInNudge } from "@/components/SignInNudge";
 import { ActivityDrawer } from "@/components/planner/ActivityDrawer";
@@ -59,7 +59,7 @@ const Planner = () => {
   const [claimModalOpen, setClaimModalOpen] = useState(false);
   const [activityOpen, setActivityOpen] = useState(false);
 
-  const onboardingActive = !loading && plan && (guests.length === 0 || tables.length === 0);
+  const onboardingActive = !loading && plan && (guests.length === 0 && tables.length === 0);
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
   const showOnboarding = canEdit && onboardingActive && !onboardingDismissed;
 
@@ -241,11 +241,6 @@ const Planner = () => {
                   (user?.email ? user.email.split("@")[0] : undefined)
                 }
               />
-              {canEdit && (
-                <Button size="sm" onClick={() => setAutoOpen(true)} className="hidden sm:inline-flex h-9 rounded-full px-4 shadow-soft">
-                  <Wand2 size={14} className="mr-1.5" />Auto-seat
-                </Button>
-              )}
               <span
                 aria-hidden
                 className="hidden size-7 items-center justify-center rounded-full bg-olive font-mono text-[11px] font-medium text-paper sm:inline-flex"
@@ -324,6 +319,8 @@ const Planner = () => {
             eventDate={plan.event_date}
             guestCount={guests.length}
             tableCount={tables.length}
+            guests={guests}
+            constraints={constraints}
             onImport={goImport}
             onAutoAssign={() => { setAutoOpen(true); setOnboardingDismissed(true); }}
             onFinish={() => { setOnboardingDismissed(true); setTab("seating"); }}
@@ -397,6 +394,7 @@ const Planner = () => {
               onGoToTables={() => setTab("tables")}
               onActivityLog={log}
               roomConfig={plan.room_config}
+              onAutoAssign={() => setAutoOpen(true)}
             />
           </TabsContent>
           <TabsContent value="guests" className="mt-6 animate-tab-in">

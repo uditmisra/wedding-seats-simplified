@@ -52,6 +52,11 @@ export function ExportPanel({ plan, guests, tables, assignments }: Props) {
   const [greyscale, setGreyscale] = useState(false);
   const [busy, setBusy] = useState(false);
 
+  const attending = guests.filter(g => g.rsvp === "attending" || g.rsvp === "maybe").length;
+  const seated = assignments.length;
+  const seatedPct = attending > 0 ? Math.round((seated / attending) * 100) : 100;
+  const showSeatingWarning = attending > 0 && seatedPct < 80;
+
   // ── Preview data ─────────────────────────────────────────────────
   const previewFloorTables = useMemo<FloorPlanTable[]>(() => {
     const seatedByTable = new Map<string, number>();
@@ -224,6 +229,15 @@ export function ExportPanel({ plan, guests, tables, assignments }: Props) {
             <p className="mt-2 text-[12px] leading-[1.6] text-ink-3">
               Four print-ready artifacts. Newsreader on cream paper. Cut marks and bleeds included.
             </p>
+            {showSeatingWarning && (
+              <div className="mt-4 rounded-lg border border-butter/60 bg-butter/20 px-3 py-2.5">
+                <p className="font-mono text-[11px] text-ink-2">
+                  <span className="font-semibold text-ink">{seatedPct}% seated</span>
+                  {" — "}{seated} of {attending} expected guests have a seat.
+                  Export now for a draft, or finish seating first.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* FORMAT */}

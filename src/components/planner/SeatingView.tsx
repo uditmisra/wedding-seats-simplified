@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Guest, TableDef, Assignment, ConstraintDef } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Pin, UserPlus, X, Move, Check } from "lucide-react";
+import { Search, Pin, UserPlus, X, Move, Check, Wand2 } from "lucide-react";
 import { tableConflicts } from "@/lib/seating";
 import { FloorPlan } from "./FloorPlan";
 import { SeatMenu } from "./SeatMenu";
@@ -31,6 +31,7 @@ interface Props {
   onGoToTables?: () => void;
   onActivityLog?: (action: string, subject?: string, detail?: string) => void;
   roomConfig?: RoomConfig | null;
+  onAutoAssign?: () => void;
 }
 
 // Composite collision strategy:
@@ -67,7 +68,7 @@ function firstFreeSeat(table: TableDef, seated: Assignment[], excludeId?: string
   return null;
 }
 
-export function SeatingView({ planId, scenarioId, guests, tables, assignments, setAssignments, constraints, refresh, onGoToGuests, onGoToTables, canEdit = true, onActivityLog, roomConfig }: Props) {
+export function SeatingView({ planId, scenarioId, guests, tables, assignments, setAssignments, constraints, refresh, onGoToGuests, onGoToTables, canEdit = true, onActivityLog, roomConfig, onAutoAssign }: Props) {
   const [search, setSearch] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [view, setView] = useState<"list" | "floor" | "grouped">("floor");
@@ -272,21 +273,32 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
             List
           </button>
         </div>
-        {/* Arrange mode toggle — only in floor view and for editors */}
-        {view === "floor" && canEdit && tables.length > 0 && (
-          <button
-            onClick={() => setArrangeMode(m => !m)}
-            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] transition ${
-              arrangeMode
-                ? "border-terracotta bg-terracotta/10 text-terracotta"
-                : "border-hairline bg-paper text-ink-3 hover:text-ink"
-            }`}
-          >
-            {arrangeMode ? <Check size={12} /> : <Move size={12} />}
-            <span className="hidden sm:inline">{arrangeMode ? "Done arranging" : "Arrange room"}</span>
-            <span className="sm:hidden">{arrangeMode ? "Done" : "Arrange"}</span>
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {canEdit && onAutoAssign && guests.length > 0 && tables.length > 0 && (
+            <button
+              onClick={onAutoAssign}
+              className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-paper px-3 py-1.5 text-[12px] text-ink-3 transition hover:text-ink"
+            >
+              <Wand2 size={12} />
+              <span className="hidden sm:inline">Auto-seat</span>
+            </button>
+          )}
+          {/* Arrange mode toggle — only in floor view and for editors */}
+          {view === "floor" && canEdit && tables.length > 0 && (
+            <button
+              onClick={() => setArrangeMode(m => !m)}
+              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] transition ${
+                arrangeMode
+                  ? "border-terracotta bg-terracotta/10 text-terracotta"
+                  : "border-hairline bg-paper text-ink-3 hover:text-ink"
+              }`}
+            >
+              {arrangeMode ? <Check size={12} /> : <Move size={12} />}
+              <span className="hidden sm:inline">{arrangeMode ? "Done arranging" : "Arrange room"}</span>
+              <span className="sm:hidden">{arrangeMode ? "Done" : "Arrange"}</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {view === "floor" ? (

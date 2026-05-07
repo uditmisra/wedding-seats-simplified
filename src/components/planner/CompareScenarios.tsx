@@ -101,12 +101,16 @@ export function CompareScenarios({ scenarios, currentScenarioId, currentTables, 
 
   if (scenarios.length < 2) {
     return (
-      <div className="rounded-2xl border border-dashed hairline bg-paper-2/40 p-12 text-center">
+      <div className="rounded-2xl border border-dashed hairline bg-paper-2/40 px-12 py-14 text-center">
         <p className="m-0 font-display text-[28px] leading-tight">
-          Two <span className="font-display-italic">scenarios</span> — pick a winner.
+          Two <span className="font-display-italic">scenarios,</span> one winner.
         </p>
-        <p className="mx-auto mt-3 max-w-md text-[14px] text-ink-3">
-          Create a second layout from the scenarios picker, then come back to compare them side by side.
+        <p className="mx-auto mt-3 max-w-sm text-[14px] text-ink-3 leading-relaxed">
+          Try a second layout — round tables vs long, or a different head table position —
+          then compare them here side by side.
+        </p>
+        <p className="mx-auto mt-4 max-w-sm font-mono text-[11px] uppercase tracking-[0.12em] text-ink-3">
+          ↑ Use the scenario selector above the tabs to create a new draft.
         </p>
       </div>
     );
@@ -351,10 +355,10 @@ function DiffRow({ row, onCopy, onDelete, busy }: {
   busy: boolean;
 }) {
   const name = row.left?.name ?? row.right?.name ?? row.key;
-  const badge = row.kind === "added" ? { text: "Only on right", color: "text-sage", icon: Plus }
-              : row.kind === "removed" ? { text: "Only on left", color: "text-muted-foreground", icon: Minus }
-              : row.kind === "changed" ? { text: "Different", color: "text-primary", icon: Pencil }
-              : { text: "Identical", color: "text-muted-foreground", icon: Equal };
+  const badge = row.kind === "added" ? { text: "Only on right", color: "text-olive", icon: Plus }
+              : row.kind === "removed" ? { text: "Only on left", color: "text-ink-3", icon: Minus }
+              : row.kind === "changed" ? { text: "Different", color: "text-terracotta", icon: Pencil }
+              : { text: "Identical", color: "text-ink-3", icon: Equal };
   const Icon = badge.icon;
 
   return (
@@ -364,7 +368,7 @@ function DiffRow({ row, onCopy, onDelete, busy }: {
         {row.left ? (
           <SideCell t={row.left} seats={row.leftSeats} onDelete={() => onDelete(row, "left")} kind={row.kind === "removed" ? "removed" : row.kind === "changed" ? "changed" : "same"}/>
         ) : (
-          <div className="text-sm text-muted-foreground italic">— not present —</div>
+          <div className="text-[13px] text-ink-3 font-display-italic">— not present —</div>
         )}
       </div>
 
@@ -375,7 +379,7 @@ function DiffRow({ row, onCopy, onDelete, busy }: {
         </div>
         <div className="font-display text-sm truncate max-w-[180px]" title={name}>{name}</div>
         {row.kind === "changed" && row.changes.length > 0 && (
-          <div className="text-[10px] text-muted-foreground text-center leading-tight">{row.changes.join(" · ")}</div>
+          <div className="text-[10px] text-ink-3 text-center leading-tight">{row.changes.join(" · ")}</div>
         )}
         <div className="flex items-center gap-1 mt-0.5">
           {row.left && row.kind !== "same" && (
@@ -396,7 +400,7 @@ function DiffRow({ row, onCopy, onDelete, busy }: {
         {row.right ? (
           <SideCell t={row.right} seats={row.rightSeats} onDelete={() => onDelete(row, "right")} kind={row.kind === "added" ? "added" : row.kind === "changed" ? "changed" : "same"}/>
         ) : (
-          <div className="text-sm text-muted-foreground italic">— not present —</div>
+          <div className="text-[13px] text-ink-3 font-display-italic">— not present —</div>
         )}
       </div>
     </div>
@@ -404,20 +408,20 @@ function DiffRow({ row, onCopy, onDelete, busy }: {
 }
 
 function SideCell({ t, seats, onDelete, kind }: { t: TableDef; seats: number; onDelete: () => void; kind: "added" | "removed" | "changed" | "same" }) {
-  const accent =
-    kind === "added" ? "border-l-sage" :
-    kind === "removed" ? "border-l-muted-foreground/50" :
-    kind === "changed" ? "border-l-primary" :
-    "border-l-transparent";
+  const borderColor =
+    kind === "added" ? "hsl(var(--olive))" :
+    kind === "removed" ? "hsl(var(--ink-4))" :
+    kind === "changed" ? "hsl(var(--terracotta))" :
+    "transparent";
   return (
-    <div className={`flex items-center justify-between gap-2 rounded-md border-l-2 ${accent} pl-3 pr-1 py-1`}>
+    <div className="flex items-center justify-between gap-2 rounded-md pl-3 pr-1 py-1" style={{ borderLeft: `2px solid ${borderColor}` }}>
       <div className="min-w-0">
-        <div className="text-sm font-medium truncate">{t.name}</div>
-        <div className="text-[11px] text-muted-foreground">
-          {t.shape} · {seats}/{t.capacity} seated · ({Math.round(t.x)},{Math.round(t.y)})
+        <div className="text-[13px] font-medium truncate">{t.name}</div>
+        <div className="text-[11px] text-ink-3">
+          {t.shape} · {seats}/{t.capacity} seated
         </div>
       </div>
-      <Button size="sm" variant="ghost" className="h-6 px-1.5 text-[11px] text-muted-foreground hover:text-destructive" onClick={onDelete}>
+      <Button size="sm" variant="ghost" className="h-6 px-1.5 text-[11px] text-ink-3 hover:text-rose" onClick={onDelete}>
         Remove
       </Button>
     </div>

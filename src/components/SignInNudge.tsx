@@ -65,11 +65,11 @@ export function SignInNudge({ planId, signedIn, guestCount, tableCount }: Props)
     >
       <div className="min-w-0 flex-1">
         <div className="font-display-italic text-[18px] leading-tight">
-          &ldquo;Don&apos;t lose this plan.&rdquo;
+          Save this to your account.
         </div>
         <div className="mt-1 text-[13px] text-ink-2">
-          You&apos;ve added {guests} and {tables}. Save your work to your email so you
-          can come back from any device.
+          {guests} and {tables} — sign in to open it from any device and share it
+          with your partner.
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -85,7 +85,7 @@ export function SignInNudge({ planId, signedIn, guestCount, tableCount }: Props)
             to={`/auth?next=${encodeURIComponent(window.location.pathname + "?claim=1")}`}
             onClick={dismiss}
           >
-            Save with email
+            Sign in
             <span className="ml-1 font-display-italic">→</span>
           </Link>
         </Button>

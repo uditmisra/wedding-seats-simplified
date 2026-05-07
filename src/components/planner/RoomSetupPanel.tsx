@@ -2,7 +2,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Wand2, Plus, Trash2, Eye, EyeOff, Save } from "lucide-react";
+import { Wand2, Trash2, Eye, EyeOff, Save } from "lucide-react";
 import { toast } from "sonner";
 import {
   type RoomConfig,
@@ -11,6 +11,7 @@ import {
   DEFAULT_ROOM_CONFIG,
   FIXTURE_META,
   FIXTURE_TYPES,
+  roomLayout,
 } from "@/lib/roomConfig";
 
 interface Props {
@@ -173,41 +174,102 @@ export function RoomSetupPanel({ planId, roomConfig, onSaved, canEdit = true }: 
           <div className="space-y-2">
             {cfg.fixtures.map(f => {
               const meta = FIXTURE_META[f.type];
+              const isPoint = f.type === "compass";
               return (
-                <div key={f.id} className="flex items-center gap-3 rounded-lg border hairline bg-paper/60 px-4 py-3">
-                  <span className="text-[16px]">{meta.emoji}</span>
-                  <div className="flex-1 min-w-0">
-                    {canEdit ? (
-                      <Input
-                        value={f.label}
-                        onChange={e => updateFixture(f.id, { label: e.target.value })}
-                        className="h-8 text-[13px] border-0 border-b border-ink/20 rounded-none px-0 focus-visible:ring-0 bg-transparent"
-                      />
-                    ) : (
-                      <span className="text-[13px]">{f.label}</span>
-                    )}
-                    <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-3">{f.type.replace("_", " ")}</span>
+                <div key={f.id} className="rounded-lg border hairline bg-paper/60">
+                  {/* Header row */}
+                  <div className="flex items-center gap-3 px-4 py-3">
+                    <span className="text-[16px]">{meta.emoji}</span>
+                    <div className="flex-1 min-w-0">
+                      {canEdit ? (
+                        <Input
+                          value={f.label}
+                          onChange={e => updateFixture(f.id, { label: e.target.value })}
+                          className="h-7 text-[13px] border-0 border-b border-ink/20 rounded-none px-0 focus-visible:ring-0 bg-transparent"
+                        />
+                      ) : (
+                        <span className="text-[13px]">{f.label}</span>
+                      )}
+                      <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-3">{f.type.replace(/_/g, " ")}</span>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {canEdit && (
+                        <button
+                          onClick={() => updateFixture(f.id, { visible: !f.visible })}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg text-ink-3 hover:text-ink hover:bg-paper-2 transition"
+                          title={f.visible ? "Hide" : "Show"}
+                        >
+                          {f.visible ? <Eye size={13} /> : <EyeOff size={13} />}
+                        </button>
+                      )}
+                      {canEdit && (
+                        <button
+                          onClick={() => removeFixture(f.id)}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg text-ink-4 hover:text-rose hover:bg-rose/10 transition"
+                          title="Remove"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    {canEdit && (
-                      <button
-                        onClick={() => updateFixture(f.id, { visible: !f.visible })}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg text-ink-3 hover:text-ink hover:bg-paper-2 transition"
-                        title={f.visible ? "Hide" : "Show"}
-                      >
-                        {f.visible ? <Eye size={13} /> : <EyeOff size={13} />}
-                      </button>
-                    )}
-                    {canEdit && (
-                      <button
-                        onClick={() => removeFixture(f.id)}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg text-ink-4 hover:text-rose hover:bg-rose/10 transition"
-                        title="Remove"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    )}
-                  </div>
+                  {/* Position sliders */}
+                  {canEdit && (
+                    <div className="border-t hairline px-4 pb-3 pt-2.5 grid grid-cols-2 gap-x-6 gap-y-1">
+                      <div>
+                        <div className="flex justify-between mb-1">
+                          <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-ink-3">← Left / Right →</span>
+                          <span className="font-mono text-[9px] text-ink-3">{Math.round((f.x_pct ?? 0) * 100)}%</span>
+                        </div>
+                        <input
+                          type="range" min={0} max={100} step={1}
+                          value={Math.round((f.x_pct ?? 0) * 100)}
+                          onChange={e => updateFixture(f.id, { x_pct: Number(e.target.value) / 100 })}
+                          className="w-full h-1 accent-terracotta"
+                        />
+                      </div>
+                      <div>
+                        <div className="flex justify-between mb-1">
+                          <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-ink-3">← Back / Front →</span>
+                          <span className="font-mono text-[9px] text-ink-3">{Math.round((f.y_pct ?? 0) * 100)}%</span>
+                        </div>
+                        <input
+                          type="range" min={0} max={100} step={1}
+                          value={Math.round((f.y_pct ?? 0) * 100)}
+                          onChange={e => updateFixture(f.id, { y_pct: Number(e.target.value) / 100 })}
+                          className="w-full h-1 accent-terracotta"
+                        />
+                      </div>
+                      {!isPoint && (
+                        <>
+                          <div>
+                            <div className="flex justify-between mb-1">
+                              <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-ink-3">Width</span>
+                              <span className="font-mono text-[9px] text-ink-3">{Math.round((f.w_pct ?? 0.1) * 100)}%</span>
+                            </div>
+                            <input
+                              type="range" min={2} max={70} step={1}
+                              value={Math.round((f.w_pct ?? 0.1) * 100)}
+                              onChange={e => updateFixture(f.id, { w_pct: Number(e.target.value) / 100 })}
+                              className="w-full h-1 accent-terracotta"
+                            />
+                          </div>
+                          <div>
+                            <div className="flex justify-between mb-1">
+                              <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-ink-3">Height</span>
+                              <span className="font-mono text-[9px] text-ink-3">{Math.round((f.h_pct ?? 0.06) * 100)}%</span>
+                            </div>
+                            <input
+                              type="range" min={2} max={70} step={1}
+                              value={Math.round((f.h_pct ?? 0.06) * 100)}
+                              onChange={e => updateFixture(f.id, { h_pct: Number(e.target.value) / 100 })}
+                              className="w-full h-1 accent-terracotta"
+                            />
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -223,6 +285,9 @@ export function RoomSetupPanel({ planId, roomConfig, onSaved, canEdit = true }: 
 
       {/* Right rail */}
       <div className="space-y-6">
+        {/* Live mini preview */}
+        <RoomMiniPreview cfg={cfg} />
+
         {canEdit && (
           <div className="bg-paper-2/40 rounded-xl border hairline p-5 space-y-4">
             <p className="label-mono">Add a feature</p>
@@ -283,16 +348,83 @@ export function RoomSetupPanel({ planId, roomConfig, onSaved, canEdit = true }: 
           </div>
         )}
 
-        <div className="bg-paper-2/40 rounded-xl border hairline p-5">
-          <p className="label-mono mb-3">About positions</p>
-          <p className="font-mono text-[11px] text-ink-3 leading-relaxed">
-            After saving, switch to the Seating tab and use{" "}
-            <span className="text-ink font-medium">Arrange room</span> to drag tables
-            into their exact positions. Fixture positions are approximate — the AI
-            places them as fractions of the room.
-          </p>
-        </div>
       </div>
+    </div>
+  );
+}
+
+function RoomMiniPreview({ cfg }: { cfg: RoomConfig }) {
+  const PREVIEW_W = 280;
+  const PAD = 12;
+  const rl = roomLayout(cfg, PAD, PAD, PAD);
+  // Scale to fit preview width
+  const scale = PREVIEW_W / rl.canvasW;
+  const previewH = Math.round(rl.canvasH * scale);
+
+  const toCanvas = (f: Fixture) => ({
+    x: (rl.roomX + f.x_pct * rl.roomW) * scale,
+    y: (rl.roomY + f.y_pct * rl.roomH) * scale,
+    w: (f.w_pct ?? 0.1) * rl.roomW * scale,
+    h: (f.h_pct ?? 0.06) * rl.roomH * scale,
+  });
+
+  return (
+    <div className="rounded-xl border hairline overflow-hidden bg-paper paper-grain">
+      <div className="label-mono px-4 pt-3 pb-2">Preview</div>
+      <svg width={PREVIEW_W} height={previewH} className="block">
+        {/* Room outline */}
+        <rect
+          x={rl.roomX * scale} y={rl.roomY * scale}
+          width={rl.roomW * scale} height={rl.roomH * scale}
+          fill="none" stroke="hsl(var(--ink))" strokeWidth={1} opacity={0.6}
+        />
+        {cfg.fixtures.filter(f => f.visible).map(f => {
+          const p = toCanvas(f);
+          const cx = p.x + p.w / 2;
+          const cy = p.y + p.h / 2;
+
+          if (f.type === "compass") {
+            return (
+              <g key={f.id} transform={`translate(${p.x}, ${p.y})`}>
+                <circle r={6} fill="none" stroke="hsl(var(--ink-3))" strokeWidth={0.5} />
+                <path d="M 0 -5 L 1.5 2 L 0 0 L -1.5 2 Z" fill="hsl(var(--ink))" />
+              </g>
+            );
+          }
+          if (f.type === "dance_floor") {
+            return (
+              <g key={f.id}>
+                <rect x={p.x} y={p.y} width={p.w} height={p.h}
+                  fill="hsl(var(--terracotta) / 0.08)"
+                  stroke="hsl(var(--terracotta))" strokeWidth={0.7} strokeDasharray="3 3" />
+                <text x={cx} y={cy + 3} textAnchor="middle"
+                  fontFamily="Newsreader, serif" fontStyle="italic"
+                  fontSize={7} fill="hsl(var(--terracotta))">{f.label}</text>
+              </g>
+            );
+          }
+          if (f.type === "entry") {
+            return (
+              <g key={f.id}>
+                <rect x={p.x} y={p.y} width={p.w} height={p.h}
+                  fill="hsl(var(--paper))" stroke="hsl(var(--ink))" strokeWidth={0.7} />
+                <text x={cx} y={p.y + p.h - 2} textAnchor="middle"
+                  fontFamily='"Geist Mono", monospace' fontSize={5}
+                  letterSpacing="0.1em" fill="hsl(var(--ink-2))">{f.label}</text>
+              </g>
+            );
+          }
+          return (
+            <g key={f.id}>
+              <rect x={p.x} y={p.y} width={p.w} height={p.h}
+                fill="hsl(var(--paper-2))" stroke="hsl(var(--ink))" strokeWidth={0.6} rx={2} />
+              <text x={cx} y={cy + 3} textAnchor="middle"
+                fontFamily="Newsreader, serif" fontStyle="italic"
+                fontSize={7} fill="hsl(var(--ink-2))">{f.label}</text>
+            </g>
+          );
+        })}
+      </svg>
     </div>
   );
 }
