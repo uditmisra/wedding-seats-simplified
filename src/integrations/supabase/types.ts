@@ -16,34 +16,34 @@ export type Database = {
     Tables: {
       activity_log: {
         Row: {
+          action: string
+          created_at: string
+          detail: string | null
           id: string
           plan_id: string
-          user_id: string | null
-          user_display: string
-          action: string
           subject: string | null
-          detail: string | null
-          created_at: string
+          user_display: string
+          user_id: string | null
         }
         Insert: {
+          action: string
+          created_at?: string
+          detail?: string | null
           id?: string
           plan_id: string
-          user_id?: string | null
-          user_display?: string
-          action: string
           subject?: string | null
-          detail?: string | null
-          created_at?: string
+          user_display?: string
+          user_id?: string | null
         }
         Update: {
+          action?: string
+          created_at?: string
+          detail?: string | null
           id?: string
           plan_id?: string
-          user_id?: string | null
-          user_display?: string
-          action?: string
           subject?: string | null
-          detail?: string | null
-          created_at?: string
+          user_display?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -52,7 +52,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "plans"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       assignments: {
@@ -330,7 +330,7 @@ export type Database = {
           id: string
           name: string
           owner_id: string | null
-          room_config: import("@/lib/roomConfig").RoomConfig | null
+          room_config: Json | null
           updated_at: string
         }
         Insert: {
@@ -340,7 +340,7 @@ export type Database = {
           id?: string
           name?: string
           owner_id?: string | null
-          room_config?: import("@/lib/roomConfig").RoomConfig | null
+          room_config?: Json | null
           updated_at?: string
         }
         Update: {
@@ -349,8 +349,8 @@ export type Database = {
           event_date?: string | null
           id?: string
           name?: string
-          room_config?: import("@/lib/roomConfig").RoomConfig | null
           owner_id?: string | null
+          room_config?: Json | null
           updated_at?: string
         }
         Relationships: []
