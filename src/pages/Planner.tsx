@@ -188,7 +188,7 @@ const Planner = () => {
   const visibleTabs = TAB_DEFS;
 
   return (
-    <div className="paper-grain min-h-screen">
+    <div className="planner-page paper-grain min-h-screen">
       {/* Editorial header */}
       <header className="sticky top-0 z-30 border-b hairline bg-paper/85 backdrop-blur-md">
         <div className="container flex h-16 items-center gap-6">
@@ -200,6 +200,7 @@ const Planner = () => {
             {editingName && canEdit ? (
               <Input
                 autoFocus
+                autoCapitalize="words"
                 value={plan.name}
                 onChange={e => renamePlan(e.target.value)}
                 onBlur={() => setEditingName(false)}
@@ -423,7 +424,7 @@ const Planner = () => {
       {/* Mobile bottom tab bar — design surface MobileGuestsA tab strip */}
       {!showOnboarding && (
         <nav
-          className="fixed inset-x-0 bottom-0 z-30 border-t hairline bg-paper/95 backdrop-blur sm:hidden"
+          className="planner-bottom-nav fixed inset-x-0 bottom-0 z-30 border-t hairline bg-paper/95 backdrop-blur sm:hidden"
           style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
           aria-label="Planner sections"
         >

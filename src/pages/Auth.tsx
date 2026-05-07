@@ -92,8 +92,8 @@ export default function Auth() {
 
       <main className="container">
         <div className="grid items-start gap-12 pt-6 md:grid-cols-12 md:gap-16 md:pt-16">
-          {/* Left — editorial framing */}
-          <div className="md:col-span-6">
+          {/* Left — editorial framing (hidden on mobile so the sign-in card is immediately visible) */}
+          <div className="hidden md:block md:col-span-6">
             <div className="label-mono mb-7">Sign in</div>
             <h1 className="m-0 font-display text-[44px] leading-[1.05] tracking-[-0.02em] sm:text-[56px]">
               Pick up where you <span className="font-display-italic">left off.</span>

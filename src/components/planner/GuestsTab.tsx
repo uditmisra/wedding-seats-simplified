@@ -665,7 +665,7 @@ function GuestEditor({ planId, guests, guest, onClose }: { planId: string; guest
       <DialogContent>
         <DialogHeader><DialogTitle>{guest ? "Edit guest" : "Add guest"}</DialogTitle></DialogHeader>
         <div className="grid gap-3">
-          <div><Label>Name</Label><Input autoFocus value={form.name ?? ""} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
+          <div><Label>Name</Label><Input autoFocus autoCapitalize="words" value={form.name ?? ""} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
           {!showMore ? (
             <button type="button" onClick={() => setShowMore(true)} className="flex items-center gap-1 self-start text-sm text-terracotta hover:underline">
               <ChevronDown size={14} /> Add details (optional)

@@ -336,7 +336,8 @@ function UnassignedDrawerTrigger({ count, children }: { count: number; children:
       <DrawerTrigger asChild>
         <button
           type="button"
-          className="fixed bottom-[72px] left-1/2 z-30 inline-flex h-11 -translate-x-1/2 items-center gap-2 rounded-full bg-ink px-5 font-mono text-[12px] uppercase tracking-[0.12em] text-paper shadow-elegant lg:hidden"
+          className="fixed left-1/2 z-30 inline-flex h-11 -translate-x-1/2 items-center gap-2 rounded-full bg-ink px-5 font-mono text-[12px] uppercase tracking-[0.12em] text-paper shadow-elegant lg:hidden"
+          style={{ bottom: "calc(72px + env(safe-area-inset-bottom, 0px))" }}
         >
           <UsersIcon size={14} />
           Guests to seat
@@ -416,7 +417,7 @@ function GuestPill({ guest, dragging, pinned, overlay }: { guest: Guest; draggin
       ref={setNodeRef}
       {...listeners}
       {...attributes}
-      className={`group flex cursor-grab items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm active:cursor-grabbing transition-colors
+      className={`group flex cursor-grab select-none items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm active:cursor-grabbing transition-colors
         ${isDragging ? "opacity-30" : ""}
         ${dragging
           ? "border border-hairline bg-paper shadow-elegant"

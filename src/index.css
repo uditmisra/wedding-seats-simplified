@@ -168,3 +168,35 @@
   @keyframes tab-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
   .animate-tab-in { animation: tab-in 200ms cubic-bezier(0.2, 0, 0, 1); }
 }
+
+/* Landscape mobile: convert bottom tab bar to a left side rail so it doesn't
+   eat 14% of the 320-400px viewport height on phones like iPhone SE portrait-landscape. */
+@media (orientation: landscape) and (max-width: 639px) {
+  .planner-page {
+    padding-left: 56px;
+  }
+  .planner-bottom-nav {
+    top: 0;
+    left: 0;
+    right: auto;
+    bottom: 0;
+    width: 56px;
+    height: 100dvh;
+    border-top: none;
+    border-right: 1px solid hsl(var(--hairline));
+    padding-bottom: 0;
+    padding-left: env(safe-area-inset-left, 0px);
+  }
+  .planner-bottom-nav > div {
+    flex-direction: column;
+    height: 100%;
+    justify-content: space-evenly;
+  }
+  .planner-bottom-nav button {
+    padding: 4px;
+    gap: 1px;
+  }
+  .planner-bottom-nav button span:last-child {
+    font-size: 8px;
+  }
+}
