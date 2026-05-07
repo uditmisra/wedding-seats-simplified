@@ -414,7 +414,7 @@ export function ExportPanel({ plan, guests, tables, assignments }: Props) {
       <UpgradeModal
         open={upgradeOpen}
         onOpenChange={setUpgradeOpen}
-        headline={<>Unlock your <em className="font-display-italic text-terracotta">exports.</em></> as unknown as string}
+        headline={<>Unlock your <em className="font-display-italic text-terracotta">exports.</em></>}
         subhead="One £10 payment unlocks every PDF for every plan on your account, forever. No subscription."
       />
     </div>
