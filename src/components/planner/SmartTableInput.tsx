@@ -88,15 +88,31 @@ export function SmartTableInput({ planId, scenarioId, existingCount, onDone }: P
           <div className="text-sm text-muted-foreground">{parsed.length} tables — tweak any details, then create.</div>
           <div className="max-h-[40vh] overflow-y-auto space-y-1">
             {parsed.map((t, i) => (
-              <div key={i} className="grid grid-cols-12 gap-2 items-center">
-                <Input className="col-span-5" value={t.name} onChange={e => update(i, { name: e.target.value })}/>
-                <select className="col-span-3 h-9 rounded-md border border-input bg-background px-2 text-sm capitalize"
-                        value={t.shape} onChange={e => update(i, { shape: e.target.value as Shape })}>
-                  {(["round","rectangle","square","long","head"] as Shape[]).map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-                <Input className="col-span-3" type="number" min={1} max={30} value={t.capacity}
-                       onChange={e => update(i, { capacity: parseInt(e.target.value) || 1 })}/>
-                <Button variant="ghost" size="sm" className="col-span-1" onClick={() => remove(i)}><Trash2 size={14}/></Button>
+              <div key={i}>
+                {/* Mobile stacked card */}
+                <div className="flex flex-col gap-1.5 rounded-lg border border-border/40 p-2.5 sm:hidden">
+                  <Input value={t.name} onChange={e => update(i, { name: e.target.value })} placeholder="Table name"/>
+                  <div className="flex gap-1.5 items-center">
+                    <select className="flex-1 h-9 rounded-md border border-input bg-background px-2 text-sm capitalize"
+                            value={t.shape} onChange={e => update(i, { shape: e.target.value as Shape })}>
+                      {(["round","rectangle","square","long","head"] as Shape[]).map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                    <Input className="w-20" type="number" min={1} max={30} value={t.capacity}
+                           onChange={e => update(i, { capacity: parseInt(e.target.value) || 1 })} placeholder="Seats"/>
+                    <Button variant="ghost" size="sm" onClick={() => remove(i)}><Trash2 size={14}/></Button>
+                  </div>
+                </div>
+                {/* Desktop grid row */}
+                <div className="hidden sm:grid grid-cols-12 gap-2 items-center">
+                  <Input className="col-span-5" value={t.name} onChange={e => update(i, { name: e.target.value })}/>
+                  <select className="col-span-3 h-9 rounded-md border border-input bg-background px-2 text-sm capitalize"
+                          value={t.shape} onChange={e => update(i, { shape: e.target.value as Shape })}>
+                    {(["round","rectangle","square","long","head"] as Shape[]).map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                  <Input className="col-span-3" type="number" min={1} max={30} value={t.capacity}
+                         onChange={e => update(i, { capacity: parseInt(e.target.value) || 1 })}/>
+                  <Button variant="ghost" size="sm" className="col-span-1" onClick={() => remove(i)}><Trash2 size={14}/></Button>
+                </div>
               </div>
             ))}
           </div>

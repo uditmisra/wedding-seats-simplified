@@ -344,11 +344,8 @@ export function ExportPanel({ plan, guests, tables, assignments }: Props) {
 
         {/* Right preview stage */}
         <div
-          className="relative flex items-center justify-center overflow-hidden p-10"
-          style={{
-            background: "linear-gradient(180deg, #2b2820 0%, #181610 100%)",
-            minHeight: 540,
-          }}
+          className="relative flex min-h-[280px] items-center justify-center overflow-hidden p-6 lg:min-h-[540px] lg:p-10"
+          style={{ background: "linear-gradient(180deg, #2b2820 0%, #181610 100%)" }}
         >
           <div
             className="pointer-events-none absolute inset-0"

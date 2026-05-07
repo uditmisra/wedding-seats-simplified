@@ -231,7 +231,7 @@ const Planner = () => {
                 }
               />
               {canEdit && (
-                <Button size="sm" onClick={() => setAutoOpen(true)} className="h-9 rounded-full px-4 shadow-soft">
+                <Button size="sm" onClick={() => setAutoOpen(true)} className="hidden sm:inline-flex h-9 rounded-full px-4 shadow-soft">
                   <Wand2 size={14} className="mr-1.5" />Auto-seat
                 </Button>
               )}

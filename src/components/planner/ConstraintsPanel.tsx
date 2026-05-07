@@ -328,7 +328,7 @@ function ConstraintRow({
       <button
         aria-label="Remove rule"
         onClick={onRemove}
-        className="inline-flex size-7 items-center justify-center rounded-full text-ink-3 opacity-0 transition group-hover:opacity-100 hover:bg-terracotta/10 hover:text-terracotta"
+        className="inline-flex size-7 items-center justify-center rounded-full text-ink-3 opacity-100 transition sm:opacity-0 group-hover:opacity-100 hover:bg-terracotta/10 hover:text-terracotta"
       >
         <Trash2 size={12} />
       </button>

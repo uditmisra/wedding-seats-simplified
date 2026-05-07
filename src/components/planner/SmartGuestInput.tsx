@@ -109,14 +109,31 @@ export function SmartGuestInput({ planId, onDone }: Props) {
           </div>
           <div className="max-h-[40vh] overflow-y-auto space-y-1">
             {parsed.map((g, i) => (
-              <div key={i} className="grid grid-cols-12 gap-2 items-center">
-                <Input className="col-span-4" placeholder="Name" value={g.name} onChange={e => update(i, { name: e.target.value })}/>
-                <Input className="col-span-3" placeholder="Party" value={g.party ?? ""} onChange={e => update(i, { party: e.target.value })}/>
-                <Input className="col-span-2" placeholder="Meal" value={g.meal ?? ""} onChange={e => update(i, { meal: e.target.value })}/>
-                <label className="col-span-2 text-xs text-muted-foreground flex items-center gap-1">
-                  <input type="checkbox" checked={!!g.is_kid} onChange={e => update(i, { is_kid: e.target.checked })}/> kid
-                </label>
-                <Button variant="ghost" size="sm" className="col-span-1" onClick={() => remove(i)}><Trash2 size={14}/></Button>
+              <div key={i}>
+                {/* Mobile stacked card */}
+                <div className="flex flex-col gap-1.5 rounded-lg border border-border/40 p-2.5 sm:hidden">
+                  <Input placeholder="Name" value={g.name} onChange={e => update(i, { name: e.target.value })}/>
+                  <div className="flex gap-1.5">
+                    <Input className="flex-1" placeholder="Party" value={g.party ?? ""} onChange={e => update(i, { party: e.target.value })}/>
+                    <Input className="w-20" placeholder="Meal" value={g.meal ?? ""} onChange={e => update(i, { meal: e.target.value })}/>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <label className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <input type="checkbox" checked={!!g.is_kid} onChange={e => update(i, { is_kid: e.target.checked })}/> kid
+                    </label>
+                    <Button variant="ghost" size="sm" onClick={() => remove(i)}><Trash2 size={14}/></Button>
+                  </div>
+                </div>
+                {/* Desktop grid row */}
+                <div className="hidden sm:grid grid-cols-12 gap-2 items-center">
+                  <Input className="col-span-4" placeholder="Name" value={g.name} onChange={e => update(i, { name: e.target.value })}/>
+                  <Input className="col-span-3" placeholder="Party" value={g.party ?? ""} onChange={e => update(i, { party: e.target.value })}/>
+                  <Input className="col-span-2" placeholder="Meal" value={g.meal ?? ""} onChange={e => update(i, { meal: e.target.value })}/>
+                  <label className="col-span-2 text-xs text-muted-foreground flex items-center gap-1">
+                    <input type="checkbox" checked={!!g.is_kid} onChange={e => update(i, { is_kid: e.target.checked })}/> kid
+                  </label>
+                  <Button variant="ghost" size="sm" className="col-span-1" onClick={() => remove(i)}><Trash2 size={14}/></Button>
+                </div>
               </div>
             ))}
           </div>
