@@ -290,6 +290,33 @@ export type Database = {
           },
         ]
       }
+      pending_paddle_sessions: {
+        Row: {
+          consumed_at: string | null
+          created_at: string
+          email: string
+          magic_link_url: string
+          paddle_session_id: string
+          user_id: string
+        }
+        Insert: {
+          consumed_at?: string | null
+          created_at?: string
+          email: string
+          magic_link_url: string
+          paddle_session_id: string
+          user_id: string
+        }
+        Update: {
+          consumed_at?: string | null
+          created_at?: string
+          email?: string
+          magic_link_url?: string
+          paddle_session_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       plan_owners: {
         Row: {
           created_at: string
@@ -352,6 +379,36 @@ export type Database = {
           owner_id?: string | null
           room_config?: Json | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          is_grandfathered: boolean
+          is_paid: boolean
+          paddle_customer_id: string | null
+          paddle_transaction_id: string | null
+          paid_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          is_grandfathered?: boolean
+          is_paid?: boolean
+          paddle_customer_id?: string | null
+          paddle_transaction_id?: string | null
+          paid_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_grandfathered?: boolean
+          is_paid?: boolean
+          paddle_customer_id?: string | null
+          paddle_transaction_id?: string | null
+          paid_at?: string | null
         }
         Relationships: []
       }
