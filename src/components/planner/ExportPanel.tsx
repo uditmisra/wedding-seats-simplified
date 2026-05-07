@@ -342,6 +342,11 @@ export function ExportPanel({ plan, guests, tables, assignments }: Props) {
                     <Loader2 size={14} className="mr-1.5 animate-spin" />
                     Rendering…
                   </>
+                ) : !isPaid ? (
+                  <>
+                    <Lock size={14} className="mr-1.5" />
+                    Unlock for £10
+                  </>
                 ) : (
                   <>
                     <Download size={14} className="mr-1.5" />
@@ -406,6 +411,12 @@ export function ExportPanel({ plan, guests, tables, assignments }: Props) {
           </div>
         </div>
       </div>
+      <UpgradeModal
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        headline={<>Unlock your <em className="font-display-italic text-terracotta">exports.</em></> as unknown as string}
+        subhead="One £10 payment unlocks every PDF for every plan on your account, forever. No subscription."
+      />
     </div>
   );
 }
