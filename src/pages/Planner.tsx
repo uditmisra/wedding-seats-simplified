@@ -35,9 +35,9 @@ import { logActivity, displayName } from "@/lib/activity";
 const TAB_DEFS = [
   { value: "guests", numeral: "I", label: "Guests" },
   { value: "tables", numeral: "II", label: "Tables" },
-  { value: "constraints", numeral: "III", label: "Rules" },
-  { value: "seating", numeral: "IV", label: "Seating" },
-  { value: "room", numeral: "V", label: "Room" },
+  { value: "room", numeral: "III", label: "Room" },
+  { value: "constraints", numeral: "IV", label: "Rules" },
+  { value: "seating", numeral: "V", label: "Seating" },
   { value: "compare", numeral: "VI", label: "Compare" },
   { value: "export", numeral: "VII", label: "Export" },
 ] as const;

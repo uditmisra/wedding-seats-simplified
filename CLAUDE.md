@@ -7,6 +7,26 @@ source of truth before touching any surface.
 
 ---
 
+## Engineering and design principles
+
+These govern every decision — code, UX, copy, and architecture.
+
+**Diagnose before you prescribe.** Find the root cause; don't paper over symptoms. A fix that works but leaves the underlying problem intact is a liability you'll pay for later. If the real issue is that tables render outside the room because the grid ignores room bounds, fix the grid — don't clamp the coordinates.
+
+**Customer experience is the hard constraint.** Technically correct code that produces a confusing or painful user experience is not done. When there's tension between implementation elegance and UX quality, resolve it in favour of the user.
+
+**Think in flows, not surfaces.** Every change has upstream and downstream effects. Adding a tab, reordering a step, or removing a field changes what a user expects to happen next. Trace the full journey before you commit. Room setup belongs before seating because no one rearranges the room after assigning 140 guests — the tab order should reflect reality.
+
+**Every element must earn its place.** Copy that restates what the design already communicates, chrome that carries no information, affordances no user will ever reach — cut them. Clarity comes from removal, not addition. When in doubt, ask: what breaks if I delete this?
+
+**Anticipate the edges.** Empty states, error states, half-filled forms, concurrent edits, mobile viewports, guests with no table, tables with no guests — these are part of the product. Handle them gracefully, not with raw error strings or invisible failures. "That'll never happen" is how embarrassing bugs ship.
+
+**Prefer obviousness over cleverness.** A solution a future engineer understands immediately is worth more than an elegant abstraction they have to decode. Name things precisely, keep logic close to where it's used, and only abstract when the duplication is genuinely painful.
+
+---
+
+---
+
 ## Product
 
 **Wedding Seater** is a wedding seating planner. Couples drag guests onto tables,
