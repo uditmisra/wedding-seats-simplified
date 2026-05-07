@@ -15,6 +15,7 @@ interface Props {
   guests: Guest[];
   tables: TableDef[];
   assignments: Assignment[];
+  setAssignments: React.Dispatch<React.SetStateAction<Assignment[]>>;
   constraints: ConstraintDef[];
   onClose: () => void;
 }
@@ -25,7 +26,7 @@ interface TableRow {
   conflicts: ConstraintDef[];
 }
 
-export function AutoAssignDialog({ planId, scenarioId, guests, tables, assignments, constraints, onClose }: Props) {
+export function AutoAssignDialog({ planId, scenarioId, guests, tables, assignments, setAssignments, constraints, onClose }: Props) {
   const [includeMaybe, setIncludeMaybe] = useState(false);
   const [keepExisting, setKeepExisting] = useState(true);
   const [preview, setPreview] = useState<Map<string, string> | null>(null);
@@ -72,15 +73,25 @@ export function AutoAssignDialog({ planId, scenarioId, guests, tables, assignmen
   const apply = async () => {
     if (!preview) return;
     setLoading(true);
+    const pinnedIds = new Set(assignments.filter(a => a.pinned).map(a => a.guest_id));
+    const rows = [...preview.entries()]
+      .filter(([gid]) => !pinnedIds.has(gid))
+      .map(([guest_id, table_id]) => ({ plan_id: planId, scenario_id: scenarioId, guest_id, table_id }));
+
+    // Apply optimistically first — user sees the result before DB operations complete.
+    // This also prevents the brief "empty seating" flash caused by the realtime
+    // DELETE event firing before the INSERT lands.
+    const optimistic: Assignment[] = [
+      ...(keepExisting ? assignments.filter(a => a.pinned) : []),
+      ...rows.map(r => ({ ...r, id: `opt-${r.guest_id}`, seat_index: null, pinned: false })),
+    ];
+    setAssignments(optimistic);
+
     if (keepExisting) {
       await supabase.from("assignments").delete().eq("scenario_id", scenarioId).eq("pinned", false);
     } else {
       await supabase.from("assignments").delete().eq("scenario_id", scenarioId);
     }
-    const pinnedIds = new Set(assignments.filter(a => a.pinned).map(a => a.guest_id));
-    const rows = [...preview.entries()]
-      .filter(([gid]) => !pinnedIds.has(gid))
-      .map(([guest_id, table_id]) => ({ plan_id: planId, scenario_id: scenarioId, guest_id, table_id }));
     if (rows.length) await supabase.from("assignments").insert(rows);
     setLoading(false);
     const eligibleCount = guests.filter(g => g.rsvp === "attending" || (includeMaybe && g.rsvp === "maybe")).length;

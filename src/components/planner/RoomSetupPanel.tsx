@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -285,8 +285,8 @@ export function RoomSetupPanel({ planId, roomConfig, onSaved, canEdit = true }: 
 
       {/* Right rail */}
       <div className="space-y-6">
-        {/* Live mini preview */}
-        <RoomMiniPreview cfg={cfg} />
+        {/* Live mini preview — fixtures are draggable when canEdit */}
+        <RoomMiniPreview cfg={cfg} canEdit={canEdit} onUpdateFixture={canEdit ? updateFixture : undefined} />
 
         {canEdit && (
           <div className="bg-paper-2/40 rounded-xl border hairline p-5 space-y-4">
@@ -353,13 +353,21 @@ export function RoomSetupPanel({ planId, roomConfig, onSaved, canEdit = true }: 
   );
 }
 
-function RoomMiniPreview({ cfg }: { cfg: RoomConfig }) {
+function RoomMiniPreview({ cfg, canEdit, onUpdateFixture }: {
+  cfg: RoomConfig;
+  canEdit?: boolean;
+  onUpdateFixture?: (id: string, patch: Partial<Fixture>) => void;
+}) {
   const PREVIEW_W = 280;
   const PAD = 12;
   const rl = roomLayout(cfg, PAD, PAD, PAD);
-  // Scale to fit preview width
   const scale = PREVIEW_W / rl.canvasW;
   const previewH = Math.round(rl.canvasH * scale);
+
+  const dragRef = useRef<{
+    id: string; startX: number; startY: number; startXpct: number; startYpct: number;
+  } | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
 
   const toCanvas = (f: Fixture) => ({
     x: (rl.roomX + f.x_pct * rl.roomW) * scale,
@@ -368,24 +376,62 @@ function RoomMiniPreview({ cfg }: { cfg: RoomConfig }) {
     h: (f.h_pct ?? 0.06) * rl.roomH * scale,
   });
 
+  const handlePointerDown = (e: React.PointerEvent<SVGGElement>, f: Fixture) => {
+    if (!canEdit || !onUpdateFixture) return;
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    dragRef.current = { id: f.id, startX: e.clientX, startY: e.clientY, startXpct: f.x_pct, startYpct: f.y_pct };
+    setDragId(f.id);
+  };
+  const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
+    if (!dragRef.current || !onUpdateFixture) return;
+    const { id, startX, startY, startXpct, startYpct } = dragRef.current;
+    const dx = (e.clientX - startX) / (rl.roomW * scale);
+    const dy = (e.clientY - startY) / (rl.roomH * scale);
+    onUpdateFixture(id, {
+      x_pct: Math.max(0, Math.min(0.95, startXpct + dx)),
+      y_pct: Math.max(0, Math.min(0.95, startYpct + dy)),
+    });
+  };
+  const stopDrag = () => { dragRef.current = null; setDragId(null); };
+
   return (
     <div className="rounded-xl border hairline overflow-hidden bg-paper paper-grain">
-      <div className="label-mono px-4 pt-3 pb-2">Preview</div>
-      <svg width={PREVIEW_W} height={previewH} className="block">
-        {/* Room outline */}
+      <div className="flex items-center justify-between px-4 pt-3 pb-2">
+        <span className="label-mono">Preview</span>
+        {canEdit && onUpdateFixture && (
+          <span className="font-mono text-[9px] normal-case tracking-normal text-ink-3">drag to reposition</span>
+        )}
+      </div>
+      <svg
+        width={PREVIEW_W}
+        height={previewH}
+        className="block select-none"
+        style={{ cursor: dragId ? "grabbing" : "default" }}
+        onPointerMove={handlePointerMove}
+        onPointerUp={stopDrag}
+        onPointerCancel={stopDrag}
+      >
         <rect
           x={rl.roomX * scale} y={rl.roomY * scale}
           width={rl.roomW * scale} height={rl.roomH * scale}
-          fill="none" stroke="hsl(var(--ink))" strokeWidth={1} opacity={0.6}
+          fill="none" stroke="hsl(var(--ink))" strokeWidth={1} opacity={0.85}
         />
         {cfg.fixtures.filter(f => f.visible).map(f => {
           const p = toCanvas(f);
           const cx = p.x + p.w / 2;
           const cy = p.y + p.h / 2;
+          const isDragging = dragId === f.id;
+          const interactive = canEdit && !!onUpdateFixture;
+          const groupProps = interactive ? {
+            style: { cursor: isDragging ? "grabbing" : "grab" } as React.CSSProperties,
+            onPointerDown: (e: React.PointerEvent<SVGGElement>) => handlePointerDown(e, f),
+          } : {};
 
           if (f.type === "compass") {
             return (
-              <g key={f.id} transform={`translate(${p.x}, ${p.y})`}>
+              <g key={f.id} transform={`translate(${p.x}, ${p.y})`} {...groupProps}>
+                {interactive && <circle r={9} fill={isDragging ? "hsl(var(--terracotta)/0.1)" : "transparent"} />}
                 <circle r={6} fill="none" stroke="hsl(var(--ink-3))" strokeWidth={0.5} />
                 <path d="M 0 -5 L 1.5 2 L 0 0 L -1.5 2 Z" fill="hsl(var(--ink))" />
               </g>
@@ -393,34 +439,36 @@ function RoomMiniPreview({ cfg }: { cfg: RoomConfig }) {
           }
           if (f.type === "dance_floor") {
             return (
-              <g key={f.id}>
+              <g key={f.id} opacity={isDragging ? 0.7 : 1} {...groupProps}>
                 <rect x={p.x} y={p.y} width={p.w} height={p.h}
-                  fill="hsl(var(--terracotta) / 0.08)"
-                  stroke="hsl(var(--terracotta))" strokeWidth={0.7} strokeDasharray="3 3" />
+                  fill="hsl(var(--terracotta)/0.08)" stroke="hsl(var(--terracotta))"
+                  strokeWidth={isDragging ? 1.5 : 0.7} strokeDasharray="3 3" />
                 <text x={cx} y={cy + 3} textAnchor="middle"
                   fontFamily="Newsreader, serif" fontStyle="italic"
-                  fontSize={7} fill="hsl(var(--terracotta))">{f.label}</text>
+                  fontSize={7} fill="hsl(var(--terracotta))" style={{ pointerEvents: "none" }}>{f.label}</text>
               </g>
             );
           }
           if (f.type === "entry") {
             return (
-              <g key={f.id}>
+              <g key={f.id} opacity={isDragging ? 0.7 : 1} {...groupProps}>
                 <rect x={p.x} y={p.y} width={p.w} height={p.h}
-                  fill="hsl(var(--paper))" stroke="hsl(var(--ink))" strokeWidth={0.7} />
+                  fill="hsl(var(--paper))" stroke="hsl(var(--ink))"
+                  strokeWidth={isDragging ? 1.5 : 0.7} />
                 <text x={cx} y={p.y + p.h - 2} textAnchor="middle"
                   fontFamily='"Geist Mono", monospace' fontSize={5}
-                  letterSpacing="0.1em" fill="hsl(var(--ink-2))">{f.label}</text>
+                  letterSpacing="0.1em" fill="hsl(var(--ink-2))" style={{ pointerEvents: "none" }}>{f.label}</text>
               </g>
             );
           }
           return (
-            <g key={f.id}>
+            <g key={f.id} opacity={isDragging ? 0.7 : 1} {...groupProps}>
               <rect x={p.x} y={p.y} width={p.w} height={p.h}
-                fill="hsl(var(--paper-2))" stroke="hsl(var(--ink))" strokeWidth={0.6} rx={2} />
+                fill="hsl(var(--paper-2))" stroke="hsl(var(--ink))"
+                strokeWidth={isDragging ? 1.5 : 0.6} rx={2} />
               <text x={cx} y={cy + 3} textAnchor="middle"
                 fontFamily="Newsreader, serif" fontStyle="italic"
-                fontSize={7} fill="hsl(var(--ink-2))">{f.label}</text>
+                fontSize={7} fill="hsl(var(--ink-2))" style={{ pointerEvents: "none" }}>{f.label}</text>
             </g>
           );
         })}

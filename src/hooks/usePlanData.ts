@@ -66,10 +66,16 @@ export function usePlanData(code: string | undefined) {
     return () => { active = false; };
   }, [code, loadAll]);
 
-  // Realtime: subscribe to changes for this plan
+  // Realtime: subscribe to changes for this plan.
+  // Debounce the reload so rapid DELETE + INSERT sequences (e.g. auto-assign)
+  // collapse into a single fetch rather than briefly showing an empty state.
   useEffect(() => {
     if (!plan || !code) return;
-    const reload = () => loadAll(code, scenarioId);
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const reload = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => loadAll(code, scenarioId), 350);
+    };
     const ch = supabase
       .channel(`plan-${plan.id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "guests", filter: `plan_id=eq.${plan.id}` }, reload)
@@ -78,7 +84,7 @@ export function usePlanData(code: string | undefined) {
       .on("postgres_changes", { event: "*", schema: "public", table: "constraints_def", filter: `plan_id=eq.${plan.id}` }, reload)
       .on("postgres_changes", { event: "*", schema: "public", table: "scenarios", filter: `plan_id=eq.${plan.id}` }, reload)
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    return () => { if (timer) clearTimeout(timer); supabase.removeChannel(ch); };
   }, [plan, code, scenarioId, loadAll]);
 
   const refresh = useCallback(() => { if (code) return loadAll(code, scenarioId); }, [code, scenarioId, loadAll]);

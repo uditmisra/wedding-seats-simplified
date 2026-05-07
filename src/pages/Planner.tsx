@@ -225,13 +225,13 @@ const Planner = () => {
                 {canEdit && <Pencil size={11} className="shrink-0 opacity-0 transition group-hover:opacity-50" />}
               </button>
             )}
-            <div className="font-mono text-[10px] uppercase tracking-[0.05em] text-ink-3">
+            <div className="font-mono text-[10px] uppercase tracking-[0.05em] text-ink-2">
               {planCode}
             </div>
           </div>
           <TooltipProvider delayDuration={200}>
             <div className="flex items-center gap-2">
-              <span className="hidden font-mono text-[11px] text-ink-3 sm:inline">Saved · just now</span>
+              <span className="hidden font-mono text-[11px] text-ink-2 sm:inline">Saved · just now</span>
               <SharePopover
                 planName={plan.name}
                 planUrl={typeof window !== "undefined" ? window.location.href : ""}
@@ -360,7 +360,7 @@ const Planner = () => {
             <div className="flex items-center gap-3 pb-3">
               {!showOnboarding && totalExpected > 0 && (
                 <div className="hidden items-center gap-2 sm:flex">
-                  <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-3 tabular-nums">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-2 tabular-nums">
                     {seatedCount} / {totalExpected} seated
                   </span>
                   <div className="h-[3px] w-24 rounded-full bg-paper-3">
@@ -430,8 +430,9 @@ const Planner = () => {
           guests={guests}
           tables={tables}
           assignments={assignments}
+          setAssignments={setAssignments}
           constraints={constraints}
-          onClose={() => { setAutoOpen(false); refresh(); toast.success("Seated."); }}
+          onClose={() => { setAutoOpen(false); refresh(); }}
         />
       )}
 
@@ -502,10 +503,10 @@ function ChapterTab({
   return (
     <TabsTrigger
       value={value}
-      className="group relative h-auto rounded-none border-0 bg-transparent px-0 pb-3 pt-3 text-sm font-normal text-ink-3 transition-colors data-[state=active]:bg-transparent data-[state=active]:font-medium data-[state=active]:text-ink data-[state=active]:shadow-none data-[state=active]:after:absolute data-[state=active]:after:inset-x-0 data-[state=active]:after:-bottom-px data-[state=active]:after:h-px data-[state=active]:after:bg-ink"
+      className="group relative h-auto rounded-none border-0 bg-transparent px-0 pb-3 pt-3 text-sm font-normal text-ink-2 transition-colors data-[state=active]:bg-transparent data-[state=active]:font-medium data-[state=active]:text-ink data-[state=active]:shadow-none data-[state=active]:after:absolute data-[state=active]:after:inset-x-0 data-[state=active]:after:-bottom-px data-[state=active]:after:h-px data-[state=active]:after:bg-ink"
     >
       <span className="flex items-baseline gap-1.5">
-        <span className="font-display-italic text-[13px] text-ink-3 transition-colors group-data-[state=active]:text-terracotta">
+        <span className="font-display-italic text-[13px] text-ink-2 transition-colors group-data-[state=active]:text-terracotta">
           {numeral}
         </span>
         <span className="text-[14px]">{label}</span>
