@@ -461,12 +461,20 @@ const Index = () => {
     const { data, error } = await supabase
       .from("plans").insert({ code, name: name.trim() || "Our Wedding" })
       .select().single();
-    if (error || !data) { setLoading(false); toast.error("Could not create plan"); return; }
+    if (error || !data) {
+      setLoading(false);
+      console.error("plans.insert failed:", error);
+      toast.error(error?.message ? `Couldn't create plan: ${error.message}` : "Could not create plan");
+      return;
+    }
     const { error: ownErr } = await supabase
       .from("plan_owners")
       .insert({ plan_id: data.id, user_id: user.id, role: "owner" });
     setLoading(false);
-    if (ownErr) toast.error("Plan created but ownership failed");
+    if (ownErr) {
+      console.error("plan_owners.insert failed:", ownErr);
+      toast.error(`Plan created but ownership failed: ${ownErr.message}`);
+    }
     analytics.planCreated({ name: data.name });
     navigate(`/plan/${data.code}`);
   };
