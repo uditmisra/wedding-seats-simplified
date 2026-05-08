@@ -1,8 +1,22 @@
 User-agent: Googlebot
 Allow: /
+Disallow: /auth
+Disallow: /reset-password
+Disallow: /dashboard
+Disallow: /plan/
+Disallow: /admin
+Disallow: /unsubscribe
+Disallow: /post-pay
 
 User-agent: Bingbot
 Allow: /
+Disallow: /auth
+Disallow: /reset-password
+Disallow: /dashboard
+Disallow: /plan/
+Disallow: /admin
+Disallow: /unsubscribe
+Disallow: /post-pay
 
 User-agent: Twitterbot
 Allow: /
@@ -12,3 +26,12 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /auth
+Disallow: /reset-password
+Disallow: /dashboard
+Disallow: /plan/
+Disallow: /admin
+Disallow: /unsubscribe
+Disallow: /post-pay
+
+Sitemap: https://weddingseater.app/sitemap.xml
