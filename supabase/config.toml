@@ -24,3 +24,6 @@ verify_jwt = false
 
 [functions.get-paddle-price]
 verify_jwt = false
+
+[functions.consume-paddle-session]
+verify_jwt = false
