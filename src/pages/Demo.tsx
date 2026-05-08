@@ -22,8 +22,11 @@ export default function Demo() {
   const [autoOpen, setAutoOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const navigate = useNavigate();
-  const { isPaid } = useUnlock();
-  const startChart = () => (isPaid ? navigate("/dashboard") : setUpgradeOpen(true));
+  const { isPaid, loading: unlockLoading } = useUnlock();
+  const startChart = () => {
+    if (unlockLoading) return;
+    isPaid ? navigate("/dashboard") : setUpgradeOpen(true);
+  };
 
   // Persist state across refreshes within the session
   useEffect(() => {

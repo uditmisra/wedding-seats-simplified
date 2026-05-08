@@ -30,7 +30,7 @@ const Dashboard = () => {
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
   const [upgradeOpen, setUpgradeOpen] = useState(false);
-  const { isPaid } = useUnlock();
+  const { isPaid, loading: unlockLoading } = useUnlock();
 
   useEffect(() => {
     if (!loading && !user) navigate("/auth?next=/dashboard", { replace: true });
@@ -241,7 +241,7 @@ const Dashboard = () => {
                 className="h-11 rounded-full border-hairline bg-paper px-4 text-[14px] placeholder:italic"
               />
             </div>
-            <Button onClick={createPlan} disabled={creating} className="h-11 rounded-full px-5">
+            <Button onClick={createPlan} disabled={creating || unlockLoading} className="h-11 rounded-full px-5">
               {creating ? (
                 <>
                   <Loader2 size={14} className="mr-1.5 animate-spin" />

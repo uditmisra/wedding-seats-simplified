@@ -6,21 +6,31 @@ import { useUnlock } from "@/hooks/useUnlock";
 import { Sparkles, Loader2 } from "lucide-react";
 
 /**
- * Post-payment landing. Two paths reach this page:
+ * Post-payment landing. Decides what to do based on auth + entitlement
+ * state, in priority order:
  *
- *  1. Anonymous checkout — Paddle redirects with `?_ptxn={transaction_id}`.
- *     We poll consume-paddle-session to retrieve the one-time magic link
- *     the webhook stashed and redirect through it. Supabase signs the
- *     user in.
+ *   1. Signed in AND already paid (or grandfathered) → straight to
+ *      /dashboard?unlock=success. Catches both:
+ *        - Fast path: webhook used customData.userId, flipped is_paid
+ *          before this page even loaded.
+ *        - Slow path: webhook is in flight when we mount, then is_paid
+ *          flips via useUnlock's realtime subscription on profiles —
+ *          this effect re-runs and lands here.
  *
- *  2. Signed-in checkout — the webhook flips profiles.is_paid directly
- *     via customData.userId. No magic link is generated. Paddle's overlay
- *     may or may not append `_ptxn` reliably in this case, so we also
- *     handle "no _ptxn but session is paid" by polling useUnlock and
- *     redirecting to the dashboard once it flips.
+ *   2. Anonymous AND has ?_ptxn → poll consume-paddle-session for the
+ *      one-time magic link the webhook stashed. Redirect through it to
+ *      sign the user in.
  *
- *  3. Fall-through — neither signed in nor with a transaction reference.
- *     Show a clear "check your email" with a manual sign-in link.
+ *   3. Anonymous AND no ?_ptxn → tell them to check their inbox.
+ *
+ *   4. Signed in AND not paid yet → wait silently for the realtime
+ *      flip. If 30s pass with no flip, surface a "didn't fully process
+ *      yet" error.
+ *
+ * The previous version always polled consume-paddle-session whenever
+ * ?_ptxn was present, which trapped signed-in users for 30s — the
+ * webhook never creates a pending_paddle_sessions row in the
+ * customData.userId path.
  */
 export default function PostPay() {
   const [params] = useSearchParams();
@@ -30,108 +40,91 @@ export default function PostPay() {
   const { isPaid, loading: unlockLoading } = useUnlock();
   const [status, setStatus] = useState<"polling" | "error" | "consumed">("polling");
   const [errorMsg, setErrorMsg] = useState<string>("");
-  const consumed = useRef(false);
+  const handled = useRef(false);
 
-  // Path 1: anonymous checkout — consume the magic link via ?_ptxn.
   useEffect(() => {
-    if (!ptxn || consumed.current) return;
-
-    let attempts = 0;
-    const MAX_ATTEMPTS = 20;
-    const INTERVAL_MS = 1500;
-    let timer: number | null = null;
-    let cancelled = false;
-
-    const poll = async () => {
-      if (cancelled || consumed.current) return;
-      attempts += 1;
-      try {
-        const { data, error } = await supabase.functions.invoke("consume-paddle-session", {
-          body: { ptxn },
-        });
-        const respStatus = (data as { status?: string } | null)?.status;
-        if (respStatus === "ok" && (data as { magic_link_url?: string }).magic_link_url) {
-          consumed.current = true;
-          window.location.replace((data as { magic_link_url: string }).magic_link_url);
-          return;
-        }
-        if (respStatus === "consumed" || (error && /410/.test(String((error as { message?: string }).message ?? "")))) {
-          setStatus("consumed");
-          return;
-        }
-        if (attempts >= MAX_ATTEMPTS) {
-          setStatus("error");
-          setErrorMsg("Payment recorded, but we couldn't sign you in automatically. Check your inbox for a sign-in link.");
-          return;
-        }
-        timer = window.setTimeout(poll, INTERVAL_MS);
-      } catch (e) {
-        if (attempts >= MAX_ATTEMPTS) {
-          setStatus("error");
-          setErrorMsg(e instanceof Error ? e.message : "Something went wrong. Check your inbox for a sign-in link.");
-          return;
-        }
-        timer = window.setTimeout(poll, INTERVAL_MS);
-      }
-    };
-
-    poll();
-    return () => { cancelled = true; if (timer) window.clearTimeout(timer); };
-  }, [ptxn]);
-
-  // Path 2: signed-in checkout — wait for is_paid to flip, then go.
-  // Also catches the "Paddle didn't redirect with _ptxn" edge case for
-  // signed-in users.
-  useEffect(() => {
-    if (ptxn) return;                  // path 1 owns this case
+    if (handled.current) return;
     if (authLoading || unlockLoading) return;
 
-    if (!user) {
-      // No transaction ref AND not signed in. Either the user navigated
-      // here directly, or paid anonymously and Paddle didn't append the
-      // ref. Their magic link should be in their inbox.
+    // Case 1: signed in + paid → go.
+    if (user && isPaid) {
+      handled.current = true;
+      navigate("/dashboard?unlock=success", { replace: true });
+      return;
+    }
+
+    // Case 2: anonymous + ptxn → poll consume-paddle-session for a
+    // one-time magic link, then redirect through it.
+    if (!user && ptxn) {
+      handled.current = true;
+      void pollConsume();
+      return;
+    }
+
+    // Case 3: anonymous + no ptxn → tell them to check email.
+    if (!user && !ptxn) {
+      handled.current = true;
       setStatus("error");
       setErrorMsg("If you just paid, your sign-in link is in your inbox. Click it to come back signed in.");
       return;
     }
 
-    // Signed in. Either they're already paid (redirect now) or the webhook
-    // is still in flight — poll the profile briefly.
-    if (isPaid) {
-      navigate("/dashboard?unlock=success", { replace: true });
-      return;
+    // Case 4: signed in but not paid yet — webhook is racing us. Do
+    // nothing here; useUnlock's realtime subscription will flip isPaid
+    // and we'll re-enter case 1. The timeout effect below catches the
+    // case where the webhook never lands.
+
+    async function pollConsume() {
+      let attempts = 0;
+      const MAX = 20;
+      const INTERVAL = 1500;
+
+      const tick = async (): Promise<void> => {
+        attempts += 1;
+        try {
+          const { data, error } = await supabase.functions.invoke("consume-paddle-session", {
+            body: { ptxn },
+          });
+          const respStatus = (data as { status?: string } | null)?.status;
+          if (respStatus === "ok" && (data as { magic_link_url?: string }).magic_link_url) {
+            window.location.replace((data as { magic_link_url: string }).magic_link_url);
+            return;
+          }
+          if (respStatus === "consumed" || (error && /410/.test(String((error as { message?: string }).message ?? "")))) {
+            setStatus("consumed");
+            return;
+          }
+          if (attempts >= MAX) {
+            setStatus("error");
+            setErrorMsg("Payment recorded, but we couldn't sign you in automatically. Check your inbox for a sign-in link.");
+            return;
+          }
+          window.setTimeout(tick, INTERVAL);
+        } catch (e) {
+          if (attempts >= MAX) {
+            setStatus("error");
+            setErrorMsg(e instanceof Error ? e.message : "Something went wrong. Check your inbox.");
+            return;
+          }
+          window.setTimeout(tick, INTERVAL);
+        }
+      };
+      await tick();
     }
+  }, [user, authLoading, isPaid, unlockLoading, ptxn, navigate]);
 
-    let attempts = 0;
-    const MAX_ATTEMPTS = 20;
-    const INTERVAL_MS = 1500;
-    let cancelled = false;
-    let timer: number | null = null;
-
-    const poll = async () => {
-      if (cancelled) return;
-      attempts += 1;
-      const { data } = await supabase
-        .from("profiles" as never)
-        .select("is_paid, is_grandfathered" as never)
-        .eq("id" as never, user.id as never)
-        .maybeSingle();
-      const row = data as { is_paid?: boolean; is_grandfathered?: boolean } | null;
-      if (row?.is_paid || row?.is_grandfathered) {
-        navigate("/dashboard?unlock=success", { replace: true });
-        return;
-      }
-      if (attempts >= MAX_ATTEMPTS) {
-        setStatus("error");
-        setErrorMsg("Payment didn't fully process yet. Refresh in a minute, or check your inbox for a sign-in link.");
-        return;
-      }
-      timer = window.setTimeout(poll, INTERVAL_MS);
-    };
-
-    poll();
-    return () => { cancelled = true; if (timer) window.clearTimeout(timer); };
-  }, [ptxn, user, authLoading, isPaid, unlockLoading, navigate]);
+  // Case 4 timeout: signed-in-but-not-paid-yet → wait 30s for is_paid
+  // to flip via realtime, then surface a fallback error.
+  useEffect(() => {
+    if (handled.current || status !== "polling") return;
+    if (!user || isPaid || authLoading || unlockLoading) return;
+    const timer = window.setTimeout(() => {
+      if (handled.current || isPaid) return;
+      setStatus("error");
+      setErrorMsg("Payment didn't fully process yet. Refresh in a minute, or check your inbox for a sign-in link.");
+    }, 30000);
+    return () => window.clearTimeout(timer);
+  }, [user, isPaid, authLoading, unlockLoading, status]);
 
   return (
     <div className="paper-grain flex min-h-screen flex-col items-center justify-center px-6 text-center">

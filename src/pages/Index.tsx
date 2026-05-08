@@ -410,7 +410,7 @@ function FAQPair({ q, a }: { q: string; a: string }) {
 const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [params, setParams] = useSearchParams();
+  const [params] = useSearchParams();
   const [name, setName] = useState("");
   const [openCode, setOpenCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -418,7 +418,7 @@ const Index = () => {
   const [showCodeOpen, setShowCodeOpen] = useState(false);
   const [myPlans, setMyPlans] = useState<OwnedPlan[]>([]);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
-  const { isPaid } = useUnlock();
+  const { isPaid, loading: unlockLoading } = useUnlock();
 
   useEffect(() => { setRecents(getRecentPlans()); }, []);
 
@@ -428,17 +428,6 @@ const Index = () => {
     if (presetName) setName(presetName);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    if (user && params.get("create") === "1") {
-      const presetName = params.get("name") ?? "";
-      const next = new URLSearchParams(params); next.delete("create"); next.delete("name");
-      setParams(next, { replace: true });
-      setName(presetName);
-      setTimeout(() => createPlan(), 0);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
 
   useEffect(() => {
     if (!user) { setMyPlans([]); return; }
@@ -456,7 +445,9 @@ const Index = () => {
 
   const createPlan = async () => {
     if (!user) {
-      navigate(`/auth?next=${encodeURIComponent("/?create=1&name=" + encodeURIComponent(name))}`);
+      // Defensive — CTAs branch on isPaid (which implies user) so this
+      // path shouldn't fire from the UI. Kept as a guard.
+      setUpgradeOpen(true);
       return;
     }
     if (!isPaid) {
@@ -541,7 +532,7 @@ const Index = () => {
                 </Link>
                 <button
                   onClick={() => (isPaid ? createPlan() : setUpgradeOpen(true))}
-                  disabled={loading}
+                  disabled={loading || unlockLoading}
                   className="inline-flex h-12 items-center justify-center gap-1.5 rounded-full border border-ink/20 bg-paper px-6 text-[15px] text-ink transition hover:bg-paper-2 disabled:opacity-60"
                 >
                   {loading ? <Loader2 size={14} className="animate-spin" /> : <>Start your chart <span className="font-display-italic">→</span></>}
@@ -768,7 +759,7 @@ const Index = () => {
                 </Link>
                 <button
                   onClick={() => (isPaid ? createPlan() : setUpgradeOpen(true))}
-                  disabled={loading}
+                  disabled={loading || unlockLoading}
                   className="inline-flex h-13 items-center justify-center gap-1.5 rounded-full border border-ink/20 bg-paper px-7 text-[16px] text-ink transition hover:bg-paper-2 disabled:opacity-60"
                 >
                   {loading ? <Loader2 size={14} className="animate-spin" /> : <>Start your chart <span className="font-display-italic">→</span></>}
