@@ -11,10 +11,10 @@ import { getRecentPlans, removeRecentPlan, type RecentPlan } from "@/lib/recentP
 import { PaperTable } from "@/components/PaperTable";
 import { useAuth } from "@/hooks/useAuth";
 import { UserMenu } from "@/components/UserMenu";
-import { loadOrCreateSamplePlan } from "@/lib/samplePlan";
 import { Logo } from "@/components/Logo";
 import { analytics } from "@/lib/analytics";
 import { UpgradeModal } from "@/components/UpgradeModal";
+import { useUnlock } from "@/hooks/useUnlock";
 
 interface OwnedPlan { id: string; code: string; name: string }
 
@@ -417,22 +417,11 @@ const Index = () => {
   const [recents, setRecents] = useState<RecentPlan[]>([]);
   const [showCodeOpen, setShowCodeOpen] = useState(false);
   const [myPlans, setMyPlans] = useState<OwnedPlan[]>([]);
-  const [sampleLoading, setSampleLoading] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const { isPaid } = useUnlock();
 
   useEffect(() => { setRecents(getRecentPlans()); }, []);
 
-  const openSample = async () => {
-    setSampleLoading(true);
-    try {
-      const code = await loadOrCreateSamplePlan();
-      navigate(`/plan/${code}`);
-    } catch (e) {
-      toast.error((e as Error)?.message ?? "Could not load the sample plan");
-    } finally {
-      setSampleLoading(false);
-    }
-  };
 
   useEffect(() => {
     const presetName = params.get("name");
@@ -468,6 +457,12 @@ const Index = () => {
   const createPlan = async () => {
     if (!user) {
       navigate(`/auth?next=${encodeURIComponent("/?create=1&name=" + encodeURIComponent(name))}`);
+      return;
+    }
+    if (!isPaid) {
+      // Pay to ship — gate plan creation behind the £10 unlock. The demo
+      // (sample data) covers try-before-buy without a real plan.
+      setUpgradeOpen(true);
       return;
     }
     setLoading(true);
@@ -506,14 +501,9 @@ const Index = () => {
           <a className="hover:text-ink" href="#how-it-works">How it works</a>
           <a className="hover:text-ink" href="#who-its-for">Who it's for</a>
           <Link to="/blog" className="hover:text-ink">Blog</Link>
-          <button
-            onClick={openSample}
-            disabled={sampleLoading}
-            className="inline-flex items-center gap-1 hover:text-ink disabled:opacity-60"
-          >
-            {sampleLoading && <Loader2 size={12} className="animate-spin" />}
-            See an example
-          </button>
+          <Link to="/demo" className="hover:text-ink">
+            Try the demo
+          </Link>
           <button
             onClick={() => setShowCodeOpen(true)}
             className="rounded-full border hairline px-4 py-2 text-[13px] hover:bg-paper-2"

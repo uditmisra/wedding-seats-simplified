@@ -11,6 +11,8 @@ import { Loader2, Plus } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { PaperTable } from "@/components/PaperTable";
 import { UserMenu } from "@/components/UserMenu";
+import { UpgradeModal } from "@/components/UpgradeModal";
+import { useUnlock } from "@/hooks/useUnlock";
 
 interface DashboardPlan {
   id: string;
@@ -27,6 +29,8 @@ const Dashboard = () => {
   const [counts, setCounts] = useState<Record<string, { guests: number; tables: number; assignments: number }>>({});
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const { isPaid } = useUnlock();
 
   useEffect(() => {
     if (!loading && !user) navigate("/auth?next=/dashboard", { replace: true });
@@ -84,6 +88,10 @@ const Dashboard = () => {
 
   const createPlan = async () => {
     if (!user) return;
+    if (!isPaid) {
+      setUpgradeOpen(true);
+      return;
+    }
     setCreating(true);
     const code = generatePlanCode();
     const { data, error } = await supabase
@@ -250,6 +258,8 @@ const Dashboard = () => {
           </div>
         </section>
       </main>
+
+      <UpgradeModal open={upgradeOpen} onOpenChange={setUpgradeOpen} />
     </div>
   );
 };
