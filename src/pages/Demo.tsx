@@ -149,13 +149,13 @@ function ConversionBar({ onUnlock, isPaid }: { onUnlock: () => void; isPaid: boo
             {isPaid ? (
               <>You're <span className="font-display-italic">unlocked.</span></>
             ) : (
-              <>Ready to plan your <span className="font-display-italic">own wedding?</span></>
+              <>You sorted Emma &amp; James's wedding. <span className="font-display-italic">Try it with yours.</span></>
             )}
           </div>
           <div className="text-[12px] text-ink-2">
             {isPaid
               ? "Head to your dashboard to start a new chart."
-              : "Your real guests, your venue. £10, one time — less than one place setting at your reception."}
+              : "Same tool, your real guests, your venue. £10 lifetime — less than one place setting."}
           </div>
         </div>
         <button
