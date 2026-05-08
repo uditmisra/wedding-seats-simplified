@@ -363,6 +363,7 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
           )}
           <FloorPlan
             chromeHeight={demoMode ? 320 : 240}
+            autoFit={demoMode}
             tables={tables} assignments={assignments} guests={guests} constraints={constraints} scenarioId={scenarioId}
             onUnassign={async (a) => {
               const g = guestById.get(a.guest_id);

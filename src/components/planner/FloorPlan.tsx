@@ -28,6 +28,8 @@ interface Props {
   roomConfig?: RoomConfig | null;
   /** Pixels of viewport chrome to subtract from 100vh. Default 240 (Planner). */
   chromeHeight?: number;
+  /** Force fit-to-viewport on mount, regardless of saved state. Used by /demo. */
+  autoFit?: boolean;
 }
 
 const MIN_ZOOM = 0.4;
@@ -39,7 +41,7 @@ const PAD_BOTTOM = 110;
 const TABLE_GAP = 44; // breathing room between table bounding boxes in auto-grid
 
 const noop = () => {};
-export function FloorPlan({ tables, assignments, guests, constraints, highlights, scenarioId, onUnassign = noop, onTogglePin = noop, onMoveTo = noop, onSwapWith = noop, unassigned = [], onAssign, canEdit = true, arrangeMode = false, onTableMove, roomConfig, chromeHeight = 240 }: Props) {
+export function FloorPlan({ tables, assignments, guests, constraints, highlights, scenarioId, onUnassign = noop, onTogglePin = noop, onMoveTo = noop, onSwapWith = noop, unassigned = [], onAssign, canEdit = true, arrangeMode = false, onTableMove, roomConfig, chromeHeight = 240, autoFit = false }: Props) {
   const guestById = useMemo(() => new Map(guests.map(g => [g.id, g])), [guests]);
 
   // Cell size grows with the largest table so big tables don't crowd neighbours.
@@ -108,15 +110,21 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
     if (!arrangeMode) setLivePos(new Map());
   }, [arrangeMode]);
 
-  // On mobile, auto-fit the canvas to the viewport width on first load
-  // (no saved state). Runs after mount so the viewport is measurable.
+  // Auto-fit on mount when:
+  //   - autoFit prop is true (demo route — always fresh, ignores saved state)
+  //   - mobile + no saved state (legacy behaviour)
+  // Runs after mount so the viewport is measurable.
   useEffect(() => {
-    if (typeof window === "undefined" || window.innerWidth >= 768) return;
-    try { if (localStorage.getItem(stateKey)) return; } catch {}
+    if (typeof window === "undefined") return;
+    const isMobile = window.innerWidth < 768;
+    if (!autoFit && !isMobile) return;
+    if (!autoFit) {
+      try { if (localStorage.getItem(stateKey)) return; } catch {}
+    }
     const id = requestAnimationFrame(fit);
     return () => cancelAnimationFrame(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [autoFit]);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
