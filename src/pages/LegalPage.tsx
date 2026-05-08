@@ -3,9 +3,15 @@ import { Link, useLocation } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { JsonLd } from "@/components/JsonLd";
 import { SITE_URL } from "@/lib/siteUrl";
+import { useSeoHead } from "@/lib/useSeoHead";
 
 export function LegalPage({ kicker, title, children }: { kicker: string; title: ReactNode; children: ReactNode }) {
   const { pathname } = useLocation();
+  useSeoHead({
+    title: `${kicker} | Wedding Seater`,
+    description: `${kicker} for Wedding Seater — the wedding seating chart planner.`,
+    canonical: `${SITE_URL}${pathname}`,
+  });
   return (
     <div className="min-h-screen bg-paper paper-grain">
       <JsonLd id={`legal-${pathname.replace(/\//g, "")}`} schema={{

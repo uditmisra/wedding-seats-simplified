@@ -7,12 +7,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { Logo } from "@/components/Logo";
+import { useSeoHead } from "@/lib/useSeoHead";
 
 export default function ResetPassword() {
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  useSeoHead({ title: "Reset password | Wedding Seater", description: "Reset your password.", noindex: true });
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange(event => {

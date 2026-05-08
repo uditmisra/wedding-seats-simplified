@@ -14,8 +14,15 @@ import { loadDemoState, saveDemoState, resetDemoState } from "@/lib/demo/demoSto
 import { useUnlock } from "@/hooks/useUnlock";
 import { JsonLd } from "@/components/JsonLd";
 import { SITE_URL } from "@/lib/siteUrl";
+import { useSeoHead } from "@/lib/useSeoHead";
 
 export default function Demo() {
+  useSeoHead({
+    title: "Try Wedding Seater — Live Demo (Emma & James, 120 guests)",
+    description: "Play with a real wedding seating chart. Drag guests, fix conflicts, run auto-seat — no account, no signup. See how Wedding Seater handles the divorced parents, the feuding cousins, the kids' table.",
+    canonical: `${SITE_URL}/demo`,
+    ogImage: `${SITE_URL}/brand/wedding-seater-mark.png`,
+  });
   const initial = useMemo(() => loadDemoState(), []);
   const [guests, setGuests] = useState(initial.guests);
   const [tables, setTables] = useState(initial.tables);

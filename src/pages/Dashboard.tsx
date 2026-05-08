@@ -13,6 +13,7 @@ import { PaperTable } from "@/components/PaperTable";
 import { UserMenu } from "@/components/UserMenu";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { useUnlock } from "@/hooks/useUnlock";
+import { useSeoHead } from "@/lib/useSeoHead";
 
 interface DashboardPlan {
   id: string;
@@ -31,6 +32,8 @@ const Dashboard = () => {
   const [name, setName] = useState("");
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const { isPaid, loading: unlockLoading } = useUnlock();
+
+  useSeoHead({ title: "Your plans | Wedding Seater", description: "Your Wedding Seater dashboard.", noindex: true });
 
   useEffect(() => {
     if (!loading && !user) navigate("/auth?next=/dashboard", { replace: true });

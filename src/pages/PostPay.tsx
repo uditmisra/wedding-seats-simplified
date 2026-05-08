@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUnlock } from "@/hooks/useUnlock";
+import { useSeoHead } from "@/lib/useSeoHead";
 import { Sparkles, Loader2 } from "lucide-react";
 
 /**
@@ -41,6 +42,8 @@ export default function PostPay() {
   const [status, setStatus] = useState<"polling" | "error" | "consumed">("polling");
   const [errorMsg, setErrorMsg] = useState<string>("");
   const handled = useRef(false);
+
+  useSeoHead({ title: "Almost there | Wedding Seater", description: "Setting up your account.", noindex: true });
 
   useEffect(() => {
     if (handled.current) return;

@@ -17,6 +17,7 @@ import { UpgradeModal } from "@/components/UpgradeModal";
 import { useUnlock } from "@/hooks/useUnlock";
 import { JsonLd } from "@/components/JsonLd";
 import { SITE_URL } from "@/lib/siteUrl";
+import { useSeoHead } from "@/lib/useSeoHead";
 
 interface OwnedPlan { id: string; code: string; name: string }
 
@@ -421,6 +422,13 @@ const Index = () => {
   const [myPlans, setMyPlans] = useState<OwnedPlan[]>([]);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const { isPaid, loading: unlockLoading } = useUnlock();
+
+  useSeoHead({
+    title: "Wedding Seating Chart Maker — Drag-and-Drop | Wedding Seater",
+    description: "Drag your guests onto your tables. Auto-seat handles the divorced parents, the feuding cousins, the kids' table. Try the demo free; £10 unlocks it for life.",
+    canonical: SITE_URL,
+    ogImage: `${SITE_URL}/brand/wedding-seater-mark.png`,
+  });
 
   useEffect(() => { setRecents(getRecentPlans()); }, []);
 

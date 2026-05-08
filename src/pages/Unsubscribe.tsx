@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { Logo } from "@/components/Logo";
+import { useSeoHead } from "@/lib/useSeoHead";
 
 type State = "loading" | "valid" | "already" | "invalid" | "submitting" | "done" | "error";
 
@@ -12,6 +13,7 @@ export default function Unsubscribe() {
   const token = params.get("token");
   const [state, setState] = useState<State>("loading");
   const [error, setError] = useState<string | null>(null);
+  useSeoHead({ title: "Unsubscribe | Wedding Seater", description: "Unsubscribe from emails.", noindex: true });
 
   useEffect(() => {
     if (!token) { setState("invalid"); return; }

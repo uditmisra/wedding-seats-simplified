@@ -31,6 +31,7 @@ import { addRecentPlan } from "@/lib/recentPlans";
 import { tableConflicts, unmetMustWith } from "@/lib/seating";
 import { useAuth } from "@/hooks/useAuth";
 import { logActivity, displayName } from "@/lib/activity";
+import { useSeoHead } from "@/lib/useSeoHead";
 
 const TAB_DEFS = [
   { value: "guests", numeral: "I", label: "Guests" },
@@ -47,6 +48,12 @@ const Planner = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { plan, setPlan, scenarios, scenarioId, setScenarioId, guests, tables, assignments, setAssignments, constraints, loading, notFound, refresh } = usePlanData(code);
   const { user } = useAuth();
+
+  useSeoHead({
+    title: plan ? `${plan.name} | Wedding Seater` : "Wedding Seater",
+    description: "Private wedding seating chart.",
+    noindex: true,
+  });
   const [editingName, setEditingName] = useState(false);
   const [autoOpen, setAutoOpen] = useState(false);
   const [copied, setCopied] = useState(false);

@@ -11,12 +11,15 @@ import { toast } from "sonner";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { analytics } from "@/lib/analytics";
+import { useSeoHead } from "@/lib/useSeoHead";
 
 export default function Auth() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const next = params.get("next") || "/";
   const { user, loading } = useAuth();
+
+  useSeoHead({ title: "Sign in | Wedding Seater", description: "Sign in to Wedding Seater.", noindex: true });
 
   useEffect(() => { if (!loading && user) navigate(next, { replace: true }); }, [user, loading, next, navigate]);
 
