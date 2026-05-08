@@ -11,7 +11,6 @@ import {
   DEMO_SCENARIO_ID,
 } from "@/lib/demo/sampleData";
 import { loadDemoState, saveDemoState, resetDemoState } from "@/lib/demo/demoStore";
-import { useResumeCheckout } from "@/hooks/useResumeCheckout";
 
 export default function Demo() {
   const initial = useMemo(() => loadDemoState(), []);
@@ -21,7 +20,6 @@ export default function Demo() {
   const [constraints] = useState(initial.constraints);
   const [autoOpen, setAutoOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
-  useResumeCheckout();
 
   // Persist state across refreshes within the session
   useEffect(() => {

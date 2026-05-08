@@ -15,7 +15,6 @@ import { Logo } from "@/components/Logo";
 import { analytics } from "@/lib/analytics";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { useUnlock } from "@/hooks/useUnlock";
-import { useResumeCheckout } from "@/hooks/useResumeCheckout";
 
 interface OwnedPlan { id: string; code: string; name: string }
 
@@ -420,7 +419,6 @@ const Index = () => {
   const [myPlans, setMyPlans] = useState<OwnedPlan[]>([]);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const { isPaid } = useUnlock();
-  useResumeCheckout();
 
   useEffect(() => { setRecents(getRecentPlans()); }, []);
 
