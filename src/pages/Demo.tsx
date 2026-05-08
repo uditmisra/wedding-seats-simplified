@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { SeatingView } from "@/components/planner/SeatingView";
 import { AutoAssignDialog } from "@/components/planner/AutoAssignDialog";
-import { Button } from "@/components/ui/button";
+import { UpgradeModal } from "@/components/UpgradeModal";
 import { Sparkles, RotateCcw, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -19,6 +19,7 @@ export default function Demo() {
   const [assignments, setAssignments] = useState(initial.assignments);
   const [constraints] = useState(initial.constraints);
   const [autoOpen, setAutoOpen] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   // Persist state across refreshes within the session
   useEffect(() => {
@@ -63,14 +64,14 @@ export default function Demo() {
               <RotateCcw size={12} />
               <span className="hidden sm:inline">Reset</span>
             </button>
-            <Link
-              to="/auth?intent=pay"
+            <button
+              onClick={() => setUpgradeOpen(true)}
               className="inline-flex items-center gap-1.5 rounded-full bg-ink px-3.5 py-1.5 text-[13px] font-medium text-paper transition hover:bg-ink-2"
             >
               <Sparkles size={13} className="text-butter" />
               <span>Start your chart</span>
               <span className="font-mono text-[11px] text-paper/70">£10</span>
-            </Link>
+            </button>
           </div>
         </div>
       </header>
@@ -121,12 +122,19 @@ export default function Demo() {
       </main>
 
       {/* Persistent conversion bar */}
-      <ConversionBar />
+      <ConversionBar onUnlock={() => setUpgradeOpen(true)} />
+
+      <UpgradeModal
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        headline={<>Ready to plan your <em className="font-display-italic text-terracotta">own wedding?</em></>}
+        subhead="One £10 payment unlocks unlimited plans, every PDF export, and sharing — for your account, forever. No subscription."
+      />
     </div>
   );
 }
 
-function ConversionBar() {
+function ConversionBar({ onUnlock }: { onUnlock: () => void }) {
   return (
     <div className="sticky bottom-0 border-t hairline bg-paper/95 backdrop-blur-md">
       <div className="container flex h-16 items-center gap-4">
@@ -138,14 +146,14 @@ function ConversionBar() {
             Your real guests, your venue. £10, one time — less than one place setting at your reception.
           </div>
         </div>
-        <Link
-          to="/auth?intent=pay"
+        <button
+          onClick={onUnlock}
           className="ml-auto inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-[14px] font-medium text-paper transition hover:bg-ink-2"
         >
           <span>Start my chart</span>
           <span className="font-mono text-[12px] text-paper/70">£10</span>
           <ArrowRight size={14} />
-        </Link>
+        </button>
       </div>
     </div>
   );
