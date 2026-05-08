@@ -59,12 +59,26 @@ async function stashMagicLink(opts: {
 
 // Account-wide one-time unlock: mark profiles.is_paid = true.
 async function handleTransactionCompleted(data: any, env: PaddleEnv) {
+  // Strict price-ID gating was checking item.price.importMeta.externalId,
+  // but Paddle's webhook payload returns this as undefined for prices
+  // created via the API (import_meta is a migration-only field). The
+  // result was every paid transaction being silently ignored.
+  //
+  // Approach: process any transaction.completed for now, since this app
+  // only sells one product. If a second SKU is added, gate by either
+  // item.price.id (resolved via get-paddle-price) or check
+  // item.price.customData (where Lovable likely sets external IDs).
   const item = data.items?.[0];
-  const externalPriceId = item?.price?.importMeta?.externalId;
-  if (externalPriceId !== 'unlock_lifetime') {
-    console.log('Ignoring transaction for unrecognized price', externalPriceId);
-    return;
-  }
+  const priceId = item?.price?.id;
+  const externalPriceId =
+    item?.price?.customData?.externalId ??
+    item?.price?.importMeta?.externalId;
+  console.log('transaction.completed', {
+    transactionId: data.id,
+    priceId,
+    externalPriceId,
+    hasCustomData: !!item?.price?.customData,
+  });
 
   let userId: string | undefined = data.customData?.userId;
   let email: string | undefined = data.customer?.email;
