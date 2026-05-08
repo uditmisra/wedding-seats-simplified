@@ -898,3 +898,51 @@ to a side rail nav instead of bottom bar. CSS-only; no JS required.
 - Native drag-and-drop rewrite (`@dnd-kit` already has touch support).
 - Floor plan re-architecture as a touch-native canvas.
 - Schema changes or new routes for mobile.
+
+---
+
+## SEO maintenance — sitemap and structured data
+
+### Whenever a new public route ships
+
+Any time a route is added in `src/App.tsx` that should be discoverable by search
+engines (landing variants, content surfaces, comparison pages, etc.), do all
+four of these in the same PR:
+
+1. **Add it to [public/sitemap.xml](public/sitemap.xml)** with an appropriate
+   `<priority>` (1.0 homepage / 0.9 conversion surfaces / 0.8 hubs / 0.7
+   articles / 0.3 legal) and today's date as `<lastmod>`. The sitemap is
+   hand-maintained; forgetting this means Google won't crawl the new page
+   through normal channels.
+2. **Add JSON-LD structured data** via `<JsonLd>` from `@/components/JsonLd`
+   with a `@type` matching the page's purpose (`SoftwareApplication` for
+   product surfaces, `BlogPosting` / `Article` for content, `WebPage` for
+   legal/utility, `FAQPage` for Q&A). Always use `SITE_URL` from
+   `@/lib/siteUrl` — never hardcode the domain.
+3. **Set canonical + meta tags** via `useSeoHead` from `@/lib/useSeoHead`.
+   Title and description drive the SERP snippet; canonical prevents
+   duplicate-content penalties when the same page is reachable via multiple
+   paths.
+4. **Confirm it isn't blocked** in [public/robots.txt](public/robots.txt) —
+   private / auth-gated routes belong in `Disallow` AND must be omitted from
+   the sitemap. Public pages need neither.
+
+### When a route flips private ↔ public
+
+If you make a previously-public route auth-gated (or vice versa), update both
+`sitemap.xml` and `robots.txt` in the same commit. Stale sitemap entries that
+404 hurt Search Console's Coverage report.
+
+### Blog posts specifically
+
+Each new file in `src/lib/blog/posts/` needs a corresponding `<url>` entry in
+`sitemap.xml` with `lastmod` matching the post's `publishDate`. If this becomes
+a chore (5+ posts/month), build-time generation from `getAllPosts()` is the
+right next step — write to `dist/sitemap.xml` from a small Vite plugin.
+
+### Domain changes
+
+The canonical URL lives in **one place only**: `src/lib/siteUrl.ts`. If the
+domain ever changes, update there plus `public/sitemap.xml` (every `<loc>`)
+plus `public/robots.txt` (the `Sitemap:` directive). Don't reintroduce
+hardcoded domains in component files.

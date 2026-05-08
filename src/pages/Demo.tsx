@@ -12,6 +12,8 @@ import {
 } from "@/lib/demo/sampleData";
 import { loadDemoState, saveDemoState, resetDemoState } from "@/lib/demo/demoStore";
 import { useUnlock } from "@/hooks/useUnlock";
+import { JsonLd } from "@/components/JsonLd";
+import { SITE_URL } from "@/lib/siteUrl";
 
 export default function Demo() {
   const initial = useMemo(() => loadDemoState(), []);
@@ -43,6 +45,20 @@ export default function Demo() {
 
   return (
     <div className="paper-grain min-h-screen flex flex-col">
+      <JsonLd id="demo-software" schema={{
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Wedding Seater — Interactive Demo",
+        "url": `${SITE_URL}/demo`,
+        "applicationCategory": "LifestyleApplication",
+        "operatingSystem": "Web browser",
+        "description": "Interactive demo of Wedding Seater. Drag guests onto tables, resolve seating conflicts, and run auto-seat — using a sample wedding (Emma & James, 120 guests). No account needed.",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "GBP",
+        },
+      }} />
       {/* Top banner — sample data pill + reset + start-your-chart CTA */}
       <header className="sticky top-0 z-30 border-b hairline bg-paper/90 backdrop-blur-md">
         <div className="container flex h-14 items-center gap-4">

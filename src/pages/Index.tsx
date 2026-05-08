@@ -15,6 +15,8 @@ import { Logo } from "@/components/Logo";
 import { analytics } from "@/lib/analytics";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { useUnlock } from "@/hooks/useUnlock";
+import { JsonLd } from "@/components/JsonLd";
+import { SITE_URL } from "@/lib/siteUrl";
 
 interface OwnedPlan { id: string; code: string; name: string }
 
@@ -486,6 +488,36 @@ const Index = () => {
 
   return (
     <div className="paper-grain min-h-screen">
+
+      <JsonLd id="organization" schema={{
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Wedding Seater",
+        "url": SITE_URL,
+        "logo": `${SITE_URL}/og-image.png`,
+        "description": "Wedding Seater is a web-based seating chart planner. Drag guests onto tables, resolve who can't sit near whom, share a link with whoever's helping.",
+      }} />
+      <JsonLd id="website" schema={{
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Wedding Seater",
+        "url": SITE_URL,
+      }} />
+      <JsonLd id="software" schema={{
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Wedding Seater",
+        "url": SITE_URL,
+        "applicationCategory": "LifestyleApplication",
+        "operatingSystem": "Web browser",
+        "offers": {
+          "@type": "Offer",
+          "price": "10.00",
+          "priceCurrency": "GBP",
+          "availability": "https://schema.org/InStock",
+          "url": SITE_URL,
+        },
+      }} />
 
       {/* ── Nav ──────────────────────────────────────────────────────────── */}
       <header className="container flex items-center justify-between py-7">

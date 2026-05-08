@@ -3,12 +3,11 @@ import { useMemo, useState } from "react";
 import { marked } from "marked";
 import { Logo } from "@/components/Logo";
 import { UserMenu } from "@/components/UserMenu";
-import { JsonLd } from "@/components/blog/JsonLd";
+import { JsonLd } from "@/components/JsonLd";
 import { useSeoHead } from "@/lib/useSeoHead";
 import { getPostBySlug } from "@/lib/blog/registry";
+import { SITE_URL } from "@/lib/siteUrl";
 import { ChevronDown } from "lucide-react";
-
-const SITE_URL = "https://weddingseater.com";
 
 // Configure marked once
 marked.setOptions({ gfm: true, breaks: false });

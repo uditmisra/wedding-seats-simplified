@@ -2,12 +2,11 @@ import { Link } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { UserMenu } from "@/components/UserMenu";
 import { PostCard } from "@/components/blog/PostCard";
-import { JsonLd } from "@/components/blog/JsonLd";
+import { JsonLd } from "@/components/JsonLd";
 import { useSeoHead } from "@/lib/useSeoHead";
 import { getAllPosts, getAllCategories } from "@/lib/blog/registry";
+import { SITE_URL } from "@/lib/siteUrl";
 import { useState } from "react";
-
-const SITE_URL = "https://weddingseater.com";
 
 export default function Blog() {
   const allPosts = getAllPosts();

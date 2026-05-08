@@ -1,10 +1,29 @@
 import { ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Logo } from "@/components/Logo";
+import { JsonLd } from "@/components/JsonLd";
+import { SITE_URL } from "@/lib/siteUrl";
 
 export function LegalPage({ kicker, title, children }: { kicker: string; title: ReactNode; children: ReactNode }) {
+  const { pathname } = useLocation();
   return (
     <div className="min-h-screen bg-paper paper-grain">
+      <JsonLd id={`legal-${pathname.replace(/\//g, "")}`} schema={{
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": kicker,
+        "url": `${SITE_URL}${pathname}`,
+        "isPartOf": {
+          "@type": "WebSite",
+          "name": "Wedding Seater",
+          "url": SITE_URL,
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "Wedding Seater",
+          "url": SITE_URL,
+        },
+      }} />
       <header className="flex items-center justify-between border-b border-hairline px-6 py-5 lg:px-14">
         <Link to="/" aria-label="Home"><Logo /></Link>
         <Link to="/" className="font-mono text-[11px] uppercase tracking-[0.16em] text-ink-3 hover:text-ink">← Back</Link>
