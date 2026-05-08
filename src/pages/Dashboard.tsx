@@ -94,24 +94,18 @@ const Dashboard = () => {
     }
     setCreating(true);
     const code = generatePlanCode();
-    const { data, error } = await supabase
-      .from("plans").insert({ code, name: name.trim() || "Our Wedding" })
-      .select().single();
+    const { data, error } = await supabase.rpc("create_plan_with_owner" as never, {
+      _code: code,
+      _name: name.trim() || "Our Wedding",
+    } as never);
+    setCreating(false);
     if (error || !data) {
-      setCreating(false);
-      console.error("plans.insert failed:", error);
+      console.error("create_plan_with_owner failed:", error);
       toast.error(error?.message ? `Couldn't create plan: ${error.message}` : "Could not create plan");
       return;
     }
-    const { error: ownErr } = await supabase
-      .from("plan_owners")
-      .insert({ plan_id: data.id, user_id: user.id, role: "owner" });
-    setCreating(false);
-    if (ownErr) {
-      console.error("plan_owners.insert failed:", ownErr);
-      toast.error(`Plan created but ownership failed: ${ownErr.message}`);
-    }
-    navigate(`/plan/${data.code}`);
+    const plan = data as unknown as { id: string; code: string; name: string };
+    navigate(`/plan/${plan.code}`);
   };
 
   if (loading || !user) return null;
