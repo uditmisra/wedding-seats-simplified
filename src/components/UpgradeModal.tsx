@@ -22,8 +22,12 @@ export function UpgradeModal({ open, onOpenChange, headline, subhead }: Props) {
 
   const start = async () => {
     if (!user) {
-      const next = encodeURIComponent(window.location.pathname + window.location.search);
-      navigate(`/auth?next=${next}`);
+      // Carry an `upgrade=resume` flag through auth so the destination page
+      // auto-opens Paddle Checkout once the user lands back signed in —
+      // they don't need to click "Start your chart" twice.
+      const sep = window.location.search ? "&" : "?";
+      const nextUrl = `${window.location.pathname}${window.location.search}${sep}upgrade=resume`;
+      navigate(`/auth?next=${encodeURIComponent(nextUrl)}`);
       return;
     }
     try { await openCheckout("unlock_lifetime"); }
@@ -57,13 +61,20 @@ export function UpgradeModal({ open, onOpenChange, headline, subhead }: Props) {
             </ul>
           </div>
 
-          <div className="mt-7 flex items-center justify-end gap-3">
-            <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-ink-3">
-              Not now
-            </Button>
-            <Button onClick={start} disabled={loading} className="rounded-full bg-ink px-6 text-paper hover:bg-ink-2">
-              {loading ? <Loader2 className="animate-spin" /> : <>Unlock for £10 →</>}
-            </Button>
+          <div className="mt-7 flex flex-col items-end gap-2">
+            <div className="flex items-center justify-end gap-3">
+              <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-ink-3">
+                Not now
+              </Button>
+              <Button onClick={start} disabled={loading} className="rounded-full bg-ink px-6 text-paper hover:bg-ink-2">
+                {loading ? <Loader2 className="animate-spin" /> : user ? <>Unlock for £10 →</> : <>Continue with email →</>}
+              </Button>
+            </div>
+            {!user && (
+              <p className="text-[11px] text-ink-3">
+                We'll email a sign-in link, then take you straight to checkout.
+              </p>
+            )}
           </div>
 
           {isTest && (

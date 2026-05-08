@@ -11,6 +11,7 @@ import {
   DEMO_SCENARIO_ID,
 } from "@/lib/demo/sampleData";
 import { loadDemoState, saveDemoState, resetDemoState } from "@/lib/demo/demoStore";
+import { useResumeCheckout } from "@/hooks/useResumeCheckout";
 
 export default function Demo() {
   const initial = useMemo(() => loadDemoState(), []);
@@ -20,6 +21,7 @@ export default function Demo() {
   const [constraints] = useState(initial.constraints);
   const [autoOpen, setAutoOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  useResumeCheckout();
 
   // Persist state across refreshes within the session
   useEffect(() => {
@@ -70,7 +72,6 @@ export default function Demo() {
             >
               <Sparkles size={13} className="text-butter" />
               <span>Start your chart</span>
-              <span className="font-mono text-[11px] text-paper/70">£10</span>
             </button>
           </div>
         </div>
@@ -151,7 +152,6 @@ function ConversionBar({ onUnlock }: { onUnlock: () => void }) {
           className="ml-auto inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-[14px] font-medium text-paper transition hover:bg-ink-2"
         >
           <span>Start my chart</span>
-          <span className="font-mono text-[12px] text-paper/70">£10</span>
           <ArrowRight size={14} />
         </button>
       </div>

@@ -15,6 +15,7 @@ import { Logo } from "@/components/Logo";
 import { analytics } from "@/lib/analytics";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { useUnlock } from "@/hooks/useUnlock";
+import { useResumeCheckout } from "@/hooks/useResumeCheckout";
 
 interface OwnedPlan { id: string; code: string; name: string }
 
@@ -419,6 +420,7 @@ const Index = () => {
   const [myPlans, setMyPlans] = useState<OwnedPlan[]>([]);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const { isPaid } = useUnlock();
+  useResumeCheckout();
 
   useEffect(() => { setRecents(getRecentPlans()); }, []);
 
@@ -541,10 +543,10 @@ const Index = () => {
                 </Link>
                 <button
                   onClick={() => setUpgradeOpen(true)}
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-ink/20 bg-paper px-5 text-[15px] text-ink transition hover:bg-paper-2"
+                  className="inline-flex h-12 items-center justify-center gap-1.5 rounded-full border border-ink/20 bg-paper px-6 text-[15px] text-ink transition hover:bg-paper-2"
                 >
-                  <span>Start your chart</span>
-                  <span className="font-mono text-[13px] text-ink-2">£10</span>
+                  Start your chart
+                  <span className="font-display-italic">→</span>
                 </button>
               </div>
               <p className="mt-3 font-mono text-[10.5px] uppercase tracking-[0.12em] text-ink-2">
@@ -768,10 +770,10 @@ const Index = () => {
                 </Link>
                 <button
                   onClick={() => setUpgradeOpen(true)}
-                  className="inline-flex h-13 items-center justify-center gap-2 rounded-full border border-ink/20 bg-paper px-6 text-[16px] text-ink transition hover:bg-paper-2"
+                  className="inline-flex h-13 items-center justify-center gap-1.5 rounded-full border border-ink/20 bg-paper px-7 text-[16px] text-ink transition hover:bg-paper-2"
                 >
-                  <span>Start your chart</span>
-                  <span className="font-mono text-[14px] text-ink-2">£10</span>
+                  Start your chart
+                  <span className="font-display-italic">→</span>
                 </button>
               </div>
               <p className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-ink-2">
