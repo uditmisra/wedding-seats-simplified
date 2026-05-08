@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { SeatingView } from "@/components/planner/SeatingView";
 import { AutoAssignDialog } from "@/components/planner/AutoAssignDialog";
 import { UpgradeModal } from "@/components/UpgradeModal";
@@ -11,6 +11,7 @@ import {
   DEMO_SCENARIO_ID,
 } from "@/lib/demo/sampleData";
 import { loadDemoState, saveDemoState, resetDemoState } from "@/lib/demo/demoStore";
+import { useUnlock } from "@/hooks/useUnlock";
 
 export default function Demo() {
   const initial = useMemo(() => loadDemoState(), []);
@@ -20,6 +21,9 @@ export default function Demo() {
   const [constraints] = useState(initial.constraints);
   const [autoOpen, setAutoOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const navigate = useNavigate();
+  const { isPaid } = useUnlock();
+  const startChart = () => (isPaid ? navigate("/dashboard") : setUpgradeOpen(true));
 
   // Persist state across refreshes within the session
   useEffect(() => {
@@ -65,11 +69,11 @@ export default function Demo() {
               <span className="hidden sm:inline">Reset</span>
             </button>
             <button
-              onClick={() => setUpgradeOpen(true)}
+              onClick={startChart}
               className="inline-flex items-center gap-1.5 rounded-full bg-ink px-3.5 py-1.5 text-[13px] font-medium text-paper transition hover:bg-ink-2"
             >
               <Sparkles size={13} className="text-butter" />
-              <span>Start your chart</span>
+              <span>{isPaid ? "Open dashboard" : "Start your chart"}</span>
             </button>
           </div>
         </div>
@@ -121,7 +125,7 @@ export default function Demo() {
       </main>
 
       {/* Persistent conversion bar */}
-      <ConversionBar onUnlock={() => setUpgradeOpen(true)} />
+      <ConversionBar onUnlock={startChart} isPaid={isPaid} />
 
       <UpgradeModal
         open={upgradeOpen}
@@ -133,23 +137,29 @@ export default function Demo() {
   );
 }
 
-function ConversionBar({ onUnlock }: { onUnlock: () => void }) {
+function ConversionBar({ onUnlock, isPaid }: { onUnlock: () => void; isPaid: boolean }) {
   return (
     <div className="sticky bottom-0 border-t hairline bg-paper/95 backdrop-blur-md">
       <div className="container flex h-16 items-center gap-4">
         <div className="hidden min-w-0 flex-1 sm:block">
           <div className="font-display text-[17px] leading-tight">
-            Ready to plan your <span className="font-display-italic">own wedding?</span>
+            {isPaid ? (
+              <>You're <span className="font-display-italic">unlocked.</span></>
+            ) : (
+              <>Ready to plan your <span className="font-display-italic">own wedding?</span></>
+            )}
           </div>
           <div className="text-[12px] text-ink-2">
-            Your real guests, your venue. £10, one time — less than one place setting at your reception.
+            {isPaid
+              ? "Head to your dashboard to start a new chart."
+              : "Your real guests, your venue. £10, one time — less than one place setting at your reception."}
           </div>
         </div>
         <button
           onClick={onUnlock}
           className="ml-auto inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-[14px] font-medium text-paper transition hover:bg-ink-2"
         >
-          <span>Start my chart</span>
+          <span>{isPaid ? "Open dashboard" : "Start my chart"}</span>
           <ArrowRight size={14} />
         </button>
       </div>

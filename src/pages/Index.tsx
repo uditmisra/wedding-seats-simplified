@@ -540,11 +540,11 @@ const Index = () => {
                   <span className="font-display-italic">→</span>
                 </Link>
                 <button
-                  onClick={() => setUpgradeOpen(true)}
-                  className="inline-flex h-12 items-center justify-center gap-1.5 rounded-full border border-ink/20 bg-paper px-6 text-[15px] text-ink transition hover:bg-paper-2"
+                  onClick={() => (isPaid ? createPlan() : setUpgradeOpen(true))}
+                  disabled={loading}
+                  className="inline-flex h-12 items-center justify-center gap-1.5 rounded-full border border-ink/20 bg-paper px-6 text-[15px] text-ink transition hover:bg-paper-2 disabled:opacity-60"
                 >
-                  Start your chart
-                  <span className="font-display-italic">→</span>
+                  {loading ? <Loader2 size={14} className="animate-spin" /> : <>Start your chart <span className="font-display-italic">→</span></>}
                 </button>
               </div>
               <p className="mt-3 font-mono text-[10.5px] uppercase tracking-[0.12em] text-ink-2">
@@ -767,11 +767,11 @@ const Index = () => {
                   <span className="font-display-italic">→</span>
                 </Link>
                 <button
-                  onClick={() => setUpgradeOpen(true)}
-                  className="inline-flex h-13 items-center justify-center gap-1.5 rounded-full border border-ink/20 bg-paper px-7 text-[16px] text-ink transition hover:bg-paper-2"
+                  onClick={() => (isPaid ? createPlan() : setUpgradeOpen(true))}
+                  disabled={loading}
+                  className="inline-flex h-13 items-center justify-center gap-1.5 rounded-full border border-ink/20 bg-paper px-7 text-[16px] text-ink transition hover:bg-paper-2 disabled:opacity-60"
                 >
-                  Start your chart
-                  <span className="font-display-italic">→</span>
+                  {loading ? <Loader2 size={14} className="animate-spin" /> : <>Start your chart <span className="font-display-italic">→</span></>}
                 </button>
               </div>
               <p className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-ink-2">
