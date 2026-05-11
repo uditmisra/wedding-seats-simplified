@@ -613,7 +613,7 @@ const Index = () => {
           <div className="relative h-[320px] md:h-[560px]">
             <FloorPlanVignette />
             <div className="absolute -bottom-3 left-6 rounded-full border hairline bg-paper px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.08em] text-ink-3">
-              Plan · Draft · 142 Guests · 17 Tables
+              Maya &amp; Jordan · 14 September 2026
             </div>
           </div>
         </section>
