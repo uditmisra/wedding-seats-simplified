@@ -542,6 +542,25 @@ export type Database = {
           plan_count: number
         }[]
       }
+      create_plan_with_owner: {
+        Args: { _code: string; _name: string }
+        Returns: {
+          code: string
+          created_at: string
+          event_date: string | null
+          id: string
+          name: string
+          owner_id: string | null
+          room_config: Json | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "plans"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
