@@ -580,9 +580,6 @@ const Index = () => {
                   {loading ? <Loader2 size={14} className="animate-spin" /> : <>Start your chart <span className="font-display-italic">→</span></>}
                 </button>
               </div>
-              <p className="mt-3 font-mono text-[10.5px] uppercase tracking-[0.12em] text-ink-2">
-                One payment · Less than one place setting at your reception
-              </p>
             </div>
 
             <div className="mt-4 max-w-lg">
