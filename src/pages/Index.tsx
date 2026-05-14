@@ -765,8 +765,8 @@ const Index = () => {
               </h2>
             </div>
             <div style={{ borderBottom: "0.5px solid rgba(43,42,34,0.18)" }}>
-              <FAQPair q="Is it actually free?" a="Yes. Not free-trial free. Not free-until-you-try-to-do-anything free. Just free." />
-              <FAQPair q="Do I need to make an account?" a="No. Your link is your plan. Bookmark it, text it to yourself, open it on any device. It'll be there." />
+              <FAQPair q="How much does it cost?" a="£10. One payment, lifetime access — no subscription, no per-guest pricing, no upsells. Try the demo first if you want to feel it before you pay. 30-day money-back guarantee." />
+              <FAQPair q="Do I need to make an account?" a="Yes — a quick email signup so your plan is saved to you and syncs across your laptop, phone, and whoever you share it with. Takes about ten seconds." />
               <FAQPair q="Can my partner edit it too?" a="Anyone with the link can. You don't need to be 'in charge' of the spreadsheet anymore — there is no spreadsheet." />
               <FAQPair q="What if I already started a spreadsheet?" a="Paste your guest list in and we'll figure out the rest. You don't have to start from zero." />
               <FAQPair q="How hard is the drag-and-drop?" a="You drag a name from the guest list. You drop it on a table. That's it. If you can move an app icon on your phone, you can do this." />
