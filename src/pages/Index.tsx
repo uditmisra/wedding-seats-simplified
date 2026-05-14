@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -409,6 +409,85 @@ function FAQPair({ q, a }: { q: string; a: string }) {
   );
 }
 
+// ─── Before / after comparison slider ─────────────────────────────────────
+function BeforeAfterSlider() {
+  const [pos, setPos] = useState(50);
+  const [dragging, setDragging] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const updateFromClientX = (clientX: number) => {
+    const el = ref.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const p = Math.max(0, Math.min(100, ((clientX - r.left) / r.width) * 100));
+    setPos(p);
+  };
+
+  useEffect(() => {
+    if (!dragging) return;
+    const onMove = (e: MouseEvent) => updateFromClientX(e.clientX);
+    const onTouch = (e: TouchEvent) => {
+      if (e.touches[0]) updateFromClientX(e.touches[0].clientX);
+    };
+    const onUp = () => setDragging(false);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("touchmove", onTouch, { passive: true });
+    window.addEventListener("mouseup", onUp);
+    window.addEventListener("touchend", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("touchmove", onTouch);
+      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("touchend", onUp);
+    };
+  }, [dragging]);
+
+  return (
+    <div style={{ width: "100%", maxWidth: 800, margin: "0 auto" }}>
+      <div
+        ref={ref}
+        onMouseDown={(e) => { e.preventDefault(); setDragging(true); updateFromClientX(e.clientX); }}
+        onTouchStart={(e) => { setDragging(true); if (e.touches[0]) updateFromClientX(e.touches[0].clientX); }}
+        style={{
+          position: "relative",
+          width: "100%",
+          overflow: "hidden",
+          borderRadius: 12,
+          cursor: "ew-resize",
+          userSelect: "none",
+          WebkitUserSelect: "none",
+          border: "1px solid rgba(43,42,34,0.18)",
+        }}
+      >
+        <img
+          src="https://i.ibb.co/JFtW4hkt/Screenshot-2026-05-14-at-15-53-55.png"
+          alt="Wedding seating planned in a spreadsheet"
+          draggable={false}
+          style={{ display: "block", width: "100%", height: "auto", pointerEvents: "none" }}
+        />
+        <div style={{ position: "absolute", inset: 0, clipPath: `inset(0 0 0 ${pos}%)` }}>
+          <img
+            src="https://i.ibb.co/DHSD62GP/Screenshot-2026-05-14-at-16-05-48.png"
+            alt="Wedding seating planned with Wedding Seater"
+            draggable={false}
+            style={{ width: "100%", height: "100%", objectFit: "cover", pointerEvents: "none" }}
+          />
+        </div>
+        <div style={{ position: "absolute", top: 0, bottom: 0, left: `${pos}%`, transform: "translateX(-50%)", width: 2, background: "#fff", boxShadow: "0 0 8px rgba(0,0,0,0.3)" }}>
+          <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 40, height: 40, borderRadius: "50%", background: "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="20" height="16" viewBox="0 0 20 16" fill="none">
+              <path d="M6 3L1 8L6 13" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M14 3L19 8L14 13" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+        </div>
+        <span style={{ position: "absolute", bottom: 12, left: 12, padding: "6px 12px", borderRadius: 9999, fontSize: 12, fontWeight: 500, fontFamily: "system-ui, -apple-system, sans-serif", background: "rgba(17,24,39,0.8)", color: "#fff", pointerEvents: "none", opacity: pos <= 5 ? 0 : 1, transition: "opacity 0.2s" }}>Spreadsheet</span>
+        <span style={{ position: "absolute", bottom: 12, right: 12, padding: "6px 12px", borderRadius: 9999, fontSize: 12, fontWeight: 500, fontFamily: "system-ui, -apple-system, sans-serif", background: "rgba(17,24,39,0.8)", color: "#fff", pointerEvents: "none", opacity: pos >= 95 ? 0 : 1, transition: "opacity 0.2s" }}>Wedding Seater</span>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main component ────────────────────────────────────────────────────────
 const Index = () => {
   const navigate = useNavigate();
@@ -707,7 +786,7 @@ const Index = () => {
           <h2 id="comparison-heading" className="m-0 mb-14 font-display text-[42px] leading-[1.0] tracking-[-0.025em] md:text-[56px] lg:text-[64px]">
             Wedding seating chart <span className="font-display-italic">template</span> vs. the real thing.
           </h2>
-          <ContrastPair />
+          <BeforeAfterSlider />
           {/* comparison table */}
           <div className="mt-16" style={{ border: `1px solid rgba(43,42,34,0.18)`, overflow: "hidden", borderRadius: 4 }}>
             {/* header row */}
