@@ -1,0 +1,39 @@
+# Wedding Seater
+
+> Drag-and-drop wedding seating chart maker. Plan tables, handle family politics, and share one live link with everyone helping.
+
+Wedding Seater is a web app for couples planning a wedding reception. You drag guests onto tables on a real floor plan, set rules for who can't sit near whom, and the planner works around them. The free demo is unlimited; £10 unlocks unlimited saved plans for life.
+
+## Pages
+
+- [Home](/): Product overview, demo, and pricing.
+- [Blog](/blog): Guides on seating arrangements, etiquette, and wedding planning.
+- [Terms](/terms): Terms of service.
+- [Privacy](/privacy): Privacy policy.
+- [Refunds](/refunds): 30-day refund policy.
+
+## Blog
+
+- [How to make a wedding seating chart](/blog/how-to-make-wedding-seating-chart): Step-by-step guide.
+- [Complete guide to wedding seating arrangements](/blog/complete-guide-wedding-seating-arrangements): Everything from head table to kids' table.
+- [Seating divorced parents](/blog/seating-divorced-parents): Handling family politics gracefully.
+- [How many guests per table](/blog/how-many-guests-per-table-wedding): Capacity planning by table shape.
+- [Head table seating guide](/blog/head-table-seating-guide): Who sits where at the top table.
+- [Wedding seating chart checklist](/blog/wedding-seating-chart-checklist): Don't forget anyone.
+- [When to start your seating chart](/blog/when-to-start-wedding-seating-chart): Timing and milestones.
+- [Drag-and-drop seating charts](/blog/drag-and-drop-seating-charts): Why visual planning beats spreadsheets.
+- [Seating chart for 150 guests](/blog/seating-chart-150-guests): Worked example.
+- [Wedding seating etiquette](/blog/wedding-seating-etiquette): Modern rules and traditions.
+- [Best free seating chart makers](/blog/best-free-seating-chart-makers): Tool comparison.
+
+## Optional
+
+- [Wedding Seater vs AllSeated](/blog/wedding-seater-vs-allseated)
+- [Seating chart vs Google Sheets](/blog/wedding-seating-chart-google-sheets)
+- [Template vs planner](/blog/wedding-seating-chart-template-vs-planner)
+- [Reception seating chart guide](/blog/wedding-reception-seating-chart)
+- [Collaborating on a seating chart](/blog/collaborate-wedding-seating-chart)
+- [Seating chart ideas](/blog/wedding-seating-chart-ideas)
+- [Wedding table planner](/blog/wedding-table-planner)
+- [Wedding seating chart app](/blog/wedding-seating-chart-app)
+- [Free seating chart maker guide](/blog/free-seating-chart-maker-guide)
