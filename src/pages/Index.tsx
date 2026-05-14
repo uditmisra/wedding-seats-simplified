@@ -424,7 +424,7 @@ const Index = () => {
   const { isPaid, loading: unlockLoading } = useUnlock();
 
   useSeoHead({
-    title: "Wedding Seating Chart Maker — Drag-and-Drop | Wedding Seater",
+    title: "Drag-and-Drop Wedding Seating Chart Maker | Wedding Seater",
     description: "Drag your guests onto your tables. Auto-seat handles the divorced parents, the feuding cousins, the kids' table. Try the demo free; £10 unlocks it for life.",
     canonical: SITE_URL,
     ogImage: `${SITE_URL}/brand/wedding-seater-mark.png`,

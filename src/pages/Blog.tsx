@@ -18,7 +18,7 @@ export default function Blog() {
     : allPosts;
 
   useSeoHead({
-    title: "Wedding Planning Tips & Seating Chart Advice | Wedding Seater Blog",
+    title: "Seating Chart Tips & Wedding Advice | Wedding Seater",
     description: "Free guides on wedding seating charts, seating arrangement tips, and planning advice from the team behind Wedding Seater.",
     canonical: `${SITE_URL}/blog`,
     ogType: "website",
