@@ -707,7 +707,7 @@ const Index = () => {
           <h2 id="comparison-heading" className="m-0 mb-14 font-display text-[42px] leading-[1.0] tracking-[-0.025em] md:text-[56px] lg:text-[64px]">
             Wedding seating chart <span className="font-display-italic">template</span> vs. the real thing.
           </h2>
-          <ContrastPair />
+          <BeforeAfterSlider />
           {/* comparison table */}
           <div className="mt-16" style={{ border: `1px solid rgba(43,42,34,0.18)`, overflow: "hidden", borderRadius: 4 }}>
             {/* header row */}
