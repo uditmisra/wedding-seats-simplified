@@ -10,7 +10,19 @@ const GUESTS_TOOL = {
   type: "function",
   function: {
     name: "extract_guests",
-    description: "Extract a structured list of wedding guests from free-form text. Split couples like 'John & Sarah Smith' into two guests sharing the same party. '+2 kids' means add 2 child guests in the same party. Use party to group people that came together (couples, families). Side is bride/groom/partner1/partner2 if mentioned. RSVP must be one of: pending, attending, maybe, declined. Map yes/coming -> attending, no/regrets -> declined.",
+    description: `Extract a structured list of wedding guests from free-form text or tabular data (CSV / spreadsheet paste).
+
+NORMALIZE every field to the controlled vocabulary below. Free-form values from the source ("Non-veg", "veg indian", "Jain (no root veg)") MUST be mapped onto the enums — never echo the source string verbatim.
+
+• Split couples like "John & Sarah Smith" into two guests sharing the same party.
+• "+2 kids" → two extra child guests in that party with is_kid=true.
+• "party" groups people who arrived together (couples, families). Use the family/group column verbatim when given.
+• "side" is normalized: "bride"/"groom" only. If the source says "Bride's family", "bride side", "Mum list", treat as "bride". Same for groom side.
+• "rsvp": yes/coming/confirmed → "attending"; no/regrets/declined → "declined"; maybe/tentative → "maybe"; otherwise "pending".
+• "meal": pick the closest enum. "veg" → "vegetarian"; "non-veg"/"non veg"/"meat" → "non_vegetarian"; "fish only" → "pescatarian"; "jain" → "jain"; "halal" → "halal"; "kosher" → "kosher"; "vegan" → "vegan"; if no preference is stated, omit the field.
+• "is_kid": true only when explicitly a child/kid/baby. Default false.
+• "accessibility": physical access only — wheelchair, walker, mobility, hearing-impaired, etc. NOT dietary.
+• "notes": EVERYTHING ELSE that's useful and didn't fit above — allergy specifics ("Allergies: peanuts"), dietary specifics inside a category ("no onion or garlic"), plus-one names, table preferences, anything noteworthy. Always prefix allergies with "Allergies:". Comma-separate multiple notes.`,
     parameters: {
       type: "object",
       properties: {
@@ -21,9 +33,9 @@ const GUESTS_TOOL = {
             properties: {
               name: { type: "string" },
               party: { type: "string" },
-              side: { type: "string" },
+              side: { type: "string", enum: ["bride", "groom"] },
               rsvp: { type: "string", enum: ["pending", "attending", "maybe", "declined"] },
-              meal: { type: "string" },
+              meal: { type: "string", enum: ["vegetarian", "vegan", "pescatarian", "non_vegetarian", "halal", "kosher", "jain"] },
               is_kid: { type: "boolean" },
               accessibility: { type: "string" },
               notes: { type: "string" },
@@ -117,8 +129,10 @@ const ROOM_TOOL = {
 
 const SYSTEM = "You are a friendly wedding planning assistant. Extract structured data carefully and conservatively. If unsure about an optional field, omit it rather than guessing.";
 
-const MAX_BYTES = 64 * 1024;
-const MAX_INPUT_CHARS = 10_000;
+// Per-request caps. Clients should chunk larger inputs to avoid silent
+// truncation here. ai-parse processes one chunk per call.
+const MAX_BYTES = 256 * 1024;
+const MAX_INPUT_CHARS = 50_000;
 const MAX_HEADERS = 50;
 const MAX_SAMPLES = 5;
 

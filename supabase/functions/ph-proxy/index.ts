@@ -1,7 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-// Reverse-proxy all PostHog traffic through this edge function so
-// ad blockers (which block us.i.posthog.com) don't drop analytics.
+// Reverse-proxy all PostHog traffic through this edge function so ad
+// blockers (which block us.i.posthog.com) don't drop analytics.
+//
+// The frontend points posthog-js's api_host at
+//   https://<project>.supabase.co/functions/v1/ph-proxy
+// PostHog SDK then hits sub-paths like /e/, /decide/, /array/, /capture/,
+// /engage/. We strip the function prefix and forward to the real host.
+
 const POSTHOG_HOST = "https://us.i.posthog.com";
 
 const cors = {
@@ -16,12 +22,23 @@ serve(async (req) => {
   }
 
   const url = new URL(req.url);
-  // Strip the /functions/v1/ph-proxy prefix — everything after becomes the path
-  const upstream = new URL(url.pathname.replace(/^\/functions\/v1\/ph-proxy/, "") || "/", POSTHOG_HOST);
-  upstream.search = url.search;
+  // Some Supabase deployments deliver req.url with the /functions/v1/<name>
+  // prefix included; others deliver only the sub-path. Handle both.
+  let path = url.pathname.replace(/^\/functions\/v1\/ph-proxy/, "");
+  if (!path) path = "/";
 
-  const headers = new Headers(req.headers);
-  headers.set("host", "us.i.posthog.com");
+  const upstream = new URL(path + url.search, POSTHOG_HOST);
+
+  // Forward only the headers PostHog actually needs. Specifically, do NOT
+  // forward the Authorization header (it's a Supabase anon JWT, not for
+  // PostHog) or our custom Host (Deno can't override it anyway).
+  const headers = new Headers();
+  for (const [k, v] of req.headers) {
+    const lower = k.toLowerCase();
+    if (lower === "content-type" || lower === "user-agent" || lower === "accept" || lower === "accept-encoding") {
+      headers.set(k, v);
+    }
+  }
 
   const response = await fetch(upstream.toString(), {
     method: req.method,
