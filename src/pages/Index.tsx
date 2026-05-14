@@ -721,7 +721,7 @@ const Index = () => {
               ["Pairings",      "Track it in your head. Hope for the best.", "Flag once. Auto-assign handles the rest."],
               ["Collaboration", "Email chains. Overwritten cells.",          "One link. Live edits."],
               ["Time",          "Three weekends.",                           "An afternoon."],
-              ["Price",         "Free. (Costs your sanity.)",                "Free. (Costs nothing.)"],
+              ["Price",         "Your sanity.",                              "£10. One time."],
             ].map((row, i) => (
               <div key={i} className="grid" style={{ gridTemplateColumns: "1.2fr 2.8fr 2.8fr", borderTop: "1px solid rgba(43,42,34,0.12)" }}>
                 <div style={{ padding: "20px 20px", fontFamily: MONO, fontSize: 11, letterSpacing: "0.13em", color: "rgba(43,42,34,0.78)", textTransform: "uppercase", borderRight: "1px solid rgba(43,42,34,0.12)", background: "rgba(43,42,34,0.02)" }}>{row[0]}</div>
