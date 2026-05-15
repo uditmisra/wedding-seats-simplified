@@ -247,6 +247,7 @@ export type Database = {
           id: string
           is_kid: boolean
           meal: string | null
+          metadata: Json | null
           name: string
           notes: string | null
           party: string | null
@@ -260,6 +261,7 @@ export type Database = {
           id?: string
           is_kid?: boolean
           meal?: string | null
+          metadata?: Json | null
           name: string
           notes?: string | null
           party?: string | null
@@ -273,6 +275,7 @@ export type Database = {
           id?: string
           is_kid?: boolean
           meal?: string | null
+          metadata?: Json | null
           name?: string
           notes?: string | null
           party?: string | null
