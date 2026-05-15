@@ -225,10 +225,8 @@ export function SmartGuestInput({ planId, onDone }: Props) {
                       onChange={v => update(i, { meal: v || undefined })}
                     />
                   </div>
-                  <div className="flex items-center justify-between">
-                    <label className="flex items-center gap-1.5 text-xs text-ink-2">
-                      <input type="checkbox" checked={!!g.is_kid} onChange={e => update(i, { is_kid: e.target.checked })}/> Child
-                    </label>
+                  <div className="flex items-center justify-between gap-2">
+                    <AgeToggle isKid={!!g.is_kid} onChange={v => update(i, { is_kid: v })} />
                     <Button variant="ghost" size="sm" onClick={() => remove(i)}><Trash2 size={14}/></Button>
                   </div>
                   {extraCount > 0 && (
@@ -238,7 +236,7 @@ export function SmartGuestInput({ planId, onDone }: Props) {
                 {/* Desktop grid row */}
                 <div className="hidden sm:grid grid-cols-12 gap-2 items-center">
                   <Input className="col-span-3" placeholder="Name" value={g.name} onChange={e => update(i, { name: e.target.value })}/>
-                  <div className="col-span-3">
+                  <div className="col-span-2">
                     <Combobox
                       placeholder="Group"
                       value={g.party ?? ""}
@@ -263,9 +261,9 @@ export function SmartGuestInput({ planId, onDone }: Props) {
                     <option value="bride">Bride</option>
                     <option value="groom">Groom</option>
                   </select>
-                  <label className="col-span-1 text-xs text-ink-2 flex items-center gap-1.5">
-                    <input type="checkbox" checked={!!g.is_kid} onChange={e => update(i, { is_kid: e.target.checked })}/> Child
-                  </label>
+                  <div className="col-span-2">
+                    <AgeToggle isKid={!!g.is_kid} onChange={v => update(i, { is_kid: v })} />
+                  </div>
                   <Button variant="ghost" size="sm" className="col-span-1" onClick={() => remove(i)}><Trash2 size={14}/></Button>
                   {extraCount > 0 && (
                     <div className="col-span-12 -mt-1 pl-1 text-[11px] text-ink-3 font-mono uppercase tracking-[0.12em]">
@@ -283,6 +281,35 @@ export function SmartGuestInput({ planId, onDone }: Props) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function AgeToggle({ isKid, onChange }: { isKid: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div
+      role="radiogroup"
+      aria-label="Adult or child"
+      className="inline-flex h-9 w-full rounded-md border border-input bg-paper-2/40 p-0.5 text-[12px]"
+    >
+      <button
+        type="button"
+        role="radio"
+        aria-checked={!isKid}
+        onClick={() => onChange(false)}
+        className={`flex-1 rounded-[5px] transition ${!isKid ? "bg-paper text-ink shadow-sm" : "text-ink-3 hover:text-ink"}`}
+      >
+        Adult
+      </button>
+      <button
+        type="button"
+        role="radio"
+        aria-checked={isKid}
+        onClick={() => onChange(true)}
+        className={`flex-1 rounded-[5px] transition ${isKid ? "bg-paper text-ink shadow-sm" : "text-ink-3 hover:text-ink"}`}
+      >
+        Child
+      </button>
     </div>
   );
 }
