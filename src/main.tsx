@@ -3,16 +3,19 @@ import posthog from "posthog-js";
 import App from "./App.tsx";
 import "./index.css";
 
-// PostHog — going direct to us.i.posthog.com for now. We had a Supabase
-// edge function proxy (ph-proxy) to defeat ad blockers, but Supabase's
-// gateway rejects requests without an `apikey` header even when
-// verify_jwt is false, so PostHog requests were 401-ing before reaching
-// the function. The proxy code is still in supabase/functions/ph-proxy;
-// re-enable here once we either send the apikey header through posthog-js's
-// xhr_headers OR set up a custom domain in front of the function.
+// Route PostHog through the ph-proxy edge function so ad blockers (which
+// block us.i.posthog.com aggressively) don't drop analytics. Supabase's
+// gateway requires an `apikey` header even when verify_jwt is false, so
+// we forward the anon key on every PostHog request — this is the header
+// the gateway needs to accept the call before it reaches the function.
+// ui_host stays pointed at the public PostHog UI for in-app toolbar links.
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+
 posthog.init("phc_sUDztZHpx2jDrHhuRkTYsUU8bPshyNVt4R4rmFUff2Ry", {
-  api_host: "https://us.i.posthog.com",
+  api_host: `${SUPABASE_URL}/functions/v1/ph-proxy`,
   ui_host: "https://us.posthog.com",
+  request_headers: { apikey: SUPABASE_ANON },
   person_profiles: "identified_only",
   capture_pageview: true,
   capture_pageleave: true,
