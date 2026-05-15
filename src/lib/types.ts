@@ -31,6 +31,7 @@ export interface Guest {
   is_kid: boolean;
   accessibility: string | null;
   notes: string | null;
+  metadata: Record<string, string> | null;
 }
 
 export interface TableDef {

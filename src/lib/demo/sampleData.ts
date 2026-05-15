@@ -64,6 +64,7 @@ const guest = (
   is_kid: false,
   accessibility: null,
   notes: null,
+  metadata: null,
   ...extras,
 });
 

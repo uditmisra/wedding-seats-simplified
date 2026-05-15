@@ -199,7 +199,12 @@ export function GuestsTab({ planId, guests, refresh, autoOpen, onAutoOpenHandled
     for (const [h, f] of Object.entries(mapping)) if (f) inverse[f] = h;
     if (!inverse.name) { toast.error("Map a 'Name' column"); return; }
 
-    const newGuests: Array<{ plan_id: string; name: string; party: string | null; rsvp: RSVP; meal: string | null; side: string | null; is_kid: boolean; accessibility: string | null; notes: string | null }> = [];
+    // Any column the user didn't map to a known field is preserved in
+    // metadata, so the spreadsheet's extra info isn't silently dropped.
+    const mappedHeaders = new Set(Object.entries(mapping).filter(([, f]) => !!f).map(([h]) => h));
+    const headerToKey = (h: string) => h.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+
+    const newGuests: Array<{ plan_id: string; name: string; party: string | null; rsvp: RSVP; meal: string | null; side: string | null; is_kid: boolean; accessibility: string | null; notes: string | null; metadata: Record<string, string> | null }> = [];
     const constraintsRaw: { aName: string; bName: string; kind: "with" | "not_with" }[] = [];
     for (const r of importRows) {
       const name = String(r[inverse.name!] ?? "").trim();
@@ -210,6 +215,14 @@ export function GuestsTab({ planId, guests, refresh, autoOpen, onAutoOpenHandled
         : rsvpRaw.startsWith("may") ? "maybe" : "pending";
       const isKidRaw = String(r[inverse.is_kid ?? ""] ?? "").toLowerCase().trim();
       const is_kid = ["yes", "true", "1", "kid", "child"].includes(isKidRaw);
+      const extras: Record<string, string> = {};
+      for (const h of importHeaders) {
+        if (mappedHeaders.has(h)) continue;
+        const val = String(r[h] ?? "").trim();
+        if (!val) continue;
+        const key = headerToKey(h);
+        if (key) extras[key] = val;
+      }
       newGuests.push({
         plan_id: planId,
         name,
@@ -220,6 +233,7 @@ export function GuestsTab({ planId, guests, refresh, autoOpen, onAutoOpenHandled
         is_kid,
         accessibility: optional(r, inverse.accessibility),
         notes: optional(r, inverse.notes),
+        metadata: Object.keys(extras).length ? extras : null,
       });
       const mw = optional(r, inverse.must_with);
       const mnw = optional(r, inverse.must_not_with);
@@ -592,6 +606,9 @@ function SelectedGuestPanel({ guest, onEdit }: { guest: Guest; onEdit: () => voi
         {guest.is_kid && <Row k="Type" v="Child" />}
         {guest.accessibility && <Row k="Access" v={guest.accessibility} />}
         {guest.notes && <Row k="Notes" v={<span className="font-display-italic">{guest.notes}</span>} />}
+        {guest.metadata && Object.entries(guest.metadata).map(([k, v]) => (
+          <Row key={k} k={prettifyMetadataKey(k)} v={String(v)} />
+        ))}
       </dl>
 
       <div className="mt-6 flex gap-2 border-t hairline pt-5">
@@ -601,6 +618,10 @@ function SelectedGuestPanel({ guest, onEdit }: { guest: Guest; onEdit: () => voi
       </div>
     </div>
   );
+}
+
+function prettifyMetadataKey(key: string): string {
+  return key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 }
 
 function Row({ k, v, mono }: { k: string; v: React.ReactNode; mono?: boolean }) {

@@ -10,19 +10,27 @@ const GUESTS_TOOL = {
   type: "function",
   function: {
     name: "extract_guests",
-    description: `Extract a structured list of wedding guests from free-form text or tabular data (CSV / spreadsheet paste).
+    description: `Extract a structured list of wedding guests from free-form text or tabular data (CSV / spreadsheet paste). NEVER LOSE INFORMATION — anything that isn't a core field belongs in "extra".
 
-NORMALIZE every field to the controlled vocabulary below. Free-form values from the source ("Non-veg", "veg indian", "Jain (no root veg)") MUST be mapped onto the enums — never echo the source string verbatim.
+CORE FIELDS — normalize to the rules below:
 
+• "name": full name as written.
 • Split couples like "John & Sarah Smith" into two guests sharing the same party.
 • "+2 kids" → two extra child guests in that party with is_kid=true.
 • "party" groups people who arrived together (couples, families). Use the family/group column verbatim when given.
 • "side" is normalized: "bride"/"groom" only. If the source says "Bride's family", "bride side", "Mum list", treat as "bride". Same for groom side.
 • "rsvp": yes/coming/confirmed → "attending"; no/regrets/declined → "declined"; maybe/tentative → "maybe"; otherwise "pending".
-• "meal": pick the closest enum. "veg" → "vegetarian"; "non-veg"/"non veg"/"meat" → "non_vegetarian"; "fish only" → "pescatarian"; "jain" → "jain"; "halal" → "halal"; "kosher" → "kosher"; "vegan" → "vegan"; if no preference is stated, omit the field.
+• "meal": KEEP THE SOURCE VALUE VERBATIM unless it's an obvious dietary category. Many weddings list the actual dish ("Beef Wellington", "Chicken parmesan", "Mushroom risotto") — preserve those exactly. Only normalize when the value is clearly a dietary preference, mapping to lowercase: "veg" / "vegetarian" → "vegetarian"; "non-veg" / "non veg" / "meat eater" → "non_vegetarian"; "vegan" → "vegan"; "fish only" / "pescatarian" → "pescatarian"; "halal" → "halal"; "kosher" → "kosher"; "jain" → "jain". If the source doesn't mention a meal at all, omit the field.
 • "is_kid": true only when explicitly a child/kid/baby. Default false.
 • "accessibility": physical access only — wheelchair, walker, mobility, hearing-impaired, etc. NOT dietary.
-• "notes": EVERYTHING ELSE that's useful and didn't fit above — allergy specifics ("Allergies: peanuts"), dietary specifics inside a category ("no onion or garlic"), plus-one names, table preferences, anything noteworthy. Always prefix allergies with "Allergies:". Comma-separate multiple notes.`,
+• "notes": short, free-form note about the guest (allergy specifics like "Allergies: peanuts", "no onion or garlic", brief reminders). Don't dump structured columns here — those go in "extra".
+
+EXTRA FIELDS — this is critical:
+
+• "extra" captures EVERY OTHER column from the source that doesn't fit a core field. Examples: phone, email, address, plus-one name, table preference, hotel, gift status, entree side, etc.
+• Keys must be lowercase snake_case derived from the source header (e.g. "Phone Number" → "phone_number", "+1 Name" → "plus_one_name", "Entree Choice" → "entree_choice").
+• Values are the raw cell value as a string, trimmed. Skip empty cells.
+• If the source isn't tabular (no headers), omit "extra".`,
     parameters: {
       type: "object",
       properties: {
@@ -35,10 +43,15 @@ NORMALIZE every field to the controlled vocabulary below. Free-form values from 
               party: { type: "string" },
               side: { type: "string", enum: ["bride", "groom"] },
               rsvp: { type: "string", enum: ["pending", "attending", "maybe", "declined"] },
-              meal: { type: "string", enum: ["vegetarian", "vegan", "pescatarian", "non_vegetarian", "halal", "kosher", "jain"] },
+              meal: { type: "string", description: "Dietary enum (vegetarian/vegan/pescatarian/non_vegetarian/halal/kosher/jain) when obviously dietary, otherwise verbatim source value (e.g. 'Beef Wellington')." },
               is_kid: { type: "boolean" },
               accessibility: { type: "string" },
               notes: { type: "string" },
+              extra: {
+                type: "object",
+                description: "Any other useful columns from the source as key/value strings. Keys lowercase snake_case from the source header.",
+                additionalProperties: { type: "string" },
+              },
             },
             required: ["name"],
           },
