@@ -34,9 +34,15 @@ Try things like:
 • John & Sarah Smith +2 kids (vegetarian) — bride side
 • Mom, Dad, Aunt May (wheelchair), Uncle Bob`;
 
-// Per-chunk row cap. The AI does best with ~40 rows of tabular data per call;
+// Per-chunk caps. The AI does best with ~40 rows of tabular data per call;
 // larger inputs get split client-side and parsed in batches, then merged.
+// The byte cap stays well under ai-parse's 256 KB request limit so wide rows
+// (many columns, long values) don't trip a 413 before the AI even sees them.
 const ROWS_PER_CHUNK = 40;
+const MAX_CHUNK_BYTES = 200 * 1024;
+
+const textEncoder = new TextEncoder();
+const byteLen = (s: string) => textEncoder.encode(s).byteLength;
 
 const MEAL_LABEL: Record<Meal, string> = {
   vegetarian: "Vegetarian",
@@ -49,13 +55,13 @@ const MEAL_LABEL: Record<Meal, string> = {
 };
 
 /**
- * Split a large text input into ~ROWS_PER_CHUNK-line chunks, preserving the
- * header (first line) on every chunk so the AI keeps column context. Returns
- * a single-element array if the input is small.
+ * Split a large text input into chunks bounded by both row count and byte
+ * size, preserving the header (first line) on every chunk so the AI keeps
+ * column context. Returns a single-element array if the input is small.
  */
 function chunkForParsing(text: string): string[] {
   const lines = text.split("\n").map(l => l.trimEnd()).filter(l => l.length > 0);
-  if (lines.length <= ROWS_PER_CHUNK + 1) return [text];
+  if (!lines.length) return [text];
 
   // Treat first line as header if it looks like one (contains a delimiter and
   // some field-like words). Otherwise just chunk straight.
@@ -63,20 +69,35 @@ function chunkForParsing(text: string): string[] {
   const hasDelimiter = /\t|,|;|\|/.test(first);
   const looksLikeHeader = hasDelimiter && /name|guest|side|rsvp|table|meal|diet|email/i.test(first);
 
-  if (looksLikeHeader) {
-    const header = lines[0];
-    const data = lines.slice(1);
-    const chunks: string[] = [];
-    for (let i = 0; i < data.length; i += ROWS_PER_CHUNK) {
-      chunks.push([header, ...data.slice(i, i + ROWS_PER_CHUNK)].join("\n"));
-    }
-    return chunks;
+  const header = looksLikeHeader ? lines[0] : null;
+  const body = looksLikeHeader ? lines.slice(1) : lines;
+
+  if (body.length <= ROWS_PER_CHUNK && byteLen(text) <= MAX_CHUNK_BYTES) {
+    return [text];
   }
 
+  const headerBytes = header ? byteLen(header) + 1 : 0;
   const chunks: string[] = [];
-  for (let i = 0; i < lines.length; i += ROWS_PER_CHUNK) {
-    chunks.push(lines.slice(i, i + ROWS_PER_CHUNK).join("\n"));
+  let current: string[] = [];
+  let currentBytes = headerBytes;
+
+  const flush = () => {
+    if (!current.length) return;
+    chunks.push((header ? [header, ...current] : current).join("\n"));
+    current = [];
+    currentBytes = headerBytes;
+  };
+
+  for (const row of body) {
+    const rowBytes = byteLen(row) + 1;
+    if (current.length > 0 && (current.length >= ROWS_PER_CHUNK || currentBytes + rowBytes > MAX_CHUNK_BYTES)) {
+      flush();
+    }
+    current.push(row);
+    currentBytes += rowBytes;
   }
+  flush();
+
   return chunks;
 }
 
