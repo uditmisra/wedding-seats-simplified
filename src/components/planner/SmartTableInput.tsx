@@ -7,6 +7,8 @@ import { Sparkles, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Shape } from "@/lib/types";
 import { analytics } from "@/lib/analytics";
+import { invokeAISingle } from "@/lib/aiParse";
+import { AIProgress } from "@/components/AIProgress";
 
 interface ParsedTable { name: string; shape: Shape; capacity: number }
 
@@ -27,19 +29,13 @@ export function SmartTableInput({ planId, scenarioId, existingCount, onDone }: P
   const [loading, setLoading] = useState(false);
   const [parsed, setParsed] = useState<ParsedTable[] | null>(null);
 
-  const parse = async () => {
+  const runAI = async () => {
     if (!text.trim()) return;
     setLoading(true);
-    const { data, error } = await supabase.functions.invoke("ai-parse", { body: { mode: "tables", input: text } });
+    const result = await invokeAISingle("tables", text);
     setLoading(false);
-    if (error) {
-      let msg = error.message;
-      try { const b = await (error as any).context?.json?.(); if (b?.error) msg = b.error; } catch { /* */ }
-      toast.error(msg);
-      return;
-    }
-    if (data?.error) { toast.error(data.error); return; }
-    const tables: ParsedTable[] = data?.tables ?? [];
+    if (result.error) { toast.error(result.error); return; }
+    const tables: ParsedTable[] = (result.data as { tables?: ParsedTable[] } | undefined)?.tables ?? [];
     if (!tables.length) { toast.error("Couldn't find any tables in that text"); return; }
     setParsed(tables);
   };
@@ -77,11 +73,12 @@ export function SmartTableInput({ planId, scenarioId, existingCount, onDone }: P
       <p className="text-sm text-muted-foreground">Tell us about your room — we'll create the tables for you.</p>
       <Textarea rows={4} placeholder={PLACEHOLDER} value={text} onChange={e => setText(e.target.value)}/>
       <div className="flex justify-end">
-        <Button onClick={parse} disabled={loading || !text.trim()}>
+        <Button onClick={runAI} disabled={loading || !text.trim()}>
           {loading ? <Loader2 className="mr-1.5 animate-spin" size={14}/> : <Sparkles className="mr-1.5" size={14}/>}
-          Parse with AI
+          {loading ? "Reading…" : "Set up with AI"}
         </Button>
       </div>
+      {loading && <AIProgress mode="tables" />}
 
       {parsed && (
         <div className="space-y-2 pt-2 border-t border-border/40">

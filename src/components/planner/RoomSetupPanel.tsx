@@ -13,6 +13,8 @@ import {
   FIXTURE_TYPES,
   roomLayout,
 } from "@/lib/roomConfig";
+import { invokeAIRoom } from "@/lib/aiParse";
+import { AIProgress } from "@/components/AIProgress";
 
 interface Props {
   planId: string;
@@ -24,7 +26,7 @@ interface Props {
 export function RoomSetupPanel({ planId, roomConfig, onSaved, canEdit = true }: Props) {
   const [cfg, setCfg] = useState<RoomConfig>(roomConfig ?? { ...DEFAULT_ROOM_CONFIG });
   const [aiText, setAiText] = useState("");
-  const [parsing, setParsing] = useState(false);
+  const [running, setRunning] = useState(false);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
 
@@ -53,30 +55,27 @@ export function RoomSetupPanel({ planId, roomConfig, onSaved, canEdit = true }: 
     update({ ...cfg, fixtures: [...cfg.fixtures, newF] });
   };
 
-  const parseWithAI = async () => {
+  const runAI = async () => {
     if (!aiText.trim()) return;
-    setParsing(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token ?? (await supabase.auth.getSession().then(r => r.data.session?.access_token)) ?? "";
-      const resp = await supabase.functions.invoke("ai-parse", {
-        body: { mode: "room", input: aiText },
-      });
-      if (resp.error) throw new Error(resp.error.message);
-      const parsed = resp.data as { width_m?: number; height_m?: number; fixtures?: Fixture[] };
-      const next: RoomConfig = {
-        width_m: parsed.width_m ?? cfg.width_m,
-        height_m: parsed.height_m ?? cfg.height_m,
-        fixtures: parsed.fixtures ?? cfg.fixtures,
-      };
-      setCfg(next);
-      setDirty(true);
-      toast.success("Room layout parsed — review and save below.");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "AI parse failed");
-    } finally {
-      setParsing(false);
+    setRunning(true);
+    const result = await invokeAIRoom(aiText);
+    setRunning(false);
+    if (result.error) {
+      toast.error(result.error);
+      return;
     }
+    const parsed = result.data as { width_m?: number; height_m?: number; fixtures?: Fixture[] } | undefined;
+    if (!parsed) {
+      toast.error("Couldn't read that description");
+      return;
+    }
+    setCfg({
+      width_m: parsed.width_m ?? cfg.width_m,
+      height_m: parsed.height_m ?? cfg.height_m,
+      fixtures: parsed.fixtures ?? cfg.fixtures,
+    });
+    setDirty(true);
+    toast.success("Room laid out — review and save below.");
   };
 
   const save = async () => {
@@ -114,24 +113,25 @@ export function RoomSetupPanel({ planId, roomConfig, onSaved, canEdit = true }: 
               <Input
                 value={aiText}
                 onChange={e => setAiText(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && parseWithAI()}
+                onKeyDown={e => e.key === "Enter" && runAI()}
                 placeholder="e.g. 20m × 14m ballroom, dance floor on the right, bar near the entry, DJ in the corner"
                 className="flex-1 font-display-italic text-[15px] h-11"
               />
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={parseWithAI}
-                disabled={parsing || !aiText.trim()}
+                onClick={runAI}
+                disabled={running || !aiText.trim()}
                 className="gap-1.5 shrink-0"
               >
-                <Wand2 size={14} className={parsing ? "animate-spin" : ""} />
-                {parsing ? "Parsing…" : "Parse"}
+                <Wand2 size={14} className={running ? "animate-spin" : ""} />
+                {running ? "Reading…" : "Set up with AI"}
               </Button>
             </div>
             <p className="font-mono text-[11px] text-ink-3">
-              Describe the room in plain English — dimensions, table layout hints, and venue features. Press Enter or click Parse.
+              Describe the room in plain English — dimensions, table layout hints, and venue features. Press Enter or click Set up.
             </p>
+            {running && <AIProgress mode="room" />}
           </div>
         )}
 

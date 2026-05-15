@@ -8,19 +8,22 @@ import { Sparkles, Loader2, Trash2, Plus, Upload } from "lucide-react";
 import { toast } from "sonner";
 import type { RSVP } from "@/lib/types";
 import { analytics } from "@/lib/analytics";
+import { invokeAIChunked } from "@/lib/aiParse";
+import { AIProgress } from "@/components/AIProgress";
 
 type Side = "bride" | "groom";
-type Meal = "vegetarian" | "vegan" | "pescatarian" | "non_vegetarian" | "halal" | "kosher" | "jain";
+type DietaryMeal = "vegetarian" | "vegan" | "pescatarian" | "non_vegetarian" | "halal" | "kosher" | "jain";
 
 interface ParsedGuest {
   name: string;
   party?: string;
   side?: Side;
   rsvp?: RSVP;
-  meal?: Meal;
+  meal?: string;
   is_kid?: boolean;
   accessibility?: string;
   notes?: string;
+  extra?: Record<string, string>;
 }
 
 interface Props {
@@ -34,17 +37,7 @@ Try things like:
 • John & Sarah Smith +2 kids (vegetarian) — bride side
 • Mom, Dad, Aunt May (wheelchair), Uncle Bob`;
 
-// Per-chunk caps. The AI does best with ~40 rows of tabular data per call;
-// larger inputs get split client-side and parsed in batches, then merged.
-// The byte cap stays well under ai-parse's 256 KB request limit so wide rows
-// (many columns, long values) don't trip a 413 before the AI even sees them.
-const ROWS_PER_CHUNK = 40;
-const MAX_CHUNK_BYTES = 200 * 1024;
-
-const textEncoder = new TextEncoder();
-const byteLen = (s: string) => textEncoder.encode(s).byteLength;
-
-const MEAL_LABEL: Record<Meal, string> = {
+const DIETARY_LABEL: Record<DietaryMeal, string> = {
   vegetarian: "Vegetarian",
   vegan: "Vegan",
   pescatarian: "Pescatarian",
@@ -53,53 +46,12 @@ const MEAL_LABEL: Record<Meal, string> = {
   kosher: "Kosher",
   jain: "Jain",
 };
+const DIETARY_KEYS = Object.keys(DIETARY_LABEL) as DietaryMeal[];
 
-/**
- * Split a large text input into chunks bounded by both row count and byte
- * size, preserving the header (first line) on every chunk so the AI keeps
- * column context. Returns a single-element array if the input is small.
- */
-function chunkForParsing(text: string): string[] {
-  const lines = text.split("\n").map(l => l.trimEnd()).filter(l => l.length > 0);
-  if (!lines.length) return [text];
-
-  // Treat first line as header if it looks like one (contains a delimiter and
-  // some field-like words). Otherwise just chunk straight.
-  const first = lines[0];
-  const hasDelimiter = /\t|,|;|\|/.test(first);
-  const looksLikeHeader = hasDelimiter && /name|guest|side|rsvp|table|meal|diet|email/i.test(first);
-
-  const header = looksLikeHeader ? lines[0] : null;
-  const body = looksLikeHeader ? lines.slice(1) : lines;
-
-  if (body.length <= ROWS_PER_CHUNK && byteLen(text) <= MAX_CHUNK_BYTES) {
-    return [text];
-  }
-
-  const headerBytes = header ? byteLen(header) + 1 : 0;
-  const chunks: string[] = [];
-  let current: string[] = [];
-  let currentBytes = headerBytes;
-
-  const flush = () => {
-    if (!current.length) return;
-    chunks.push((header ? [header, ...current] : current).join("\n"));
-    current = [];
-    currentBytes = headerBytes;
-  };
-
-  for (const row of body) {
-    const rowBytes = byteLen(row) + 1;
-    if (current.length > 0 && (current.length >= ROWS_PER_CHUNK || currentBytes + rowBytes > MAX_CHUNK_BYTES)) {
-      flush();
-    }
-    current.push(row);
-    currentBytes += rowBytes;
-  }
-  flush();
-
-  return chunks;
-}
+const displayMeal = (m: string | undefined): string => {
+  if (!m) return "";
+  return DIETARY_LABEL[m as DietaryMeal] ?? m;
+};
 
 /** Read a file as TSV text. Excel files get converted via xlsx; everything else is read as plain text. */
 async function readFileToText(file: File): Promise<string> {
@@ -116,7 +68,8 @@ async function readFileToText(file: File): Promise<string> {
 export function SmartGuestInput({ planId, onDone }: Props) {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState<string>("");
+  const [batch, setBatch] = useState(0);
+  const [totalBatches, setTotalBatches] = useState(0);
   const [parsed, setParsed] = useState<ParsedGuest[] | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -130,46 +83,34 @@ export function SmartGuestInput({ planId, onDone }: Props) {
     }
   };
 
-  const parse = async () => {
+  const runAI = async () => {
     if (!text.trim()) return;
     setLoading(true);
     setParsed(null);
+    setBatch(0);
+    setTotalBatches(0);
 
-    const chunks = chunkForParsing(text);
-    const allGuests: ParsedGuest[] = [];
-    let parseError: string | null = null;
+    const result = await invokeAIChunked<ParsedGuest>({
+      mode: "guests",
+      text,
+      collect: data => (data as { guests?: ParsedGuest[] } | null)?.guests ?? [],
+      onProgress: (b, total) => { setBatch(b); setTotalBatches(total); },
+    });
 
-    for (let i = 0; i < chunks.length; i++) {
-      if (chunks.length > 1) setProgress(`Parsing batch ${i + 1} of ${chunks.length}…`);
-      const { data, error } = await supabase.functions.invoke("ai-parse", {
-        body: { mode: "guests", input: chunks[i] },
-      });
-      if (error) {
-        let msg = error.message;
-        try { const b = await (error as any).context?.json?.(); if (b?.error) msg = b.error; } catch { /* */ }
-        parseError = msg;
-        break;
-      }
-      if (data?.error) { parseError = data.error; break; }
-      const guests: ParsedGuest[] = data?.guests ?? [];
-      allGuests.push(...guests);
-    }
-
-    setProgress("");
     setLoading(false);
+    setBatch(0);
+    setTotalBatches(0);
 
-    if (parseError) {
-      toast.error(parseError);
+    if (result.error) {
+      toast.error(result.error);
       return;
     }
-    if (!allGuests.length) {
+    if (!result.items.length) {
       toast.error("Couldn't find any guests in that text");
       return;
     }
-    setParsed(allGuests);
-    if (chunks.length > 1) {
-      toast.success(`Parsed ${allGuests.length} guests across ${chunks.length} batches`);
-    }
+    setParsed(result.items);
+    toast.success(`Found ${result.items.length} guests`);
   };
 
   const addAll = async () => {
@@ -186,6 +127,7 @@ export function SmartGuestInput({ planId, onDone }: Props) {
         is_kid: !!g.is_kid,
         accessibility: g.accessibility ?? null,
         notes: g.notes ?? null,
+        metadata: g.extra && Object.keys(g.extra).length ? g.extra : null,
       }));
     if (!rows.length) return;
     const { error } = await supabase.from("guests").insert(rows);
@@ -229,11 +171,14 @@ export function SmartGuestInput({ planId, onDone }: Props) {
           </Button>
           <span className="text-[11px] text-ink-3">CSV, TSV, Excel</span>
         </div>
-        <Button onClick={parse} disabled={loading || !text.trim()}>
+        <Button onClick={runAI} disabled={loading || !text.trim()}>
           {loading ? <Loader2 className="mr-1.5 animate-spin" size={14}/> : <Sparkles className="mr-1.5" size={14}/>}
-          {loading ? (progress || "Parsing…") : "Parse with AI"}
+          {loading ? "Reading…" : "Read with AI"}
         </Button>
       </div>
+      {loading && (
+        <AIProgress mode="guests" batch={batch || undefined} totalBatches={totalBatches || undefined} />
+      )}
 
       {parsed && (
         <div className="space-y-2 pt-2 border-t border-border/40">
@@ -241,22 +186,26 @@ export function SmartGuestInput({ planId, onDone }: Props) {
             <div className="text-sm text-muted-foreground">Found {parsed.length} guests — review and edit, then add.</div>
             <Button variant="ghost" size="sm" onClick={addBlank}><Plus size={14} className="mr-1"/>Row</Button>
           </div>
+          <datalist id="meal-suggestions">
+            {DIETARY_KEYS.map(m => <option key={m} value={DIETARY_LABEL[m]} />)}
+          </datalist>
           <div className="max-h-[40vh] overflow-y-auto space-y-1">
-            {parsed.map((g, i) => (
+            {parsed.map((g, i) => {
+              const extraCount = g.extra ? Object.keys(g.extra).length : 0;
+              return (
               <div key={i}>
                 {/* Mobile stacked card */}
                 <div className="flex flex-col gap-1.5 rounded-lg border border-border/40 p-2.5 sm:hidden">
                   <Input placeholder="Name" value={g.name} onChange={e => update(i, { name: e.target.value })}/>
                   <div className="flex gap-1.5">
                     <Input className="flex-1" placeholder="Party" value={g.party ?? ""} onChange={e => update(i, { party: e.target.value })}/>
-                    <select
-                      className="h-9 rounded-md border border-input bg-background px-2 text-sm"
-                      value={g.meal ?? ""}
-                      onChange={e => update(i, { meal: (e.target.value || undefined) as Meal | undefined })}
-                    >
-                      <option value="">—</option>
-                      {(Object.keys(MEAL_LABEL) as Meal[]).map(m => <option key={m} value={m}>{MEAL_LABEL[m]}</option>)}
-                    </select>
+                    <Input
+                      list="meal-suggestions"
+                      className="w-32"
+                      placeholder="Meal"
+                      value={displayMeal(g.meal)}
+                      onChange={e => update(i, { meal: e.target.value || undefined })}
+                    />
                   </div>
                   <div className="flex items-center justify-between">
                     <label className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -264,19 +213,21 @@ export function SmartGuestInput({ planId, onDone }: Props) {
                     </label>
                     <Button variant="ghost" size="sm" onClick={() => remove(i)}><Trash2 size={14}/></Button>
                   </div>
+                  {extraCount > 0 && (
+                    <div className="text-[11px] text-ink-3 font-mono uppercase tracking-[0.12em]">+{extraCount} more {extraCount === 1 ? "field" : "fields"} kept</div>
+                  )}
                 </div>
                 {/* Desktop grid row */}
                 <div className="hidden sm:grid grid-cols-12 gap-2 items-center">
                   <Input className="col-span-3" placeholder="Name" value={g.name} onChange={e => update(i, { name: e.target.value })}/>
                   <Input className="col-span-3" placeholder="Party" value={g.party ?? ""} onChange={e => update(i, { party: e.target.value })}/>
-                  <select
-                    className="col-span-2 h-9 rounded-md border border-input bg-background px-2 text-sm"
-                    value={g.meal ?? ""}
-                    onChange={e => update(i, { meal: (e.target.value || undefined) as Meal | undefined })}
-                  >
-                    <option value="">Meal —</option>
-                    {(Object.keys(MEAL_LABEL) as Meal[]).map(m => <option key={m} value={m}>{MEAL_LABEL[m]}</option>)}
-                  </select>
+                  <Input
+                    list="meal-suggestions"
+                    className="col-span-2"
+                    placeholder="Meal"
+                    value={displayMeal(g.meal)}
+                    onChange={e => update(i, { meal: e.target.value || undefined })}
+                  />
                   <select
                     className="col-span-2 h-9 rounded-md border border-input bg-background px-2 text-sm"
                     value={g.side ?? ""}
@@ -290,9 +241,15 @@ export function SmartGuestInput({ planId, onDone }: Props) {
                     <input type="checkbox" checked={!!g.is_kid} onChange={e => update(i, { is_kid: e.target.checked })}/> kid
                   </label>
                   <Button variant="ghost" size="sm" className="col-span-1" onClick={() => remove(i)}><Trash2 size={14}/></Button>
+                  {extraCount > 0 && (
+                    <div className="col-span-12 -mt-1 pl-1 text-[11px] text-ink-3 font-mono uppercase tracking-[0.12em]">
+                      +{extraCount} more {extraCount === 1 ? "field" : "fields"} kept ({Object.keys(g.extra!).slice(0, 3).join(", ")}{extraCount > 3 ? "…" : ""})
+                    </div>
+                  )}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="ghost" onClick={() => setParsed(null)}>Cancel</Button>
