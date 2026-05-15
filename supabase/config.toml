@@ -16,9 +16,6 @@ verify_jwt = false
 [functions.handle-email-suppression]
 verify_jwt = false
 
-[functions.ph-proxy]
-verify_jwt = false
-
 [functions.payments-webhook]
 verify_jwt = false
 
