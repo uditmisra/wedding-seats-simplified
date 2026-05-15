@@ -233,10 +233,11 @@ export function SmartGuestInput({ planId, onDone }: Props) {
                     <div className="text-[11px] text-ink-3 font-mono uppercase tracking-[0.12em]">+{extraCount} more {extraCount === 1 ? "field" : "fields"} kept</div>
                   )}
                 </div>
-                {/* Desktop grid row */}
+                {/* Desktop grid row. Side stays in state and is persisted, but we
+                    don't show it inline — real party / meal values need the room. */}
                 <div className="hidden sm:grid grid-cols-12 gap-2 items-center">
                   <Input className="col-span-3" placeholder="Name" value={g.name} onChange={e => update(i, { name: e.target.value })}/>
-                  <div className="col-span-2">
+                  <div className="col-span-3">
                     <Combobox
                       placeholder="Group"
                       value={g.party ?? ""}
@@ -244,7 +245,7 @@ export function SmartGuestInput({ planId, onDone }: Props) {
                       onChange={v => update(i, { party: v || undefined })}
                     />
                   </div>
-                  <div className="col-span-2">
+                  <div className="col-span-3">
                     <Combobox
                       placeholder="Meal"
                       value={displayMeal(g.meal)}
@@ -252,15 +253,6 @@ export function SmartGuestInput({ planId, onDone }: Props) {
                       onChange={v => update(i, { meal: v || undefined })}
                     />
                   </div>
-                  <select
-                    className="col-span-2 h-9 rounded-md border border-input bg-background px-2 text-sm"
-                    value={g.side ?? ""}
-                    onChange={e => update(i, { side: (e.target.value || undefined) as Side | undefined })}
-                  >
-                    <option value="">Side —</option>
-                    <option value="bride">Bride</option>
-                    <option value="groom">Groom</option>
-                  </select>
                   <div className="col-span-2">
                     <AgeToggle isKid={!!g.is_kid} onChange={v => update(i, { is_kid: v })} />
                   </div>
