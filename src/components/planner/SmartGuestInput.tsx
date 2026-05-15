@@ -1,9 +1,10 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Combobox } from "@/components/ui/combobox";
 import { Sparkles, Loader2, Trash2, Plus, Upload } from "lucide-react";
 import { toast } from "sonner";
 import type { RSVP } from "@/lib/types";
@@ -72,6 +73,20 @@ export function SmartGuestInput({ planId, onDone }: Props) {
   const [totalBatches, setTotalBatches] = useState(0);
   const [parsed, setParsed] = useState<ParsedGuest[] | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Dropdown suggestions are sourced from values the AI extracted across
+  // the current batch so the same party/meal gets reused instead of
+  // hand-typed five different ways. Combobox still lets you add a new one.
+  const partySuggestions = useMemo(
+    () => (parsed ?? []).map(g => (g.party ?? "").trim()).filter(Boolean),
+    [parsed],
+  );
+  const mealSuggestions = useMemo(() => {
+    const detected = (parsed ?? []).map(g => displayMeal(g.meal)).filter(Boolean);
+    // Dietary labels are always available even if no one in the batch is
+    // tagged with one yet — they're the most-common buckets.
+    return [...detected, ...DIETARY_KEYS.map(k => DIETARY_LABEL[k])];
+  }, [parsed]);
 
   const onFile = async (file: File) => {
     try {
@@ -186,9 +201,6 @@ export function SmartGuestInput({ planId, onDone }: Props) {
             <div className="text-sm text-muted-foreground">Found {parsed.length} guests — review and edit, then add.</div>
             <Button variant="ghost" size="sm" onClick={addBlank}><Plus size={14} className="mr-1"/>Row</Button>
           </div>
-          <datalist id="meal-suggestions">
-            {DIETARY_KEYS.map(m => <option key={m} value={DIETARY_LABEL[m]} />)}
-          </datalist>
           <div className="max-h-[40vh] overflow-y-auto space-y-1">
             {parsed.map((g, i) => {
               const extraCount = g.extra ? Object.keys(g.extra).length : 0;
@@ -198,18 +210,24 @@ export function SmartGuestInput({ planId, onDone }: Props) {
                 <div className="flex flex-col gap-1.5 rounded-lg border border-border/40 p-2.5 sm:hidden">
                   <Input placeholder="Name" value={g.name} onChange={e => update(i, { name: e.target.value })}/>
                   <div className="flex gap-1.5">
-                    <Input className="flex-1" placeholder="Party" value={g.party ?? ""} onChange={e => update(i, { party: e.target.value })}/>
-                    <Input
-                      list="meal-suggestions"
+                    <Combobox
+                      className="flex-1"
+                      placeholder="Group"
+                      value={g.party ?? ""}
+                      suggestions={partySuggestions}
+                      onChange={v => update(i, { party: v || undefined })}
+                    />
+                    <Combobox
                       className="w-32"
                       placeholder="Meal"
                       value={displayMeal(g.meal)}
-                      onChange={e => update(i, { meal: e.target.value || undefined })}
+                      suggestions={mealSuggestions}
+                      onChange={v => update(i, { meal: v || undefined })}
                     />
                   </div>
                   <div className="flex items-center justify-between">
-                    <label className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <input type="checkbox" checked={!!g.is_kid} onChange={e => update(i, { is_kid: e.target.checked })}/> kid
+                    <label className="flex items-center gap-1.5 text-xs text-ink-2">
+                      <input type="checkbox" checked={!!g.is_kid} onChange={e => update(i, { is_kid: e.target.checked })}/> Child
                     </label>
                     <Button variant="ghost" size="sm" onClick={() => remove(i)}><Trash2 size={14}/></Button>
                   </div>
@@ -220,14 +238,22 @@ export function SmartGuestInput({ planId, onDone }: Props) {
                 {/* Desktop grid row */}
                 <div className="hidden sm:grid grid-cols-12 gap-2 items-center">
                   <Input className="col-span-3" placeholder="Name" value={g.name} onChange={e => update(i, { name: e.target.value })}/>
-                  <Input className="col-span-3" placeholder="Party" value={g.party ?? ""} onChange={e => update(i, { party: e.target.value })}/>
-                  <Input
-                    list="meal-suggestions"
-                    className="col-span-2"
-                    placeholder="Meal"
-                    value={displayMeal(g.meal)}
-                    onChange={e => update(i, { meal: e.target.value || undefined })}
-                  />
+                  <div className="col-span-3">
+                    <Combobox
+                      placeholder="Group"
+                      value={g.party ?? ""}
+                      suggestions={partySuggestions}
+                      onChange={v => update(i, { party: v || undefined })}
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Combobox
+                      placeholder="Meal"
+                      value={displayMeal(g.meal)}
+                      suggestions={mealSuggestions}
+                      onChange={v => update(i, { meal: v || undefined })}
+                    />
+                  </div>
                   <select
                     className="col-span-2 h-9 rounded-md border border-input bg-background px-2 text-sm"
                     value={g.side ?? ""}
@@ -237,8 +263,8 @@ export function SmartGuestInput({ planId, onDone }: Props) {
                     <option value="bride">Bride</option>
                     <option value="groom">Groom</option>
                   </select>
-                  <label className="col-span-1 text-xs text-muted-foreground flex items-center gap-1">
-                    <input type="checkbox" checked={!!g.is_kid} onChange={e => update(i, { is_kid: e.target.checked })}/> kid
+                  <label className="col-span-1 text-xs text-ink-2 flex items-center gap-1.5">
+                    <input type="checkbox" checked={!!g.is_kid} onChange={e => update(i, { is_kid: e.target.checked })}/> Child
                   </label>
                   <Button variant="ghost" size="sm" className="col-span-1" onClick={() => remove(i)}><Trash2 size={14}/></Button>
                   {extraCount > 0 && (
