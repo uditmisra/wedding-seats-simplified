@@ -54,7 +54,13 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
   // Resolve canvas dimensions and room rectangle.
   // When roomConfig is provided, canvas scales from real-world dimensions.
   // Otherwise, size to fit the table grid with proper padding so tables land inside the room outline.
-  const cfg = roomConfig ?? DEFAULT_ROOM_CONFIG;
+  // A roomConfig stored without fixtures (e.g. AI room-parse fallback or partial save) would
+  // crash RoomGeometry on render, blanking the canvas — backfill defaults to stay resilient.
+  const cfg: RoomConfig = {
+    width_m: roomConfig?.width_m ?? DEFAULT_ROOM_CONFIG.width_m,
+    height_m: roomConfig?.height_m ?? DEFAULT_ROOM_CONFIG.height_m,
+    fixtures: Array.isArray(roomConfig?.fixtures) ? roomConfig!.fixtures : DEFAULT_ROOM_CONFIG.fixtures,
+  };
   const rl = roomLayout(cfg, PAD_X, PAD_TOP, PAD_BOTTOM);
 
   // If any table has a stored position, use the configured canvas.
@@ -88,12 +94,20 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
   const stateKey = `floorplan:view:${scenarioId ?? "default"}`;
 
   const [view, setView] = useState<{ x: number; y: number; z: number }>(() => {
-    if (typeof window === "undefined") return { x: 0, y: 0, z: 1 };
+    const fallback = { x: 0, y: 0, z: 1 };
+    if (typeof window === "undefined") return fallback;
     try {
       const raw = localStorage.getItem(`floorplan:view:${scenarioId ?? "default"}`);
-      if (raw) return JSON.parse(raw);
+      if (!raw) return fallback;
+      const parsed = JSON.parse(raw) as { x?: unknown; y?: unknown; z?: unknown };
+      // A corrupted z of 0 or NaN would scale the whole canvas to invisible —
+      // reject anything outside the legal zoom range and start fresh.
+      const x = Number.isFinite(parsed.x) ? Number(parsed.x) : 0;
+      const y = Number.isFinite(parsed.y) ? Number(parsed.y) : 0;
+      const z = Number.isFinite(parsed.z) && Number(parsed.z) > 0 ? Number(parsed.z) : 1;
+      return { x, y, z: Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, z)) };
     } catch {}
-    return { x: 0, y: 0, z: 1 };
+    return fallback;
   });
   const [animate, setAnimate] = useState(false);
   const [panning, setPanning] = useState(false);
