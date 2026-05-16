@@ -86,23 +86,23 @@ export function SmartTableInput({ planId, scenarioId, existingCount, onDone }: P
           <div className="max-h-[40vh] overflow-y-auto space-y-1">
             {parsed.map((t, i) => (
               <div key={i}>
-                {/* Mobile stacked card */}
-                <div className="flex flex-col gap-1.5 rounded-lg border border-border/40 p-2.5 sm:hidden">
+                {/* Stacked card — used up to md: so review rows never clip on tablet-width modals */}
+                <div className="flex flex-col gap-1.5 rounded-lg border border-border/40 p-2.5 md:hidden">
                   <Input value={t.name} onChange={e => update(i, { name: e.target.value })} placeholder="Table name"/>
                   <div className="flex gap-1.5 items-center">
-                    <select className="flex-1 h-9 rounded-md border border-input bg-background px-2 text-sm capitalize"
+                    <select className="flex-1 min-w-0 h-9 rounded-md border border-input bg-background px-2 text-sm capitalize"
                             value={t.shape} onChange={e => update(i, { shape: e.target.value as Shape })}>
                       {(["round","rectangle","square","long","head"] as Shape[]).map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
-                    <Input className="w-20" type="number" min={1} max={30} value={t.capacity}
+                    <Input className="w-20 shrink-0" type="number" min={1} max={30} value={t.capacity}
                            onChange={e => update(i, { capacity: parseInt(e.target.value) || 1 })} placeholder="Seats"/>
-                    <Button variant="ghost" size="sm" onClick={() => remove(i)}><Trash2 size={14}/></Button>
+                    <Button variant="ghost" size="sm" className="shrink-0" onClick={() => remove(i)}><Trash2 size={14}/></Button>
                   </div>
                 </div>
-                {/* Desktop grid row */}
-                <div className="hidden sm:grid grid-cols-12 gap-2 items-center">
+                {/* Desktop grid row — needs ~768px to fit all four columns comfortably */}
+                <div className="hidden md:grid grid-cols-12 gap-2 items-center">
                   <Input className="col-span-5" value={t.name} onChange={e => update(i, { name: e.target.value })}/>
-                  <select className="col-span-3 h-9 rounded-md border border-input bg-background px-2 text-sm capitalize"
+                  <select className="col-span-3 min-w-0 h-9 rounded-md border border-input bg-background px-2 text-sm capitalize"
                           value={t.shape} onChange={e => update(i, { shape: e.target.value as Shape })}>
                     {(["round","rectangle","square","long","head"] as Shape[]).map(s => <option key={s} value={s}>{s}</option>)}
                   </select>

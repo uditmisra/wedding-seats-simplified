@@ -206,8 +206,8 @@ export function SmartGuestInput({ planId, onDone }: Props) {
               const extraCount = g.extra ? Object.keys(g.extra).length : 0;
               return (
               <div key={i}>
-                {/* Mobile stacked card */}
-                <div className="flex flex-col gap-1.5 rounded-lg border border-border/40 p-2.5 sm:hidden">
+                {/* Stacked card — used up to md: so review rows never clip on tablet-width modals */}
+                <div className="flex flex-col gap-1.5 rounded-lg border border-border/40 p-2.5 md:hidden">
                   <Input placeholder="Name" value={g.name} onChange={e => update(i, { name: e.target.value })}/>
                   <div className="flex gap-1.5">
                     <Combobox
@@ -233,9 +233,9 @@ export function SmartGuestInput({ planId, onDone }: Props) {
                     <div className="text-[11px] text-ink-3 font-mono uppercase tracking-[0.12em]">+{extraCount} more {extraCount === 1 ? "field" : "fields"} kept</div>
                   )}
                 </div>
-                {/* Desktop grid row. Side stays in state and is persisted, but we
-                    don't show it inline — real party / meal values need the room. */}
-                <div className="hidden sm:grid grid-cols-12 gap-2 items-center">
+                {/* Desktop grid row — needs ~768px to fit five columns comfortably.
+                    Side stays in state and is persisted, but we don't show it inline. */}
+                <div className="hidden md:grid grid-cols-12 gap-2 items-center">
                   <Input className="col-span-3" placeholder="Name" value={g.name} onChange={e => update(i, { name: e.target.value })}/>
                   <div className="col-span-3">
                     <Combobox
