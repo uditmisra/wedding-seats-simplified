@@ -100,6 +100,7 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
   const [activeId, setActiveId] = useState<string | null>(null);
   const [view, setView] = useState<"list" | "floor" | "grouped">("floor");
   const [arrangeMode, setArrangeMode] = useState(false);
+  const [hasAutoSeated, setHasAutoSeated] = useState(false);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 3 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 6 } }),
@@ -355,6 +356,22 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
           )}
         </div>
       </div>
+
+      {/* Mobile-only primary auto-seat — the one interaction that works
+          well on a phone. Demoted to a quieter "Reshuffle" after first run. */}
+      {canEdit && onAutoAssign && guests.length > 0 && tables.length > 0 && view === "floor" && !arrangeMode && (
+        <button
+          onClick={() => { setHasAutoSeated(true); onAutoAssign(); }}
+          className={`mb-3 inline-flex w-full items-center justify-center gap-2 rounded-full px-5 text-[14px] font-medium transition sm:hidden ${
+            hasAutoSeated
+              ? "h-10 border border-hairline bg-paper text-ink-2"
+              : "h-11 bg-ink text-paper shadow-elegant"
+          }`}
+        >
+          <Wand2 size={hasAutoSeated ? 13 : 15} className={hasAutoSeated ? "" : "text-butter"} />
+          {hasAutoSeated ? "Reshuffle" : `Auto-seat all ${guests.filter(g => g.rsvp !== "declined").length} guests`}
+        </button>
+      )}
 
       {view === "floor" ? (
         <div className="grid lg:grid-cols-[280px_1fr] gap-6">
