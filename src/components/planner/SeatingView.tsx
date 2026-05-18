@@ -455,8 +455,7 @@ function UnassignedDrawerTrigger({ count, children }: { count: number; children:
           style={{ bottom: "calc(64px + env(safe-area-inset-bottom, 0px))" }}
         >
           <UsersIcon size={14} />
-          <span className="hidden xs:inline">Still to seat — drag or tap</span>
-          <span className="xs:hidden">Still to seat</span>
+          Still to seat
           <span className="ml-0.5 inline-flex size-5 items-center justify-center rounded-full bg-paper font-mono text-[10px] text-ink">
             {count}
           </span>
