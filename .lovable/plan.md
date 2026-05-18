@@ -1,78 +1,60 @@
-## The honest answer: no, the exports don't match the app
+## What the demo is for
 
-The on-screen Export tab is beautifully art-directed — paper grain, Newsreader display type, terracotta accents, a "Fig. 01" preview. The actual files people download look nothing like that:
+`/demo` exists to give a stressed couple a 30-second "this could actually work for us" moment, then convert. The desktop demo does that with three affordances: pan/drag a tiny chart, try a specific head-table conflict, and hit auto-seat. On a 390px phone, **two of those three don't really work**:
 
-- **PDFs use jsPDF's default Helvetica on stark white.** No paper tone, no display serif, no hairline rules, no chapter numerals — none of the editorial language that defines the rest of the app.
-- **"Big seating chart"** is a bare two-column text dump. No header block, no totals, no zebra rows.
-- **"One page per table"** is a bullet list. No table number badge, no shape indicator, no seat order.
-- **"Place cards"** is a wireframe — eight grey rectangles per A4 with a centred name. No fold guide, no decorative motif, no cut marks, nothing you'd actually put on a table.
-- **No actual visual seating chart export.** The app's hero artifact — the floor plan — is missing from the deliverables.
-- **CSV is fine but minimal.** Misses seat index, table shape, side, accessibility, kid flag.
+- Long-pressing a tiny guest pill in a drawer, then dragging it across a cramped floor plan onto a 12px seat dot, is fiddly enough that most users abandon.
+- "Try the conflict at the head table" requires zooming in, finding Linda and Robert, and dragging them — none of which is obvious. The instruction is a desktop instruction.
+- Auto-seat works perfectly on mobile — it's a single tap and the wow lands in 2 seconds. But it's hidden as an icon-only secondary button, while the visual hierarchy points at the broken drag flow.
 
-The exports undersell the product. People who download them won't believe it's the same app.
+The mobile demo today *teaches users they can't use the product*. That's the actual problem; visual cramping is a symptom.
 
-## What we'll build
+## Reframe: auto-seat is the hero on mobile
 
-Four redesigned PDFs + an upgraded CSV, all sharing the paper/serif/terracotta language.
+On desktop, drag-and-drop is the magic. On mobile, **auto-seat is the magic**, and we should design the whole demo around making it the inevitable next action.
 
-### 1. Visual seating chart PDF (new — becomes the hero export)
+## Changes
 
-Render the same floor-plan SVG used in the planner into the PDF as vector. Single landscape A4 (with A3 toggle) showing every table laid out, seat numbers, guest initials, table names, and a small legend. This is the format people frame or hang at the venue entrance.
+### 1. Rewrite the demo guidance for mobile — `src/pages/Demo.tsx`
+Replace the body copy below `sm:` with a single, mobile-specific instruction:
+> "Tap **Auto-seat** to watch it solve a 120-guest chart in 2 seconds. Pinch to zoom in."
 
-### 2. Big seating chart (A–Z list) — redesigned
+Keep the desktop "Drag a guest… try the conflict at the head table…" copy at `sm:` and up. Stop telling phone users to do something they can't comfortably do.
 
-- Header: plan name in Newsreader, event date, "Seating · A–Z" tagline, totals strip ("128 guests · 16 tables · 12 dietary marks").
-- Two-column body with hairline rule between columns.
-- Each row: guest name (serif), party tag (small caps mono), table name right-aligned with leader dots.
-- Section headings by initial letter as oversized italic display ("A", "B", "C").
-- Footer: plan code, page X of Y, "Made with Seatly".
-- Optional dietary chip after the name.
+### 2. Promote Auto-seat to a labeled primary action on mobile — `src/components/planner/SeatingView.tsx`
+- Below `sm:`, render the Auto-seat button as a full-width labeled primary pill (`bg-ink text-paper`, 44px tall, with the wand icon + "Auto-seat all 120 guests" label) under the view-toggle row.
+- Above `sm:`, keep the existing icon-pill in the top-right (desktop layout unchanged).
+- After auto-seat runs once on mobile, demote the button to a small "Reshuffle" pill in the same slot — the user has seen the magic; don't keep shouting.
 
-### 3. One page per table — redesigned
+### 3. Auto-fit to a *tappable* zoom, not a "fits-everything" zoom — `src/components/planner/FloorPlan.tsx`
+Current `fit()` shrinks the canvas until everything is visible, which on 390px produces tables so small the seats are not tap targets. New behaviour on viewports under 640px:
+- Compute the zoom that makes the average table ~80px wide (a real tap target).
+- Center on the room's center of mass.
+- Allow user to pan/pinch from there — the whole chart isn't visible at once, and that's fine. A scrollable, legible chart beats a "complete" chart you can't touch.
+- Lower `MIN_ZOOM` to `0.2` so this computed zoom isn't clamped away on very small phones (no-op for desktop, where users wheel-zoom into the same range).
 
-- Per-table page: large "T1" badge, table name in serif display, shape and capacity in mono, inline seat-map thumbnail.
-- Guest list with seat order (Seat 1 → N), name, party, dietary tag.
-- Conflict callout at the bottom if any constraints are violated.
+### 4. Make the conversion bar honest — `src/pages/Demo.tsx`
+The bar currently claims "You sorted Emma & James's wedding" the second the page loads. Track a single boolean (`hasInteracted`) flipped on first assignment change, table move, or auto-seat. Until then the copy reads:
+> "Get a feel for it. When you're ready, start your own."
 
-### 4. Place cards — redesigned
+After interaction, swap to the existing celebratory copy. This costs ~10 lines and removes a small but real credibility hit.
 
-- 4 per A4 sheet (not 8), printed two-up duplex-friendly: front shows guest name in display serif and table in italic; back shows meal preference and a tiny floor-plan dot showing which table.
-- Crop marks and fold guides as hairlines.
-- Optional "Mr./Ms." prefix toggle.
+### 5. Dedupe the top CTA on mobile — `src/pages/Demo.tsx`
+Hide the header "Start your chart" pill below `sm:`. The sticky bottom bar already carries it, and on mobile two competing primaries above and below the chart make the chart itself feel like an interstitial. Keep Reset and the wordmark.
 
-### 5. CSV — small additions
+### 6. Slim the chrome so the chart gets the room — `src/pages/Demo.tsx`
+- Drop `<h1>` to `text-[22px]` below `sm:`.
+- Reduce `<main>` padding from `py-6` to `py-3 sm:py-6`.
+- ConversionBar: `h-14 sm:h-16` + `pb-[env(safe-area-inset-bottom)]` on the wrapper, smaller CTA padding on mobile.
+- Update the "Guests to seat" FAB offset to `bottom: calc(64px + env(safe-area-inset-bottom, 0px))` to match the slimmer bar (`lg:hidden`, so desktop unaffected).
 
-Add columns: seat index, table shape, party side, accessibility notes, kid flag.
+### 7. Soften the "Guests to seat" drawer's purpose on mobile
+The drawer's drag flow stays — power users can still drag — but its label changes from "Guests to seat" to "**95** still to seat — drag or tap". This sets expectation that taps are valid (groundwork for a future tap-to-seat mode; not built in this plan).
 
-## Technical approach
+## Out of scope (intentional)
+- **Tap-to-seat placement mode** (tap guest → tap seat). Biggest unlocked UX win, but requires real changes to `SeatingView` + `FloorPlan` interaction model + visual placing state. Worth its own plan.
+- Redesigning the Plan/Grouped/List toggle.
+- Onboarding/dashboard/planner pages — covered by their own mobile passes.
+- Pinch-to-zoom — already wired in `FloorPlan.tsx`.
 
-```text
-Current: jsPDF .text() calls → flat A4 default fonts
-Target:  jsPDF + custom fonts + paper background + SVG embed
-```
-
-- **Fonts**: Embed Newsreader (display) + Inter Tight (body) in jsPDF via `addFileToVFS` + `addFont`. Fetch the WOFF/TTF the app already loads, base64 once at module load.
-- **Paper tone**: Fill page background with `hsl(41 40% 92%)` converted to RGB before drawing.
-- **Hairlines**: 0.3pt rules in `hsl(50 14% 15% / 0.15)`.
-- **Floor-plan embed**: Extract `computeSeats` and `tableDims` into `src/lib/floorplanGeometry.ts` so both the React canvas and the export use them; build an SVG string from that geometry and render via `jspdf.svg()` (svg2pdf.js) at vector quality.
-- **Refactor**: Each export becomes `src/lib/export/<format>.ts`. `ExportPanel.tsx` stays thin. A shared `pdfTheme.ts` holds colors, fonts, and page setup.
-- **Preview**: Update on-screen `PaperPreview` to render the same components as the actual PDF — what you see is what prints. Add a sub-toggle to preview each format before downloading.
-
-## Files affected
-
-- `src/lib/export/pdfTheme.ts` (new) — fonts, colors, page helpers
-- `src/lib/export/seatingChart.ts` (new) — visual chart PDF
-- `src/lib/export/alphabeticalChart.ts` (new) — A–Z list redesign
-- `src/lib/export/byTable.ts` (new) — per-table redesign
-- `src/lib/export/placeCards.ts` (new) — 4-up double-sided cards
-- `src/lib/export/csv.ts` (new) — extended columns
-- `src/lib/floorplanGeometry.ts` (new) — pure geometry pulled from `FloorPlan.tsx`
-- `src/components/planner/ExportPanel.tsx` — wire up new exports, surface "Visual chart" format, refresh preview
-- `package.json` — add `svg2pdf.js`
-
-## Two product calls before I build
-
-1. **Hero export — the new visual seating chart, or keep the A–Z list as the default download?**
-2. **Place cards — 4-up double-sided (premium feel) or keep 8-up single-sided (cheaper to print)?**
-
-If you say "just go", I'll default to: visual chart as hero, 4-up double-sided cards, all four PDFs redesigned, geometry extracted, on-screen preview matched to actual output.
+## Risk
+Low. Changes 1, 2, 4, 5, 6, 7 are mobile-gated by breakpoint. Change 3 alters the `fit()` heuristic and lowers `MIN_ZOOM`, which affects the demo route's first paint and the wheel-zoom floor on desktop — both verifiable in one preview pass.
