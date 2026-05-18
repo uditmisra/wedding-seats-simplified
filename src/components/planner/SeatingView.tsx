@@ -452,10 +452,11 @@ function UnassignedDrawerTrigger({ count, children }: { count: number; children:
         <button
           type="button"
           className="fixed left-1/2 z-30 inline-flex h-11 -translate-x-1/2 items-center gap-2 rounded-full bg-ink px-5 font-mono text-[12px] uppercase tracking-[0.12em] text-paper shadow-elegant lg:hidden"
-          style={{ bottom: "calc(72px + env(safe-area-inset-bottom, 0px))" }}
+          style={{ bottom: "calc(64px + env(safe-area-inset-bottom, 0px))" }}
         >
           <UsersIcon size={14} />
-          Guests to seat
+          <span className="hidden xs:inline">Still to seat — drag or tap</span>
+          <span className="xs:hidden">Still to seat</span>
           <span className="ml-0.5 inline-flex size-5 items-center justify-center rounded-full bg-paper font-mono text-[10px] text-ink">
             {count}
           </span>
