@@ -100,6 +100,7 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
   const [activeId, setActiveId] = useState<string | null>(null);
   const [view, setView] = useState<"list" | "floor" | "grouped">("floor");
   const [arrangeMode, setArrangeMode] = useState(false);
+  const [hasAutoSeated, setHasAutoSeated] = useState(false);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 3 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 6 } }),
@@ -332,7 +333,7 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
           {canEdit && onAutoAssign && guests.length > 0 && tables.length > 0 && !arrangeMode && (
             <button
               onClick={onAutoAssign}
-              className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-paper px-3 py-1.5 text-[12px] text-ink-2 transition hover:text-ink"
+              className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-hairline bg-paper px-3 py-1.5 text-[12px] text-ink-2 transition hover:text-ink"
             >
               <Wand2 size={12} />
               <span className="hidden sm:inline">Auto-seat</span>
@@ -355,6 +356,22 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
           )}
         </div>
       </div>
+
+      {/* Mobile-only primary auto-seat — the one interaction that works
+          well on a phone. Demoted to a quieter "Reshuffle" after first run. */}
+      {canEdit && onAutoAssign && guests.length > 0 && tables.length > 0 && view === "floor" && !arrangeMode && (
+        <button
+          onClick={() => { setHasAutoSeated(true); onAutoAssign(); }}
+          className={`mb-3 inline-flex w-full items-center justify-center gap-2 rounded-full px-5 text-[14px] font-medium transition sm:hidden ${
+            hasAutoSeated
+              ? "h-10 border border-hairline bg-paper text-ink-2"
+              : "h-11 bg-ink text-paper shadow-elegant"
+          }`}
+        >
+          <Wand2 size={hasAutoSeated ? 13 : 15} className={hasAutoSeated ? "" : "text-butter"} />
+          {hasAutoSeated ? "Reshuffle" : `Auto-seat all ${guests.filter(g => g.rsvp !== "declined").length} guests`}
+        </button>
+      )}
 
       {view === "floor" ? (
         <div className="grid lg:grid-cols-[280px_1fr] gap-6">
@@ -452,10 +469,10 @@ function UnassignedDrawerTrigger({ count, children }: { count: number; children:
         <button
           type="button"
           className="fixed left-1/2 z-30 inline-flex h-11 -translate-x-1/2 items-center gap-2 rounded-full bg-ink px-5 font-mono text-[12px] uppercase tracking-[0.12em] text-paper shadow-elegant lg:hidden"
-          style={{ bottom: "calc(72px + env(safe-area-inset-bottom, 0px))" }}
+          style={{ bottom: "calc(64px + env(safe-area-inset-bottom, 0px))" }}
         >
           <UsersIcon size={14} />
-          Guests to seat
+          Still to seat
           <span className="ml-0.5 inline-flex size-5 items-center justify-center rounded-full bg-paper font-mono text-[10px] text-ink">
             {count}
           </span>

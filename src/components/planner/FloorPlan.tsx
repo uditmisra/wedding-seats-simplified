@@ -32,7 +32,7 @@ interface Props {
   autoFit?: boolean;
 }
 
-const MIN_ZOOM = 0.4;
+const MIN_ZOOM = 0.2;
 const MAX_ZOOM = 2.5;
 
 const PAD_X = 70;
@@ -155,11 +155,19 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
   const fit = () => {
     const vp = viewportRef.current; if (!vp) return;
     const rect = vp.getBoundingClientRect();
-    const pad = 60;
-    const z = Math.min((rect.width - pad * 2) / width, (rect.height - pad * 2) / height, 1.5);
-    const zc = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, z));
-    const x = (rect.width - width * zc) / 2;
-    const y = (rect.height - height * zc) / 2;
+    const isSmall = rect.width < 640;
+    const pad = isSmall ? 16 : 60;
+    const fitZ = Math.min((rect.width - pad * 2) / width, (rect.height - pad * 2) / height, 1.5);
+    // On small screens, prefer a zoom that keeps tables tappable (~80px wide)
+    // over a zoom that crams the whole chart on screen. Users can pan from there.
+    const targetZ = isSmall ? Math.max(fitZ, 0.65) : fitZ;
+    const zc = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, targetZ));
+    // Center on the room's center of mass, not the full canvas, so the
+    // tables-rich area lands in the middle of the viewport.
+    const cx = roomX + roomW / 2;
+    const cy = roomY + roomH / 2;
+    const x = rect.width / 2 - cx * zc;
+    const y = rect.height / 2 - cy * zc;
     setAnimate(true); setView({ x, y, z: zc });
     window.setTimeout(() => setAnimate(false), 320);
   };
