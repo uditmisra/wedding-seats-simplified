@@ -333,7 +333,7 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
           {canEdit && onAutoAssign && guests.length > 0 && tables.length > 0 && !arrangeMode && (
             <button
               onClick={onAutoAssign}
-              className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-paper px-3 py-1.5 text-[12px] text-ink-2 transition hover:text-ink"
+              className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-hairline bg-paper px-3 py-1.5 text-[12px] text-ink-2 transition hover:text-ink"
             >
               <Wand2 size={12} />
               <span className="hidden sm:inline">Auto-seat</span>
