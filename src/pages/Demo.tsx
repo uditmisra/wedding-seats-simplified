@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { SeatingView } from "@/components/planner/SeatingView";
 import { AutoAssignDialog } from "@/components/planner/AutoAssignDialog";
@@ -30,6 +30,8 @@ export default function Demo() {
   const [constraints] = useState(initial.constraints);
   const [autoOpen, setAutoOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const interactionBaselineRef = useRef(true); // skip the first state sync
   const navigate = useNavigate();
   const { isPaid, loading: unlockLoading } = useUnlock();
   const startChart = () => {
@@ -42,11 +44,25 @@ export default function Demo() {
     saveDemoState({ guests, tables, assignments, constraints });
   }, [guests, tables, assignments, constraints]);
 
+  // Flip hasInteracted the first time the user changes anything (drag,
+  // table move, auto-seat). The first effect run after mount is the
+  // baseline — ignore it.
+  useEffect(() => {
+    if (interactionBaselineRef.current) {
+      interactionBaselineRef.current = false;
+      return;
+    }
+    if (!hasInteracted) setHasInteracted(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assignments, tables]);
+
   const reset = () => {
     const fresh = resetDemoState();
     setGuests(fresh.guests);
     setTables(fresh.tables);
     setAssignments(fresh.assignments);
+    setHasInteracted(false);
+    interactionBaselineRef.current = true;
     toast.success("Demo reset to a fresh wedding.");
   };
 
@@ -96,7 +112,7 @@ export default function Demo() {
             </button>
             <button
               onClick={startChart}
-              className="inline-flex items-center gap-1.5 rounded-full bg-ink px-3.5 py-1.5 text-[13px] font-medium text-paper transition hover:bg-ink-2"
+              className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-ink px-3.5 py-1.5 text-[13px] font-medium text-paper transition hover:bg-ink-2"
             >
               <Sparkles size={13} className="text-butter" />
               <span>{isPaid ? "Open dashboard" : "Start your chart"}</span>
@@ -106,15 +122,18 @@ export default function Demo() {
       </header>
 
       {/* Main canvas */}
-      <main className="container flex-1 py-6">
+      <main className="container flex-1 py-3 sm:py-6">
         <div className="mb-4 flex items-baseline justify-between gap-3">
           <div>
-            <h1 className="m-0 font-display text-[28px] leading-none">
+            <h1 className="m-0 font-display text-[22px] leading-tight sm:text-[28px] sm:leading-none">
               Emma &amp; James <span className="font-display-italic text-ink-3">— a sample wedding</span>
             </h1>
-            <p className="mt-1.5 text-[13px] text-ink-2">
+            <p className="mt-1.5 hidden text-[13px] text-ink-2 sm:block">
               Drag a guest to a seat. Try the conflict at the head table — Linda and Robert are flagged "not near."
               Or hit auto-seat and watch it solve.
+            </p>
+            <p className="mt-1.5 text-[13px] text-ink-2 sm:hidden">
+              Tap <span className="font-medium text-ink">Auto-seat</span> to watch it solve a 120-guest chart in 2 seconds. Pinch to zoom in.
             </p>
           </div>
         </div>
@@ -151,7 +170,7 @@ export default function Demo() {
       </main>
 
       {/* Persistent conversion bar */}
-      <ConversionBar onUnlock={startChart} isPaid={isPaid} />
+      <ConversionBar onUnlock={startChart} isPaid={isPaid} hasInteracted={hasInteracted} />
 
       <UpgradeModal
         open={upgradeOpen}
@@ -163,16 +182,21 @@ export default function Demo() {
   );
 }
 
-function ConversionBar({ onUnlock, isPaid }: { onUnlock: () => void; isPaid: boolean }) {
+function ConversionBar({ onUnlock, isPaid, hasInteracted }: { onUnlock: () => void; isPaid: boolean; hasInteracted: boolean }) {
   return (
-    <div className="sticky bottom-0 border-t hairline bg-paper/95 backdrop-blur-md">
-      <div className="container flex h-16 items-center gap-4">
+    <div
+      className="sticky bottom-0 border-t hairline bg-paper/95 backdrop-blur-md"
+      style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+    >
+      <div className="container flex h-14 items-center gap-4 sm:h-16">
         <div className="hidden min-w-0 flex-1 sm:block">
           <div className="font-display text-[17px] leading-tight">
             {isPaid ? (
               <>You're <span className="font-display-italic">unlocked.</span></>
-            ) : (
+            ) : hasInteracted ? (
               <>You sorted Emma &amp; James's wedding. <span className="font-display-italic">Try it with yours.</span></>
+            ) : (
+              <>Get a <span className="font-display-italic">feel for it.</span> When you're ready, start your own.</>
             )}
           </div>
           <div className="text-[12px] text-ink-2">
@@ -183,7 +207,7 @@ function ConversionBar({ onUnlock, isPaid }: { onUnlock: () => void; isPaid: boo
         </div>
         <button
           onClick={onUnlock}
-          className="ml-auto inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-[14px] font-medium text-paper transition hover:bg-ink-2"
+          className="ml-auto inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-[13px] font-medium text-paper transition hover:bg-ink-2 sm:px-5 sm:py-2.5 sm:text-[14px]"
         >
           <span>{isPaid ? "Open dashboard" : "Start my chart"}</span>
           <ArrowRight size={14} />
