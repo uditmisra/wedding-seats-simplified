@@ -241,34 +241,32 @@ const table = (
 });
 
 export const DEMO_TABLES: TableDef[] = [
-  // The default room places fixtures in three corners of the bottom/right:
-  //   - DJ booth      top-right     (~x 863..978, y  22..51)
-  //   - Bar           bottom-left   (~x  21..229, y 597..648)
-  //   - Dance floor   bottom-right  (~x 777..1027, y 460..737)
-  // Tables are laid out to leave each of those zones clear.
+  // 26m × 18m demo room (canvas ~1352 × 936). Fixtures sit at:
+  //   - DJ booth      top-right     (~x 1122..1271, y  28..94)
+  //   - Bar           bottom-left   (~x   27..297,  y 767..833)
+  //   - Dance floor   bottom-right  (~x  919..1244, y 515..871)
+  // Round 10-seat tables render at ~186 × 186 px (min radius 60 + seat
+  // gap + dot), so every neighbour needs ≥200 px pitch.
 
-  // Row 1 — head table + kids' long table + T13 across the top.
-  table("t-head", "Head Table", 8, "head", 330, 155),
-  table("t-kids", "Kids' Table", 12, "long", 560, 155),
-  table("t-13", "Table 13", 8, "round", 820, 165),
+  // Row 1 (y=170) — head + kids' long across the top, well clear of DJ.
+  table("t-head", "Head Table", 8, "head", 400, 170),
+  table("t-kids", "Kids' Table", 12, "long", 900, 170),
 
-  // Row 2 — five rounds across the full width (above the dance floor band).
-  table("t-1", "Table 1", 10, "round", 175, 310),
-  table("t-2", "Table 2", 10, "round", 335, 310),
-  table("t-3", "Table 3", 10, "round", 495, 310),
-  table("t-4", "Table 4", 10, "round", 655, 310),
-  table("t-5", "Table 5", 10, "round", 815, 310),
+  // Row 2 (y=360) — four rounds at 210 px pitch.
+  table("t-1", "Table 1", 10, "round", 160, 360),
+  table("t-2", "Table 2", 10, "round", 370, 360),
+  table("t-3", "Table 3", 10, "round", 580, 360),
+  table("t-4", "Table 4", 10, "round", 790, 360),
 
-  // Row 3 — four rounds, all left of the dance floor.
-  table("t-6", "Table 6", 10, "round", 175, 450),
-  table("t-7", "Table 7", 10, "round", 335, 450),
-  table("t-8", "Table 8", 10, "round", 495, 450),
-  table("t-9", "Table 9", 10, "round", 655, 450),
+  // Row 3 (y=560) — four more rounds, last one still clears dance floor.
+  table("t-5", "Table 5", 10, "round", 160, 560),
+  table("t-6", "Table 6", 10, "round", 370, 560),
+  table("t-7", "Table 7", 10, "round", 580, 560),
+  table("t-8", "Table 8", 10, "round", 790, 560),
 
-  // Row 4 — three eights tucked between the bar and the dance floor.
-  table("t-10", "Table 10", 8, "round", 350, 585),
-  table("t-11", "Table 11", 8, "round", 515, 585),
-  table("t-12", "Table 12", 8, "round", 680, 585),
+  // Row 4 (y=760) — two rounds tucked between the bar and the dance floor.
+  table("t-9", "Table 9", 10, "round", 450, 760),
+  table("t-10", "Table 10", 10, "round", 660, 760),
 ];
 
 // ── Constraints (10) ─────────────────────────────────────────────────
