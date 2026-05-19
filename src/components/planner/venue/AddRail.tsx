@@ -21,6 +21,8 @@ interface Props {
   canEdit: boolean;
   onSavedRoom: (cfg: RoomConfig) => void;
   refresh: () => void;
+  demoMode?: boolean;
+  setTables?: React.Dispatch<React.SetStateAction<TableDef[]>>;
 }
 
 const TABLE_SHAPES: Array<{ shape: Shape; label: string; seats: number }> = [
@@ -156,7 +158,7 @@ function FixtureThumb({ type }: { type: FixtureType }) {
   }
 }
 
-export function AddRail({ planId, scenarioId, tables, roomConfig, canEdit, onSavedRoom, refresh }: Props) {
+export function AddRail({ planId, scenarioId, tables, roomConfig, canEdit, onSavedRoom, refresh, demoMode, setTables }: Props) {
   const cfg: RoomConfig = {
     width_m: roomConfig?.width_m ?? DEFAULT_ROOM_CONFIG.width_m,
     height_m: roomConfig?.height_m ?? DEFAULT_ROOM_CONFIG.height_m,
@@ -182,6 +184,17 @@ export function AddRail({ planId, scenarioId, tables, roomConfig, canEdit, onSav
     const { x, y } = dropTableAt(shape, name, capacity);
     const finalName = uniqueTableName(name, tables.map(t => t.name));
     if (finalName !== name) toast.info(`Renamed to "${finalName}" — name already used.`);
+    if (demoMode) {
+      const newTable: TableDef = {
+        id: `demo-t-${Date.now()}`,
+        plan_id: planId,
+        scenario_id: scenarioId,
+        name: finalName, shape, capacity, x, y, rotation: 0,
+      };
+      setTables?.(prev => [...prev, newTable]);
+      setPendingShape(null);
+      return;
+    }
     await supabase.from("tables_def").insert({
       plan_id: planId, scenario_id: scenarioId,
       name: finalName, shape, capacity, x, y, rotation: 0,
@@ -203,6 +216,7 @@ export function AddRail({ planId, scenarioId, tables, roomConfig, canEdit, onSav
       visible: true,
     };
     const next: RoomConfig = { ...cfg, fixtures: [...cfg.fixtures, newF] };
+    if (demoMode) { onSavedRoom(next); return; }
     const { error } = await supabase.from("plans").update({ room_config: next as unknown as null }).eq("id", planId);
     if (error) { toast.error(error.message); return; }
     onSavedRoom(next);
@@ -210,6 +224,7 @@ export function AddRail({ planId, scenarioId, tables, roomConfig, canEdit, onSav
 
   const runAI = async () => {
     if (!aiText.trim()) return;
+    if (demoMode) { toast.info("AI setup isn't available in the demo — try the table buttons above."); return; }
     setAiBusy(true);
     try {
       const [roomRes, tablesRes] = await Promise.all([
