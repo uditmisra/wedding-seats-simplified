@@ -48,8 +48,6 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
   const dims = tables.map(tableDims);
   const maxW = Math.max(180, ...dims.map(d => d.box.w));
   const maxH = Math.max(180, ...dims.map(d => d.box.h));
-  const cols = tables.length <= 2 ? Math.max(1, tables.length) : tables.length <= 6 ? 3 : 4;
-  const rows = Math.max(1, Math.ceil(tables.length / Math.max(1, cols)));
 
   // Resolve canvas dimensions and room rectangle.
   // When roomConfig is provided, canvas scales from real-world dimensions.
@@ -63,11 +61,15 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
   };
   const rl = roomLayout(cfg, PAD_X, PAD_TOP, PAD_BOTTOM);
 
-  // If any table has a stored position, use the configured canvas.
-  // Otherwise use an auto-sized canvas that guarantees tables fit inside the room outline.
-  const hasCustomPos = tables.some(t => t.x > 0 || t.y > 0);
+  // Aspect-aware column count keeps tables filling the room rather than piling
+  // in one corner. Falls back to a sane minimum when there are very few tables.
+  const aspect = (rl.roomW || 1) / (rl.roomH || 1);
+  const rawCols = Math.round(Math.sqrt(Math.max(1, tables.length) * aspect));
+  const cols = Math.max(1, Math.min(6, rawCols || 1));
+  const rows = Math.max(1, Math.ceil(tables.length / cols));
+
   let width: number, height: number, roomX: number, roomY: number, roomW: number, roomH: number;
-  if (hasCustomPos || roomConfig) {
+  if (roomConfig) {
     ({ canvasW: width, canvasH: height, roomX, roomY, roomW, roomH } = rl);
   } else {
     // Auto-size: room must contain all tables with TABLE_GAP breathing room
@@ -249,7 +251,8 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
   const dotSize = 24 * view.z;
 
   // Pre-compute table positions/seats once.
-  // Priority: live drag position → stored DB position → auto-grid (inside room bounds).
+  // Priority while arranging: live drag → stored DB. Otherwise: always auto-grid
+  // inside the room so the Seating view stays tidy regardless of Venue drops.
   const layout = tables.map((t, i) => {
     const col = i % cols;
     const row = Math.floor(i / cols);
@@ -259,7 +262,7 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
     const gridCx = roomX + col * gridCellW + gridCellW / 2;
     const gridCy = roomY + row * gridCellH + gridCellH / 2;
     const live = livePos.get(t.id);
-    const stored = (t.x > 0 || t.y > 0) ? { cx: t.x, cy: t.y } : null;
+    const stored = arrangeMode && (t.x > 0 || t.y > 0) ? { cx: t.x, cy: t.y } : null;
     const cx = live?.cx ?? stored?.cx ?? gridCx;
     const cy = live?.cy ?? stored?.cy ?? gridCy;
     const d = dims[i];
