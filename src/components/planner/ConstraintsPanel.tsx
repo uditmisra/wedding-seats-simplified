@@ -13,6 +13,8 @@ interface Props {
   /** Hides the auto-assign rail — used when embedded in onboarding */
   compact?: boolean;
   onAutoAssign?: () => void;
+  demoMode?: boolean;
+  setConstraints?: React.Dispatch<React.SetStateAction<ConstraintDef[]>>;
 }
 
 const AVATAR_COLORS = [
@@ -49,7 +51,7 @@ function loadPrefs(planId: string): Prefs {
 
 const defaultPrefs: Prefs = { keepPinned: true, groupByParty: true, mixSides: false, honorRules: true };
 
-export function ConstraintsPanel({ planId, guests, constraints, refresh, compact = false, onAutoAssign }: Props) {
+export function ConstraintsPanel({ planId, guests, constraints, refresh, compact = false, onAutoAssign, demoMode, setConstraints }: Props) {
   const [adding, setAdding] = useState<ConstraintKind | null>(null);
   const [a, setA] = useState("");
   const [b, setB] = useState("");
@@ -79,11 +81,21 @@ export function ConstraintsPanel({ planId, guests, constraints, refresh, compact
     const guestA = guests.find(g => g.name === a)?.id;
     const guestB = guests.find(g => g.name === b)?.id;
     if (!guestA || !guestB) return;
+    if (demoMode) {
+      const newC: ConstraintDef = {
+        id: `demo-c-${Date.now()}`,
+        plan_id: planId, guest_a: guestA, guest_b: guestB, kind: adding,
+      };
+      setConstraints?.(prev => [...prev, newC]);
+      cancelAdd();
+      return;
+    }
     await supabase.from("constraints_def").insert({ plan_id: planId, guest_a: guestA, guest_b: guestB, kind: adding });
     cancelAdd();
     refresh();
   };
   const remove = async (id: string) => {
+    if (demoMode) { setConstraints?.(prev => prev.filter(c => c.id !== id)); return; }
     await supabase.from("constraints_def").delete().eq("id", id);
     refresh();
   };

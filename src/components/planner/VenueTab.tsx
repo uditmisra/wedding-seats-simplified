@@ -17,6 +17,9 @@ interface Props {
   onSavedRoom: (cfg: RoomConfig) => void;
   autoOpen?: "new" | "bulk" | null;
   onAutoOpenHandled?: () => void;
+  /** Demo mode — skip Supabase writes; mutate via setTables. */
+  demoMode?: boolean;
+  setTables?: React.Dispatch<React.SetStateAction<TableDef[]>>;
 }
 
 /**
@@ -25,7 +28,7 @@ interface Props {
  */
 export function VenueTab({
   planId, scenarioId, tables, assignments, roomConfig, canEdit, refresh, onSavedRoom,
-  autoOpen, onAutoOpenHandled,
+  autoOpen, onAutoOpenHandled, demoMode, setTables,
 }: Props) {
   const isBelowLg = useBelowLg();
 
@@ -38,6 +41,7 @@ export function VenueTab({
         tables={tables} assignments={assignments}
         roomConfig={roomConfig} canEdit={canEdit}
         onSavedRoom={onSavedRoom} refresh={refresh}
+        demoMode={demoMode} setTables={setTables}
       />
     );
   }
@@ -49,12 +53,14 @@ export function VenueTab({
           planId={planId} scenarioId={scenarioId}
           tables={tables} roomConfig={roomConfig}
           canEdit={canEdit} onSavedRoom={onSavedRoom} refresh={refresh}
+          demoMode={demoMode} setTables={setTables}
         />
         <div className="bg-paper-2/30 p-4">
           <VenueCanvas
             planId={planId} tables={tables} assignments={assignments}
             roomConfig={roomConfig} canEdit={canEdit}
             onSavedRoom={onSavedRoom} refresh={refresh}
+            demoMode={demoMode} setTables={setTables}
           />
         </div>
       </div>

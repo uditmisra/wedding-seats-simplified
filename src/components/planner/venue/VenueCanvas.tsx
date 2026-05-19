@@ -23,6 +23,8 @@ interface Props {
   canEdit: boolean;
   onSavedRoom: (cfg: RoomConfig) => void;
   refresh: () => void;
+  demoMode?: boolean;
+  setTables?: React.Dispatch<React.SetStateAction<TableDef[]>>;
 }
 
 /**
@@ -31,7 +33,7 @@ interface Props {
  * for spin, inline selection bar for the common edits, double-click table
  * for the rename/capacity modal.
  */
-export function VenueCanvas({ planId, tables, assignments, roomConfig, canEdit, onSavedRoom, refresh }: Props) {
+export function VenueCanvas({ planId, tables, assignments, roomConfig, canEdit, onSavedRoom, refresh, demoMode, setTables }: Props) {
   const cfg: RoomConfig = useMemo(() => ({
     width_m: roomConfig?.width_m ?? DEFAULT_ROOM_CONFIG.width_m,
     height_m: roomConfig?.height_m ?? DEFAULT_ROOM_CONFIG.height_m,
@@ -59,6 +61,14 @@ export function VenueCanvas({ planId, tables, assignments, roomConfig, canEdit, 
   useEffect(() => {
     const stacked = tables.filter(t => t.x === 0 && t.y === 0);
     if (stacked.length > 1) {
+      if (demoMode) {
+        setTables?.(prev => prev.map((t, i) => {
+          if (t.x !== 0 || t.y !== 0) return t;
+          const col = i % 4; const row = Math.floor(i / 4);
+          return { ...t, x: roomX + 100 + col * 180, y: roomY + 100 + row * 160 };
+        }));
+        return;
+      }
       stacked.forEach(async (t, i) => {
         const col = i % 4;
         const row = Math.floor(i / 4);
@@ -202,6 +212,11 @@ export function VenueCanvas({ planId, tables, assignments, roomConfig, canEdit, 
       const final = tablePos[id];
       rotateRef.current = null;
       if (final) {
+        if (demoMode) {
+          setTables?.(prev => prev.map(t => t.id === id ? { ...t, rotation: Math.round(final.rotation) } : t));
+          setTablePos(p => { const { [id]: _, ...rest } = p; return rest; });
+          return;
+        }
         await supabase.from("tables_def").update({ rotation: Math.round(final.rotation) }).eq("id", id);
         setTablePos(p => { const { [id]: _, ...rest } = p; return rest; });
         refresh();
@@ -214,6 +229,11 @@ export function VenueCanvas({ planId, tables, assignments, roomConfig, canEdit, 
     if (d.kind === "table") {
       const final = tablePos[d.id];
       if (final) {
+        if (demoMode) {
+          setTables?.(prev => prev.map(t => t.id === d.id ? { ...t, x: Math.round(final.x), y: Math.round(final.y) } : t));
+          setTablePos(p => { const { [d.id]: _, ...rest } = p; return rest; });
+          return;
+        }
         await supabase.from("tables_def").update({ x: Math.round(final.x), y: Math.round(final.y) }).eq("id", d.id);
         setTablePos(p => { const { [d.id]: _, ...rest } = p; return rest; });
         refresh();
@@ -232,6 +252,7 @@ export function VenueCanvas({ planId, tables, assignments, roomConfig, canEdit, 
   };
 
   const saveRoom = async (next: RoomConfig) => {
+    if (demoMode) { onSavedRoom(next); return; }
     const { error } = await supabase.from("plans").update({ room_config: next as unknown as null }).eq("id", planId);
     if (error) { toast.error(error.message); return; }
     onSavedRoom(next);
@@ -247,21 +268,40 @@ export function VenueCanvas({ planId, tables, assignments, roomConfig, canEdit, 
       setEditName(null);
       return;
     }
+    if (demoMode) {
+      setTables?.(prev => prev.map(t => t.id === id ? { ...t, name: trimmed } : t));
+      setEditName(null);
+      return;
+    }
     await supabase.from("tables_def").update({ name: trimmed }).eq("id", id);
     setEditName(null);
     refresh();
   };
   const setTableCapacity = async (id: string, capacity: number) => {
-    await supabase.from("tables_def").update({ capacity: Math.max(1, Math.min(30, capacity)) }).eq("id", id);
+    const cap = Math.max(1, Math.min(30, capacity));
+    if (demoMode) {
+      setTables?.(prev => prev.map(t => t.id === id ? { ...t, capacity: cap } : t));
+      return;
+    }
+    await supabase.from("tables_def").update({ capacity: cap }).eq("id", id);
     refresh();
   };
   const setTableShape = async (id: string, shape: Shape) => {
+    if (demoMode) {
+      setTables?.(prev => prev.map(t => t.id === id ? { ...t, shape } : t));
+      return;
+    }
     await supabase.from("tables_def").update({ shape }).eq("id", id);
     refresh();
   };
   const deleteTable = async (id: string) => {
     const seated = seatedByTable.get(id) ?? 0;
     if (seated > 0 && !confirm(`${seated} guest${seated === 1 ? "" : "s"} seated here. Delete anyway?`)) return;
+    if (demoMode) {
+      setTables?.(prev => prev.filter(t => t.id !== id));
+      setSelection({ kind: null, id: null });
+      return;
+    }
     await supabase.from("tables_def").delete().eq("id", id);
     setSelection({ kind: null, id: null });
     refresh();
@@ -314,6 +354,12 @@ export function VenueCanvas({ planId, tables, assignments, roomConfig, canEdit, 
       const y = Math.round(p.y / GRID) * GRID;
       return { id: t.id, x, y };
     });
+    if (demoMode) {
+      const byId = new Map(updates.map(u => [u.id, u]));
+      setTables?.(prev => prev.map(t => byId.has(t.id) ? { ...t, x: byId.get(t.id)!.x, y: byId.get(t.id)!.y } : t));
+      toast.success("Nudged tables apart");
+      return;
+    }
     await Promise.all(updates.map(u =>
       supabase.from("tables_def").update({ x: u.x, y: u.y }).eq("id", u.id)
     ));
