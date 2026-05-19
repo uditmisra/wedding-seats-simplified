@@ -349,7 +349,7 @@ const Planner = () => {
           <div className="hidden items-end justify-between gap-3 border-b hairline bg-white/30 px-4 -mx-4 rounded-t-md sm:flex">
             <TabsList className="h-auto gap-7 rounded-none bg-transparent p-0">
               {visibleTabs.map(t => {
-                const count = t.value === "guests" ? guests.length : t.value === "tables" ? tables.length : undefined;
+                const count = t.value === "guests" ? guests.length : t.value === "venue" ? tables.length : undefined;
                 return (
                   <ChapterTab
                     key={t.value}
@@ -396,7 +396,7 @@ const Planner = () => {
               refresh={refresh}
               canEdit={canEdit}
               onGoToGuests={() => setTab("guests")}
-              onGoToTables={() => setTab("tables")}
+              onGoToTables={() => setTab("venue")}
               onActivityLog={log}
               roomConfig={plan.room_config}
               onAutoAssign={() => setAutoOpen(true)}
@@ -405,15 +405,18 @@ const Planner = () => {
           <TabsContent value="guests" className="mt-6 animate-tab-in">
                 <GuestsTab planId={plan.id} guests={guests} refresh={refresh} autoOpen={guestsAutoOpen} onAutoOpenHandled={() => setGuestsAutoOpen(null)} onActivityLog={log} />
           </TabsContent>
-          <TabsContent value="tables" className="mt-6 animate-tab-in">
-                <TablesTab planId={plan.id} scenarioId={scenarioId ?? ""} tables={tables} assignments={assignments} refresh={refresh} autoOpen={tablesAutoOpen} onAutoOpenHandled={() => setTablesAutoOpen(null)} onActivityLog={log} />
-          </TabsContent>
-          <TabsContent value="room" className="mt-6 animate-tab-in">
-                <RoomSetupPanel
+          <TabsContent value="venue" className="mt-6 animate-tab-in">
+                <VenueTab
                   planId={plan.id}
+                  scenarioId={scenarioId ?? ""}
+                  tables={tables}
+                  assignments={assignments}
                   roomConfig={plan.room_config}
                   canEdit={canEdit}
-                  onSaved={(cfg) => plan && setPlan({ ...plan, room_config: cfg })}
+                  refresh={refresh}
+                  onSavedRoom={(cfg) => plan && setPlan({ ...plan, room_config: cfg })}
+                  autoOpen={tablesAutoOpen}
+                  onAutoOpenHandled={() => setTablesAutoOpen(null)}
                 />
           </TabsContent>
           <TabsContent value="compare" className="mt-6 animate-tab-in">
