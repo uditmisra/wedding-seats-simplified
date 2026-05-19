@@ -231,32 +231,34 @@ const table = (
 });
 
 export const DEMO_TABLES: TableDef[] = [
-  // Row 1 — head table center, kids' long table tucked to its right (still
-  // clear of DJ booth at top-right). y≈155 keeps the head table below the
-  // entry doorway.
+  // The default room places fixtures in three corners of the bottom/right:
+  //   - DJ booth      top-right     (~x 863..978, y  22..51)
+  //   - Bar           bottom-left   (~x  21..229, y 597..648)
+  //   - Dance floor   bottom-right  (~x 777..1027, y 460..737)
+  // Tables are laid out to leave each of those zones clear.
+
+  // Row 1 — head table + kids' long table across the top, below the entry.
   table("t-head", "Head Table", 8, "head", 430, 155),
-  table("t-kids", "Kids' Table", 12, "long", 720, 155),
+  table("t-kids", "Kids' Table", 12, "long", 700, 155),
 
-  // Row 2 — five round tens, full width
-  table("t-1", "Table 1", 10, "round", 175, 320),
-  table("t-2", "Table 2", 10, "round", 335, 320),
-  table("t-3", "Table 3", 10, "round", 495, 320),
-  table("t-4", "Table 4", 10, "round", 655, 320),
-  table("t-5", "Table 5", 10, "round", 815, 320),
+  // Row 2 — five rounds across the full width (above the dance floor band).
+  table("t-1", "Table 1", 10, "round", 175, 310),
+  table("t-2", "Table 2", 10, "round", 335, 310),
+  table("t-3", "Table 3", 10, "round", 495, 310),
+  table("t-4", "Table 4", 10, "round", 655, 310),
+  table("t-5", "Table 5", 10, "round", 815, 310),
 
-  // Row 3 — five round tens, full width
-  table("t-6", "Table 6", 10, "round", 175, 470),
-  table("t-7", "Table 7", 10, "round", 335, 470),
-  table("t-8", "Table 8", 10, "round", 495, 470),
-  table("t-9", "Table 9", 10, "round", 655, 470),
-  table("t-10", "Table 10", 10, "round", 815, 470),
+  // Row 3 — four rounds left of the dance floor.
+  table("t-6", "Table 6", 10, "round", 175, 450),
+  table("t-7", "Table 7", 10, "round", 335, 450),
+  table("t-8", "Table 8", 10, "round", 495, 450),
+  table("t-9", "Table 9", 10, "round", 655, 450),
 
-  // Row 4 — three round eights tucked between bar (bottom-left, y≈600+)
-  // and dance floor (bottom-right, x≈700+, y≈400+). Sit slightly higher
-  // (y=605) so seat dots clear the bar; x stays left of the dance floor.
-  table("t-11", "Table 11", 8, "round", 230, 605),
-  table("t-12", "Table 12", 8, "round", 410, 605),
-  table("t-13", "Table 13", 8, "round", 590, 605),
+  // Row 4 — four eights tucked between the bar and the dance floor.
+  table("t-10", "Table 10", 8, "round", 290, 580),
+  table("t-11", "Table 11", 8, "round", 430, 580),
+  table("t-12", "Table 12", 8, "round", 570, 580),
+  table("t-13", "Table 13", 8, "round", 710, 580),
 ];
 
 // ── Constraints (10) ─────────────────────────────────────────────────
