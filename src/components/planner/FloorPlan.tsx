@@ -187,7 +187,11 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
 
   // Clear live positions when leaving arrange mode
   useEffect(() => {
-    if (!arrangeMode) setLivePos(new Map());
+    if (!arrangeMode) {
+      setLivePos(new Map());
+      setLiveFixPos(new Map());
+      setSelectedFixtureId(null);
+    }
   }, [arrangeMode]);
 
   // Auto-fit on mount when:
