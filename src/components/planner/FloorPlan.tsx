@@ -48,7 +48,7 @@ const noop = () => {};
 const BLOCKING_FIXTURE_TYPES = new Set<FixtureType>([
   "bar", "dance_floor", "dj", "stage", "catering", "photo_booth", "bathroom", "coat_check", "entry",
 ]);
-const FIXTURE_CLEARANCE = 16;
+const FIXTURE_CLEARANCE = 36;
 
 export function FloorPlan({ tables, assignments, guests, constraints, highlights, scenarioId, onUnassign = noop, onTogglePin = noop, onMoveTo = noop, onSwapWith = noop, unassigned = [], onAssign, canEdit = true, arrangeMode = false, onTableMove, onFixtureMove, onFixtureDelete, roomConfig, chromeHeight = 240, autoFit = false }: Props) {
   const guestById = useMemo(() => new Map(guests.map(g => [g.id, g])), [guests]);
@@ -133,7 +133,25 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
       }
     }
     if (candidates.length >= tables.length || c === 8) {
-      cols = c; rows = r; freeCells = candidates;
+      cols = c; rows = r;
+      // When we have surplus cells, prefer the ones farthest from any fixture
+      // so tables breathe instead of crowding the DJ booth / bar edges.
+      if (candidates.length > tables.length && fixtureRects.length > 0) {
+        const scored = candidates.map(p => {
+          let minD = Infinity;
+          for (const fr of fixtureRects) {
+            const dx = Math.max(fr.x - p.cx, 0, p.cx - (fr.x + fr.w));
+            const dy = Math.max(fr.y - p.cy, 0, p.cy - (fr.y + fr.h));
+            const d = Math.hypot(dx, dy);
+            if (d < minD) minD = d;
+          }
+          return { p, d: minD };
+        }).sort((a, b) => b.d - a.d).slice(0, tables.length);
+        // Re-sort by scan order so visual layout stays predictable (top→bottom, left→right).
+        freeCells = scored.map(s => s.p).sort((a, b) => (a.cy - b.cy) || (a.cx - b.cx));
+      } else {
+        freeCells = candidates;
+      }
       break;
     }
   }
