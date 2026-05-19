@@ -412,6 +412,7 @@ const Planner = () => {
               onActivityLog={log}
               roomConfig={plan.room_config}
               onAutoAssign={() => setAutoOpen(true)}
+              onSavedRoom={(cfg) => plan && setPlan({ ...plan, room_config: cfg })}
             />
           </TabsContent>
           <TabsContent value="guests" className="mt-6 animate-tab-in">
