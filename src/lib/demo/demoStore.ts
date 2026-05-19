@@ -6,20 +6,23 @@
 // from killing 3 minutes of dragging.
 
 import type { Guest, TableDef, Assignment, ConstraintDef } from "@/lib/types";
+import type { RoomConfig } from "@/lib/roomConfig";
 import {
   DEMO_GUESTS,
   DEMO_TABLES,
   DEMO_ASSIGNMENTS,
   DEMO_CONSTRAINTS,
+  DEMO_PLAN,
 } from "./sampleData";
 
-const KEY = "demo:state:v1";
+const KEY = "demo:state:v2";
 
 export interface DemoState {
   guests: Guest[];
   tables: TableDef[];
   assignments: Assignment[];
   constraints: ConstraintDef[];
+  roomConfig: RoomConfig;
 }
 
 const seed = (): DemoState => ({
@@ -27,6 +30,7 @@ const seed = (): DemoState => ({
   tables: DEMO_TABLES.map(t => ({ ...t })),
   assignments: DEMO_ASSIGNMENTS.map(a => ({ ...a })),
   constraints: DEMO_CONSTRAINTS.map(c => ({ ...c })),
+  roomConfig: JSON.parse(JSON.stringify(DEMO_PLAN.room_config)),
 });
 
 export function loadDemoState(): DemoState {
@@ -36,7 +40,7 @@ export function loadDemoState(): DemoState {
     if (!raw) return seed();
     const parsed = JSON.parse(raw) as DemoState;
     // Sanity guard — if anything is missing, fall back to a fresh seed.
-    if (!parsed.guests || !parsed.tables || !parsed.assignments || !parsed.constraints) return seed();
+    if (!parsed.guests || !parsed.tables || !parsed.assignments || !parsed.constraints || !parsed.roomConfig) return seed();
     return parsed;
   } catch {
     return seed();
