@@ -487,6 +487,78 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
                   </div>
                 );
               })}
+              {/* Arrange mode — fixture overlays (move + delete). */}
+              {arrangeMode && (onFixtureMove || onFixtureDelete) && cfg.fixtures.filter(f => f.visible && f.type !== "compass").map(f => {
+                const live = liveFixPos.get(f.id);
+                const x_pct = live?.x_pct ?? f.x_pct;
+                const y_pct = live?.y_pct ?? f.y_pct;
+                const fx = roomX + x_pct * roomW;
+                const fy = roomY + y_pct * roomH;
+                const fw = (f.w_pct ?? 0.1) * roomW;
+                const fh = (f.h_pct ?? 0.06) * roomH;
+                const isSel = selectedFixtureId === f.id;
+                const isDragging = fixDragRef.current?.id === f.id;
+                return (
+                  <div
+                    key={`fixarr-${f.id}`}
+                    data-interactive
+                    className="absolute pointer-events-auto"
+                    style={{
+                      left: fx, top: fy, width: fw, height: fh,
+                      touchAction: "none", userSelect: "none",
+                      cursor: isDragging ? "grabbing" : "grab",
+                      border: `1.5px dashed hsl(var(--${isSel || isDragging ? "terracotta" : "ink-3"}))`,
+                      background: isSel ? "hsl(var(--terracotta) / 0.06)" : "transparent",
+                      borderRadius: 4,
+                    }}
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                      setSelectedFixtureId(f.id);
+                      fixDragRef.current = {
+                        id: f.id, startXpct: x_pct, startYpct: y_pct,
+                        startPx: e.clientX, startPy: e.clientY, moved: false,
+                      };
+                      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+                    }}
+                    onPointerMove={(e) => {
+                      const d = fixDragRef.current;
+                      if (!d || d.id !== f.id) return;
+                      const dx = (e.clientX - d.startPx) / view.z;
+                      const dy = (e.clientY - d.startPy) / view.z;
+                      if (Math.abs(dx) + Math.abs(dy) > 2) d.moved = true;
+                      const nx = Math.max(0, Math.min(1 - (f.w_pct ?? 0.1), d.startXpct + dx / roomW));
+                      const ny = Math.max(0, Math.min(1 - (f.h_pct ?? 0.06), d.startYpct + dy / roomH));
+                      setLiveFixPos(m => new Map(m).set(f.id, { x_pct: nx, y_pct: ny }));
+                    }}
+                    onPointerUp={() => {
+                      const d = fixDragRef.current;
+                      if (!d || d.id !== f.id) return;
+                      const pos = liveFixPos.get(f.id);
+                      if (pos && d.moved) onFixtureMove?.(f.id, pos.x_pct, pos.y_pct);
+                      fixDragRef.current = null;
+                    }}
+                    onPointerCancel={() => { fixDragRef.current = null; }}
+                  >
+                    {isSel && onFixtureDelete && (
+                      <button
+                        type="button"
+                        data-interactive
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onFixtureDelete(f.id);
+                          setSelectedFixtureId(null);
+                        }}
+                        className="absolute -top-3 -right-3 flex h-7 w-7 items-center justify-center rounded-full bg-terracotta text-paper shadow-elegant hover:bg-terracotta-2"
+                        aria-label={`Delete ${f.label}`}
+                        title={`Delete ${f.label}`}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
