@@ -8,7 +8,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { GuestsTab } from "@/components/planner/GuestsTab";
-import { TablesTab } from "@/components/planner/TablesTab";
+import { VenueTab } from "@/components/planner/VenueTab";
 import { SeatingView } from "@/components/planner/SeatingView";
 import { ConstraintsPanel } from "@/components/planner/ConstraintsPanel";
 import { ExportPanel } from "@/components/planner/ExportPanel";
@@ -24,7 +24,6 @@ import { Link as LinkIcon, Check, GitCompareArrows, ShieldAlert, Download, Mail,
 import { ClaimPlanModal } from "@/components/ClaimPlanModal";
 import { SignInNudge } from "@/components/SignInNudge";
 import { ActivityDrawer } from "@/components/planner/ActivityDrawer";
-import { RoomSetupPanel } from "@/components/planner/RoomSetupPanel";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { addRecentPlan } from "@/lib/recentPlans";
@@ -35,12 +34,11 @@ import { useSeoHead } from "@/lib/useSeoHead";
 
 const TAB_DEFS = [
   { value: "guests", numeral: "I", label: "Guests" },
-  { value: "tables", numeral: "II", label: "Tables" },
-  { value: "room", numeral: "III", label: "Room" },
-  { value: "constraints", numeral: "IV", label: "Rules" },
-  { value: "seating", numeral: "V", label: "Seating" },
-  { value: "compare", numeral: "VI", label: "Compare" },
-  { value: "export", numeral: "VII", label: "Export" },
+  { value: "venue", numeral: "II", label: "Venue" },
+  { value: "constraints", numeral: "III", label: "Rules" },
+  { value: "seating", numeral: "IV", label: "Seating" },
+  { value: "compare", numeral: "V", label: "Compare" },
+  { value: "export", numeral: "VI", label: "Export" },
 ] as const;
 
 const Planner = () => {
