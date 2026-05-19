@@ -144,6 +144,13 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
     id: string; startCx: number; startCy: number; startPx: number; startPy: number
   } | null>(null);
 
+  // Live fixture drag state — kept as pct so it composes with the live geometry.
+  const [liveFixPos, setLiveFixPos] = useState<Map<string, { x_pct: number; y_pct: number }>>(new Map());
+  const [selectedFixtureId, setSelectedFixtureId] = useState<string | null>(null);
+  const fixDragRef = useRef<{
+    id: string; startXpct: number; startYpct: number; startPx: number; startPy: number; moved: boolean;
+  } | null>(null);
+
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const { setNodeRef: setCanvasDropRef } = useDroppable({ id: "__canvas__" });
   const setViewportRef = (el: HTMLDivElement | null) => {
