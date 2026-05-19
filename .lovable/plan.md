@@ -1,45 +1,40 @@
-Two fixes, both rooted in the screenshot: the Venue rail is a text menu (not a visual catalog), and the Seating chart respects ad-hoc Venue positions and ends up lopsided.
+Two changes, both on the Seating canvas (`FloorPlan.tsx`) and the surrounding wiring.
 
-## 1. Visual Venue rail (AddRail.tsx)
+## 1. Auto-arrange respects fixtures
 
-Replace the cramped 4-up icon grid + text list with a **catalog of visual cards**, like the Hitched reference:
+Today the grid maths is purely `roomW × roomH` divided into `cols × rows` cells. It ignores the bar, DJ booth, dance floor, stage, etc., so tables land on top of them.
 
-- **Tables section**: 2-column grid of larger tiles (~100×120). Each tile renders a miniature SVG of the actual shape (circle / long rect with chairs / square / head table) drawn in ink-on-paper — same primitives as `PaperTable` but simplified. Label underneath in `font-display` 13px, capacity hint in mono ("Seats 8"). Hover lifts + terracotta border.
-- **Features section**: same 2-column tile grid. Each fixture rendered as a small illustrative pictogram (dashed-outline rect with italic label for dance floor, ◉ for DJ, 🍷 bar, etc. — drawn in SVG, not emoji). Tile shows the icon big, name small.
-- **AI input**: keep, but move to a slim footer band so the catalog dominates.
-- Widen the rail from `240px` → `280px` in `VenueTab.tsx` grid to fit two columns comfortably.
+Fix inside `FloorPlan.tsx` layout pass:
 
-The point: when you scan the rail, you *see* tables and features as objects, not as a list of words.
+- Build the list of "forbidden rectangles" from `cfg.fixtures.filter(visible && !point)` — that's bar, dance floor, dj, stage, catering, photo booth, bathroom, coat check, entry. Compass and annotation are skipped.
+- Generate a pool of candidate centres by sampling each grid cell, then for each cell test whether the table's bounding box (from `tableDims`) collides with any forbidden rect plus a small clearance (~16px).
+- If too many cells are blocked, refine the grid: increase `cols` until the count of free cells ≥ `tables.length`, capped at 8.
+- Assign tables to free cells in scan order. If a table still doesn't fit (huge table + crowded room), nudge it along the gradient away from the nearest fixture until it's clear, then clamp inside `roomW/roomH`.
+- Stored positions in `tables_def.x/y` are still ignored in non-arrange mode (already done last pass). Arrange mode keeps using stored coords.
 
-## 2. Auto-arranging Seating chart (FloorPlan.tsx)
+## 2. Fixtures are movable + deletable
 
-Current behaviour: as soon as any table has `x>0` or `y>0`, FloorPlan switches to "custom positions" mode and renders each table at its stored coordinate. Since the new Venue editor saves positions on every drop, every table now has stored coords — and the Seating view inherits whatever cluster the user happened to drop them in (the right-hand pile in the screenshot).
+Fixtures are currently rendered inside `RoomGeometry` as one SVG `<g pointerEvents="none">` — they can't be selected or touched on the Seating canvas. The Venue canvas handles this, but a user looking at the Seating chart can't fix a misplaced dance floor without bouncing to another tab.
 
-Fix: **decouple Seating layout from Venue layout.** The Seating canvas always auto-grids tables inside the room rectangle, ignoring `tables_def.x/y`. Venue stays the place where positions matter (for export and the floor-plan PDF).
+Changes:
 
-Concrete changes in `src/components/planner/FloorPlan.tsx`:
+- `FloorPlan.tsx`: take two new optional props `onFixtureMove(id, x_pct, y_pct)` and `onFixtureDelete(id)`. When `arrangeMode` is on and these are provided, render fixtures as positioned `<div>` overlays (parallel to the existing arrange-mode table drag handles) on top of the SVG geometry. Each fixture overlay:
+  - Click selects (state `selectedFixtureId`).
+  - Drag updates a `liveFixturePos` map (same pattern as `livePos` for tables); release calls `onFixtureMove`.
+  - Selected fixture shows a small floating delete button (trash icon) near its top-right corner; click calls `onFixtureDelete`.
+- `SeatingView.tsx`: implement the two handlers — update `room_config` via supabase `update plans` and pass back through `onSavedRoom`. (`SeatingView` already receives `roomConfig` and a setter through Planner.)
+- `Planner.tsx`: pass `onSavedRoom` to `SeatingView` (currently only `roomConfig` is passed). The setter already exists on `VenueTab`; mirror it.
 
-- Remove the `hasCustomPos` branch in the layout calculation (lines ~68–80, ~253–267). Always use the auto-grid path: cells = `roomW/cols × roomH/rows`, table centred in cell.
-- Keep `arrangeMode` as the single explicit override — when on, live drags still work and writes still flow through `onTableMove`. When off (the default for Seating), positions are computed, not read.
-- Choose `cols` based on table count *and* room aspect ratio so a wide room gets more columns (avoids the right-side pile): `cols = clamp(round(sqrt(n * roomW/roomH)), 1, 6)`.
-- The PDF floor-plan export (`FloorPlanPDF.tsx`) uses the same FloorPlan props path; verify it still renders centred (it should — same code path).
+Out of scope: rotation/resize of fixtures (Venue tab still owns the heavier editing). No schema change. No change to the legend / arrange hint banner copy beyond "Drag tables or features".
 
-The Venue canvas keeps doing what it does: stored positions are still respected *there*, because users want to arrange the room for the PDF print. Seating is purely about who-sits-where; the chart should just look tidy.
+## Files
 
-## Out of scope
-
-- No schema changes. `tables_def.x/y` stay; they're just unused by FloorPlan in non-arrange mode.
-- No change to the Venue canvas drag/snap behaviour.
-- No change to the AI parsing pipeline.
-
-## Files touched
-
-- `src/components/planner/venue/AddRail.tsx` — rewrite the rail UI
-- `src/components/planner/VenueTab.tsx` — bump rail column to 280px
-- `src/components/planner/FloorPlan.tsx` — always auto-grid; aspect-aware column count
+- `src/components/planner/FloorPlan.tsx` — fixture-aware grid + draggable/deletable fixture overlays in arrange mode
+- `src/components/planner/SeatingView.tsx` — wire `handleFixtureMove` / `handleFixtureDelete`, pass to FloorPlan
+- `src/pages/Planner.tsx` — pass `onSavedRoom` through to SeatingView
 
 ## Verification
 
-- Open Seating: tables fill the room in a balanced grid, no right-side pile.
-- Open Venue: rail shows visual tiles; clicking a table tile opens the existing AddTableModal; dragging on canvas still works.
-- Toggle arrange-room in Seating: positions become draggable again; saved on release.
+- Open Seating with default fixtures: tables fill the room without overlapping the dance floor / bar / DJ booth.
+- Click "Arrange room": fixtures gain a dashed selection halo on hover, drag to reposition, trash button to delete. Release persists. Toggle off arrange: fixtures revert to non-interactive geometry.
+- Venue tab still behaves the same.

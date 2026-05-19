@@ -32,6 +32,8 @@ interface Props {
   onActivityLog?: (action: string, subject?: string, detail?: string) => void;
   roomConfig?: RoomConfig | null;
   onAutoAssign?: () => void;
+  /** Persist a fixture move/delete from the Seating arrange overlay. */
+  onSavedRoom?: (cfg: RoomConfig) => void;
   /** Demo mode — skip Supabase writes; rely on setAssignments + setTables for state. */
   demoMode?: boolean;
   setTables?: React.Dispatch<React.SetStateAction<TableDef[]>>;
@@ -95,7 +97,7 @@ function firstFreeSeat(table: TableDef, seated: Assignment[], excludeId?: string
   return null;
 }
 
-export function SeatingView({ planId, scenarioId, guests, tables, assignments, setAssignments, constraints, refresh, onGoToGuests, onGoToTables, canEdit = true, onActivityLog, roomConfig, onAutoAssign, demoMode = false, setTables }: Props) {
+export function SeatingView({ planId, scenarioId, guests, tables, assignments, setAssignments, constraints, refresh, onGoToGuests, onGoToTables, canEdit = true, onActivityLog, roomConfig, onAutoAssign, onSavedRoom, demoMode = false, setTables }: Props) {
   const [search, setSearch] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [view, setView] = useState<"list" | "floor" | "grouped">("floor");
@@ -296,6 +298,30 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
     refresh();
   };
 
+  const writeRoomConfig = async (next: RoomConfig) => {
+    if (!canEdit || !onSavedRoom) return;
+    const { error } = await supabase.from("plans").update({ room_config: next as unknown as null }).eq("id", planId);
+    if (error) { toast.error(error.message); return; }
+    onSavedRoom(next);
+  };
+
+  const handleFixtureMove = async (id: string, x_pct: number, y_pct: number) => {
+    if (!roomConfig) return;
+    const next: RoomConfig = {
+      ...roomConfig,
+      fixtures: roomConfig.fixtures.map(f => f.id === id ? { ...f, x_pct, y_pct } : f),
+    };
+    await writeRoomConfig(next);
+  };
+
+  const handleFixtureDelete = async (id: string) => {
+    if (!roomConfig) return;
+    const f = roomConfig.fixtures.find(x => x.id === id);
+    const next: RoomConfig = { ...roomConfig, fixtures: roomConfig.fixtures.filter(x => x.id !== id) };
+    await writeRoomConfig(next);
+    if (f) onActivityLog?.("removed", f.label);
+  };
+
   if (tables.length === 0 && guests.length === 0) {
     return (
       <EmptyCanvas
@@ -400,6 +426,8 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
             canEdit={canEdit}
             arrangeMode={arrangeMode}
             onTableMove={handleTableMove}
+            onFixtureMove={handleFixtureMove}
+            onFixtureDelete={handleFixtureDelete}
             roomConfig={roomConfig}
             onAssign={async (guestId, tableId, seatIndex) => {
               const g = guestById.get(guestId);
