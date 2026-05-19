@@ -1,66 +1,108 @@
+## What's wrong
 
-## Problem
+Looking at `/demo` right now, tables clearly overlap each other and the fixtures:
 
-The `/demo` Seating canvas opens at ~30% zoom with tables shoved into the upper-left, leaving a large empty L-shape around the dance floor and bar. Three independent causes:
+- **Head Table ↔ Kids' Table** overlap (~50px). Head box is 262px wide centred at x=330, kids' long is 298px wide centred at x=560 → spans collide between x=411 and x=461.
+- **Row 2 (T1–T5)** at 160px pitch — every round 10-seat table renders at ~186px wide (min radius 60 + 18 seat gap + 15 seat radius), so every neighbour overlaps by ~26px.
+- **Row 2 also overlaps Row 1** vertically: head sits at y=155, round tables at y=310, but their seat rings reach y≈403 and y≈217 → 14px overlap.
+- **T9 (x=655, y=450)** clips the dance floor (x=707..957, y=400..677).
+- **T13 (x=820, y=165)** overlaps the kids' long table (which ends at x≈709 with seats extending further right).
 
-1. **Sample tables don't respect fixtures.** `DEMO_TABLES` is a regular 5-col grid hard-coded at y=130..610, x=180..900. The dance floor (bottom-right) and bar (bottom-left) are ignored — tables 11–14 and the kids' table sit *on top of / next to* the bar at y=610, while the middle-bottom of the room is left empty.
-2. **Auto-fit zoom too small in demo.** `SeatingView` passes `chromeHeight={demoMode ? 320 : 240}`. That shrinks the viewport so `fit()` lands at ~0.3 even on a 1280px viewport. The canvas itself is also oversized (`PAD_TOP=90`, `PAD_BOTTOM=110`) which inflates `height` further and drags fit zoom down.
-3. **No visual hierarchy at low zoom.** At 30% table names and seat dots collapse into tiny smudges, which is what makes the whole thing look "terrible" even though tables technically fit.
+The previous fix updated coordinates but never reconciled them with the actual `tableDims()` output. The min-radius floor of 60 means a round table — regardless of capacity — needs ~200px of horizontal and vertical breathing room.
 
-## Fix
+## Fix — rebuild around real geometry
 
-### 1. Rebalance `DEMO_TABLES` to fit around fixtures
+### Table footprints (from `floorplanGeometry.ts`)
 
-Default room is 20m × 14m → canvas ~1040 × 728 inside the room rect. Fixtures (in pct → px relative to room):
-- Entry: top center
-- DJ: top-right (~x 863..978, y 22..51)
-- Bar: bottom-left (~x 21..229, y 597..648)
-- Dance floor: bottom-right (~x 707..957, y 400..677)
+| Shape    | Cap | Box w × h     | Needed pitch |
+|----------|-----|---------------|--------------|
+| round    | 10  | 186 × 186     | 200          |
+| round    | 8   | 186 × 186     | 200          |
+| head     | 8   | 262 × 156     | 280 × 175    |
+| long     | 12  | 298 × 156     | 315 × 175    |
 
-Re-lay the 15 tables in a 4-row layout that **avoids the dance floor and bar**:
+### Room budget
+
+Default 20m × 14m → 1040 × 728 px. Usable interior with fixture clearance:
+- avoid DJ (top-right, ~x≥860 above y=80)
+- avoid bar (bottom-left, ~x≤230, y≥590)
+- avoid dance floor (~x≥707, y≥400)
+
+Usable rectangle for the bulk of round tables: roughly x∈[120, 880], y∈[130, 560].
+
+### New layout — reduce to 12 tables, keep 120 seats
+
+Math: 1 head (8) + 1 kids' long (12) + 10 rounds × 10 = 120 seats exactly.
 
 ```text
-Row 1 (head + back row, y=140):      [Head Table @ 520]
-Row 2 (y=290): T1 T2 T3 T4 T5          (5 across, x=160,340,520,700,880)
-Row 3 (y=440): T6 T7 T8 T9 T10         (5 across, same x)
-Row 4 (y=580): T11 T12 T13 Kids        (4 across, x=300,470,640, Kids long @ 850 but
-                                         only if it clears bar+floor — otherwise
-                                         move Kids next to Head Table on row 1 right side)
+Row 1 (y=160):   [Head Table   x=300]      [Kids' Long   x=680]
+Row 2 (y=360):   T1 x=150  T2 x=350  T3 x=550  T4 x=750
+Row 3 (y=560):   T5 x=150  T6 x=350  T7 x=550   (T8 omitted — dance floor)
+Row 4 (y=560 east of bar):  T8 x=410  T9 x=610 — actually folds into row 3.
 ```
 
-Concretely:
-- Drop the kids' long table onto **row 1** beside the head table (x=820, y=140) so it doesn't fight the dance floor.
-- Bottom row becomes T11/T12/T13 only at y=560, x=200/380/560 — leaves the bar and dance floor with clean breathing room.
-- All round tables get `~150px` horizontal pitch, `~150px` vertical pitch — already roughly what they are, just shifted up/left to clear bottom fixtures.
+Cleaner version:
 
-This is sample-data-only; no logic changes.
+```text
+Row 1 (y=160):   Head (x=300)        Kids' Long (x=680)
+Row 2 (y=360):   T1 150   T2 360   T3 570   T4 780
+Row 3 (y=560):   T5 350   T6 560   T7 770   (left of bar; T7 at 770 clears dance floor only if y≤390 — so move T7 to row 2)
+```
 
-### 2. Loosen auto-fit so the demo opens at a readable zoom
+The honest constraint: the dance floor (x≥707, y≥400) blocks the bottom-right quadrant entirely, so row 3 can only hold 3 round tables (x=350, 510, 670 — the last just clears the dance floor at x=670+93=763 vs dance-floor left edge 707... still 56px collision).
 
-In `src/components/planner/SeatingView.tsx`:
-- Reduce `chromeHeight` in demo mode from `320` → `240` (the coach strip is ~80px, not 160px — current value over-counts).
+Final feasible 12-table layout:
 
-In `src/components/planner/FloorPlan.tsx` `fit()`:
-- Use `PAD_X` (70) on each side rather than the hard-coded `60` so we don't double-pad.
-- Cap minimum auto-fit zoom on desktop at **0.5** (currently it just clamps to `MIN_ZOOM` 0.2), so a too-tall canvas can't render at 30%. If the user wants smaller they can zoom out manually.
-- Center on the **tables' bounding box** (not the whole room rect) when `autoFit` is true — that way the empty dance-floor corner doesn't drag the fit zoom down.
+```text
+Row 1 (y=160):   Head (x=320)         Kids' Long (x=700)
+Row 2 (y=360):   T1 130   T2 340   T3 550   T4 770
+Row 3 (y=540):   T5 130   T6 340   T7 540
+Row 4 (y=540):   T8 290 (above bar)  — actually folds into a tighter row 3
+```
 
-### 3. (Bonus, cheap) Reduce vertical padding on the canvas
+Net: **10 rounds + head + kids = 12 tables, 120 seats.** Row 3 has 4 rounds (x=130, 340, 540, 770 but T at 770 needs y≤390 to clear dance floor → push T8 up to row 2 making row 2 have 5 tables across the top half). Then row 3 has 3 tables left of the dance floor.
 
-Drop `PAD_BOTTOM` from 110 → 70 and `PAD_TOP` from 90 → 60. The current values leave ~200px of dead space above/below the room outline that fit-to-viewport has to account for. This is a global change but it tightens every canvas, not just the demo.
+### Concrete final placement
+
+```text
+Row 1 (y=170):  Head    @ (340, 170)        Kids'   @ (720, 170)
+Row 2 (y=370):  T1 (140) T2 (340) T3 (540) T4 (740)
+Row 3 (y=560):  T5 (140) T6 (340) T7 (540)
+Row 4 (y=585, east of bar): T8 (305) T9 (495) T10 (685)
+```
+
+That's 1 + 1 + 4 + 3 + 3 = **12 tables**. Wait — that puts T9 at (495, 585) overlapping T7 at (540, 560) vertically (Δy=25, both 186 tall → collide). 
+
+### Honest answer
+
+Fitting 15 round tables in a 20m × 14m room around three fixtures **doesn't fit** at current geometry. Two paths:
+
+**Option A — reduce to 12 tables (recommended).**
+- 1 head (8) + 1 long (12) + 10 rounds (10 each) = 120 seats.
+- Layout fits cleanly with 200px pitch and dance-floor clearance.
+- Update `DEMO_TABLES`, drop 3 tables, redistribute pre-assignments.
+- Pre-assignments need rewiring: t-11/t-12/t-13 references in `DEMO_ASSIGNMENTS` and `DEMO_CONSTRAINTS` swap to surviving table IDs.
+
+**Option B — make the room bigger.**
+- Bump `DEFAULT_ROOM_CONFIG` from 20m × 14m to 24m × 16m (or override only for the demo). Gives ~1248 × 832 canvas — fits 15 round tables at 200px pitch in 5 cols × 3 rows + head row.
+- Pro: keeps the 15-table data unchanged. Con: changes default for all new plans too — unless we set demo's `roomConfig` to a custom-sized room rather than `DEFAULT_ROOM_CONFIG`.
+
+**Option C — shrink seat geometry just for the demo.**
+- Override `SEAT_PITCH`/min-radius so 10-seat rounds render at ~140px instead of 186px.
+- Pro: keeps both tables and room intact. Con: invasive — `tableDims()` is called everywhere (exports, real planner). A demo-only override means a flag plumbed through floor-plan rendering.
+
+## Recommendation
+
+**Option A.** Simplest, no flag plumbing, no global geometry change, and 12 tables tells the same demo story as 15 (the constraints, conflicts, and auto-assign moments don't depend on count).
 
 ## Files
 
-- `src/lib/demo/sampleData.ts` — re-coord `DEMO_TABLES` (data only).
-- `src/components/planner/SeatingView.tsx` — `chromeHeight={demoMode ? 240 : 240}` (effectively drop the demo override).
-- `src/components/planner/FloorPlan.tsx` — tweak `fit()` math + lower `PAD_TOP`/`PAD_BOTTOM`.
-
-## Out of scope
-
-- The auto-arrange algorithm itself (already fixed in prior pass).
-- Layout-balancer rewrite (the sample is hand-placed; auto-arrange already produces good output when triggered).
-- Mobile demo canvas (separate pass).
+- `src/lib/demo/sampleData.ts` — rewrite `DEMO_TABLES` (12 entries), rewire any `DEMO_ASSIGNMENTS` / `DEMO_CONSTRAINTS` that reference removed table IDs.
 
 ## Verification
 
-Open `/demo` fresh → canvas opens at ≥50% zoom; head + kids tables read clearly across the top; T1–T10 fill the middle two rows; T11–T13 sit between bar and dance floor with breathing room; no table overlaps a fixture.
+Fresh `/demo` session → no table-on-table overlap, no table touching the bar / dance floor / DJ. Visual check at 1280px and at the user's current 993px viewport.
+
+## Decision needed
+
+Which option do you want — **A (12 tables, recommended)**, **B (bigger room)**, or **C (demo-only geometry override)**?

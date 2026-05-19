@@ -7,19 +7,29 @@
 // without updating both arrays.
 
 import type { Guest, TableDef, Assignment, ConstraintDef, Plan } from "@/lib/types";
-import { DEFAULT_ROOM_CONFIG } from "@/lib/roomConfig";
+import { DEFAULT_ROOM_CONFIG, type RoomConfig } from "@/lib/roomConfig";
 
 const id = (slug: string) => `demo-${slug}`;
 
 export const DEMO_PLAN_ID = id("plan");
 export const DEMO_SCENARIO_ID = id("scenario");
 
+// Demo uses a larger room (26m × 18m) than the default 20m × 14m so all
+// 12 tables fit with clean breathing room around the bar, dance floor and
+// DJ booth. Fixture percentages match DEFAULT_ROOM_CONFIG.
+const DEMO_ROOM_CONFIG: RoomConfig = {
+  ...DEFAULT_ROOM_CONFIG,
+  width_m: 26,
+  height_m: 18,
+  fixtures: DEFAULT_ROOM_CONFIG.fixtures.map(f => ({ ...f })),
+};
+
 export const DEMO_PLAN: Plan = {
   id: DEMO_PLAN_ID,
   code: "EMMA-JAMES",
   name: "Emma & James",
   event_date: "2026-09-14",
-  room_config: { ...DEFAULT_ROOM_CONFIG },
+  room_config: DEMO_ROOM_CONFIG,
 };
 
 // ── Named characters — referenced in constraints + pre-assignments ───────
