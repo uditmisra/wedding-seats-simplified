@@ -8,7 +8,6 @@ import { UpgradeModal } from "@/components/UpgradeModal";
 import { Sparkles, RotateCcw, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import {
-  DEMO_PLAN,
   DEMO_PLAN_ID,
   DEMO_SCENARIO_ID,
 } from "@/lib/demo/sampleData";
