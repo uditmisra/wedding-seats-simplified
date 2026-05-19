@@ -112,7 +112,7 @@ export function OnboardingFlow({
                 </h2>
                 <p className="mt-4 max-w-md text-[15px] leading-[1.55] text-ink-2 md:text-[16px]">
                   Describe what you have — &ldquo;10 round tables of 8, plus a head table
-                  for 6&rdquo;. We&apos;ll add them. You can arrange the room layout in the Room tab.
+                  for 6&rdquo;. We&apos;ll add them. You can arrange the room in the Venue tab.
                 </p>
 
                 <div className="mt-10">
