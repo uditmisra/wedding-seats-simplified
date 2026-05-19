@@ -23,9 +23,11 @@ interface Props {
   canEdit: boolean;
   onSavedRoom: (cfg: RoomConfig) => void;
   refresh: () => void;
+  demoMode?: boolean;
+  setTables?: React.Dispatch<React.SetStateAction<TableDef[]>>;
 }
 
-export function MobileVenueList({ planId, scenarioId, tables, assignments, roomConfig, canEdit, onSavedRoom, refresh }: Props) {
+export function MobileVenueList({ planId, scenarioId, tables, assignments, roomConfig, canEdit, onSavedRoom, refresh, demoMode, setTables }: Props) {
   const cfg: RoomConfig = {
     width_m: roomConfig?.width_m ?? DEFAULT_ROOM_CONFIG.width_m,
     height_m: roomConfig?.height_m ?? DEFAULT_ROOM_CONFIG.height_m,
@@ -37,6 +39,7 @@ export function MobileVenueList({ planId, scenarioId, tables, assignments, roomC
   for (const a of assignments) seatedByTable.set(a.table_id, (seatedByTable.get(a.table_id) ?? 0) + 1);
 
   const saveRoom = async (next: RoomConfig) => {
+    if (demoMode) { onSavedRoom(next); return; }
     const { error } = await supabase.from("plans").update({ room_config: next as unknown as null }).eq("id", planId);
     if (error) { toast.error(error.message); return; }
     onSavedRoom(next);
@@ -54,6 +57,7 @@ export function MobileVenueList({ planId, scenarioId, tables, assignments, roomC
   const deleteTable = async (t: TableDef) => {
     const seated = seatedByTable.get(t.id) ?? 0;
     if (seated > 0 && !confirm(`${seated} guest${seated === 1 ? "" : "s"} seated. Delete anyway?`)) return;
+    if (demoMode) { setTables?.(prev => prev.filter(x => x.id !== t.id)); return; }
     await supabase.from("tables_def").delete().eq("id", t.id);
     refresh();
   };
@@ -161,14 +165,17 @@ export function MobileVenueList({ planId, scenarioId, tables, assignments, roomC
         <TableEditor planId={planId} scenarioId={scenarioId}
           table={editing === "new" ? null : editing} count={tables.length}
           existingNames={tables.map(t => t.name)}
+          demoMode={demoMode}
+          setTables={setTables}
           onClose={() => { setEditing(null); refresh(); }} />
       )}
     </div>
   );
 }
 
-function TableEditor({ planId, scenarioId, table, count, existingNames, onClose }: {
-  planId: string; scenarioId: string; table: TableDef | null; count: number; existingNames: string[]; onClose: () => void;
+function TableEditor({ planId, scenarioId, table, count, existingNames, demoMode, setTables, onClose }: {
+  planId: string; scenarioId: string; table: TableDef | null; count: number; existingNames: string[];
+  demoMode?: boolean; setTables?: React.Dispatch<React.SetStateAction<TableDef[]>>; onClose: () => void;
 }) {
   const [name, setName] = useState(
     table?.name ?? uniqueTableName(`Table ${count + 1}`, existingNames),
@@ -180,6 +187,20 @@ function TableEditor({ planId, scenarioId, table, count, existingNames, onClose 
     const others = existingNames.filter(n => !table || n !== table.name);
     const clash = others.some(n => n.trim().toLowerCase() === name.trim().toLowerCase());
     if (clash) { toast.error("A table with that name already exists."); return; }
+    if (demoMode) {
+      if (table) {
+        setTables?.(prev => prev.map(t => t.id === table.id ? { ...t, name, capacity, shape } : t));
+      } else {
+        const newTable: TableDef = {
+          id: `demo-t-${Date.now()}`,
+          plan_id: planId, scenario_id: scenarioId,
+          name, capacity, shape, x: 0, y: 0, rotation: 0,
+        };
+        setTables?.(prev => [...prev, newTable]);
+      }
+      onClose();
+      return;
+    }
     if (table) await supabase.from("tables_def").update({ name, capacity, shape }).eq("id", table.id);
     else await supabase.from("tables_def").insert({ plan_id: planId, scenario_id: scenarioId, name, capacity, shape });
     onClose();
