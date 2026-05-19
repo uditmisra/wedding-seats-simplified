@@ -2,7 +2,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Sparkles, Loader2, Circle, Square, RectangleHorizontal, Crown } from "lucide-react";
+import { Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Shape, TableDef } from "@/lib/types";
 import {
@@ -22,14 +22,138 @@ interface Props {
   refresh: () => void;
 }
 
-const TABLE_SHAPES: Array<{ shape: Shape; icon: React.ReactNode; label: string }> = [
-  { shape: "round", icon: <Circle size={18} />, label: "Round" },
-  { shape: "rectangle", icon: <RectangleHorizontal size={20} />, label: "Long" },
-  { shape: "square", icon: <Square size={18} />, label: "Square" },
-  { shape: "head", icon: <Crown size={18} />, label: "Head" },
+const TABLE_SHAPES: Array<{ shape: Shape; label: string; seats: number }> = [
+  { shape: "round", label: "Round", seats: 8 },
+  { shape: "rectangle", label: "Long", seats: 10 },
+  { shape: "square", label: "Square", seats: 4 },
+  { shape: "head", label: "Head", seats: 6 },
 ];
 
-const FIXTURE_LIST: FixtureType[] = ["bar", "dj", "dance_floor", "stage", "catering", "photo_booth", "bathroom", "coat_check", "entry"];
+const FIXTURE_LIST: FixtureType[] = ["dance_floor", "bar", "dj", "stage", "catering", "photo_booth", "bathroom", "coat_check", "entry"];
+
+/** Tiny SVG preview of a table shape — draws the table outline + chair dots. */
+function TableThumb({ shape }: { shape: Shape }) {
+  const stroke = "hsl(var(--ink))";
+  const fill = "hsl(var(--paper))";
+  if (shape === "round") {
+    const seats = 8;
+    const cx = 32, cy = 30, r = 14, rs = 22;
+    return (
+      <svg viewBox="0 0 64 60" className="h-full w-full">
+        <circle cx={cx} cy={cy} r={r} fill={fill} stroke={stroke} strokeWidth={1.1} />
+        {Array.from({ length: seats }).map((_, i) => {
+          const a = (i / seats) * Math.PI * 2 - Math.PI / 2;
+          return <circle key={i} cx={cx + Math.cos(a) * rs} cy={cy + Math.sin(a) * rs} r={2.4} fill={fill} stroke={stroke} strokeWidth={0.9} />;
+        })}
+      </svg>
+    );
+  }
+  if (shape === "square") {
+    return (
+      <svg viewBox="0 0 64 60" className="h-full w-full">
+        <rect x={22} y={20} width={20} height={20} fill={fill} stroke={stroke} strokeWidth={1.1} rx={2} />
+        {[[32,14],[32,46],[14,30],[50,30]].map(([x,y],i) => <circle key={i} cx={x} cy={y} r={2.4} fill={fill} stroke={stroke} strokeWidth={0.9} />)}
+      </svg>
+    );
+  }
+  if (shape === "head") {
+    return (
+      <svg viewBox="0 0 64 60" className="h-full w-full">
+        <rect x={10} y={26} width={44} height={10} fill={fill} stroke={stroke} strokeWidth={1.1} rx={2} />
+        {[16,26,38,48].map((x,i) => <circle key={i} cx={x} cy={20} r={2.4} fill={fill} stroke={stroke} strokeWidth={0.9} />)}
+        {[22,42].map((x,i) => <circle key={i} cx={x} cy={42} r={2.4} fill={fill} stroke={stroke} strokeWidth={0.9} />)}
+      </svg>
+    );
+  }
+  // rectangle / long
+  return (
+    <svg viewBox="0 0 64 60" className="h-full w-full">
+      <rect x={8} y={24} width={48} height={12} fill={fill} stroke={stroke} strokeWidth={1.1} rx={2} />
+      {[14,24,32,40,50].map((x,i) => <circle key={`t${i}`} cx={x} cy={18} r={2.2} fill={fill} stroke={stroke} strokeWidth={0.9} />)}
+      {[14,24,32,40,50].map((x,i) => <circle key={`b${i}`} cx={x} cy={42} r={2.2} fill={fill} stroke={stroke} strokeWidth={0.9} />)}
+    </svg>
+  );
+}
+
+/** Tiny SVG pictogram for a venue feature. Dashed outline + italic label hint. */
+function FixtureThumb({ type }: { type: FixtureType }) {
+  const stroke = "hsl(var(--ink))";
+  const accent = "hsl(var(--terracotta))";
+  switch (type) {
+    case "dance_floor":
+      return (
+        <svg viewBox="0 0 64 48" className="h-full w-full">
+          <rect x={10} y={8} width={44} height={32} fill="none" stroke={accent} strokeWidth={1.2} strokeDasharray="3 3" rx={2}/>
+          <text x={32} y={28} textAnchor="middle" fontFamily="Newsreader, serif" fontStyle="italic" fontSize="10" fill={accent}>dance</text>
+        </svg>
+      );
+    case "bar":
+      return (
+        <svg viewBox="0 0 64 48" className="h-full w-full">
+          <rect x={8} y={18} width={48} height={12} fill="hsl(var(--paper-2))" stroke={stroke} strokeWidth={1.1} rx={1.5}/>
+          <text x={32} y={42} textAnchor="middle" fontFamily="Newsreader, serif" fontStyle="italic" fontSize="9" fill={stroke}>bar</text>
+        </svg>
+      );
+    case "dj":
+      return (
+        <svg viewBox="0 0 64 48" className="h-full w-full">
+          <rect x={18} y={14} width={28} height={20} fill={stroke} rx={2}/>
+          <text x={32} y={28} textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="9" fill="hsl(var(--paper))">DJ</text>
+        </svg>
+      );
+    case "stage":
+      return (
+        <svg viewBox="0 0 64 48" className="h-full w-full">
+          <rect x={6} y={16} width={52} height={18} fill="none" stroke={stroke} strokeWidth={1.1} strokeDasharray="4 2" rx={2}/>
+          <text x={32} y={28} textAnchor="middle" fontFamily="Newsreader, serif" fontStyle="italic" fontSize="10" fill={stroke}>stage</text>
+        </svg>
+      );
+    case "entry":
+      return (
+        <svg viewBox="0 0 64 48" className="h-full w-full">
+          <rect x={14} y={20} width={36} height={10} fill="hsl(var(--paper))" stroke={stroke} strokeWidth={1.1}/>
+          <text x={32} y={28} textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="7" letterSpacing="1" fill={stroke}>ENTRY</text>
+        </svg>
+      );
+    case "catering":
+      return (
+        <svg viewBox="0 0 64 48" className="h-full w-full">
+          <rect x={12} y={16} width={40} height={18} fill="none" stroke={stroke} strokeWidth={1.1} strokeDasharray="3 2" rx={2}/>
+          <circle cx={22} cy={25} r={3} fill="none" stroke={stroke} strokeWidth={0.9}/>
+          <circle cx={32} cy={25} r={3} fill="none" stroke={stroke} strokeWidth={0.9}/>
+          <circle cx={42} cy={25} r={3} fill="none" stroke={stroke} strokeWidth={0.9}/>
+        </svg>
+      );
+    case "photo_booth":
+      return (
+        <svg viewBox="0 0 64 48" className="h-full w-full">
+          <rect x={18} y={10} width={28} height={28} fill="none" stroke={stroke} strokeWidth={1.1} rx={2}/>
+          <circle cx={32} cy={24} r={6} fill="none" stroke={stroke} strokeWidth={1}/>
+          <circle cx={32} cy={24} r={2.5} fill={stroke}/>
+        </svg>
+      );
+    case "bathroom":
+      return (
+        <svg viewBox="0 0 64 48" className="h-full w-full">
+          <rect x={14} y={10} width={36} height={28} fill="none" stroke={stroke} strokeWidth={1.1} rx={2}/>
+          <text x={32} y={29} textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="11" fill={stroke}>WC</text>
+        </svg>
+      );
+    case "coat_check":
+      return (
+        <svg viewBox="0 0 64 48" className="h-full w-full">
+          <path d="M16 30 H48 V36 H16 Z" fill="none" stroke={stroke} strokeWidth={1.1}/>
+          <path d="M22 30 V18 a10 10 0 0 1 20 0" fill="none" stroke={stroke} strokeWidth={1}/>
+        </svg>
+      );
+    default:
+      return (
+        <svg viewBox="0 0 64 48" className="h-full w-full">
+          <rect x={12} y={14} width={40} height={20} fill="none" stroke={stroke} strokeWidth={1.1} strokeDasharray="3 2" rx={2}/>
+        </svg>
+      );
+  }
+}
 
 export function AddRail({ planId, scenarioId, tables, roomConfig, canEdit, onSavedRoom, refresh }: Props) {
   const cfg: RoomConfig = {
@@ -138,41 +262,46 @@ export function AddRail({ planId, scenarioId, tables, roomConfig, canEdit, onSav
   };
 
   return (
-    <aside className="flex flex-col gap-5 border-r hairline p-4">
-      {/* Tables */}
-      <div>
-        <div className="label-mono mb-2">Add table</div>
-        <div className="grid grid-cols-4 gap-1.5">
-          {TABLE_SHAPES.map(({ shape, icon, label }) => (
+    <aside className="flex h-full flex-col border-r hairline">
+      <div className="flex-1 overflow-y-auto p-4">
+        {/* Tables */}
+        <div className="label-mono mb-2.5">Tables</div>
+        <div className="grid grid-cols-2 gap-2">
+          {TABLE_SHAPES.map(({ shape, label, seats }) => (
             <button
               key={shape}
               disabled={!canEdit}
               onClick={() => setPendingShape(shape)}
-              className="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border hairline bg-paper text-ink-2 transition hover:border-terracotta hover:text-terracotta disabled:opacity-40"
+              className="group flex flex-col items-center gap-1.5 rounded-lg border hairline bg-paper p-2.5 text-ink transition hover:-translate-y-0.5 hover:border-terracotta hover:shadow-soft disabled:opacity-40 disabled:hover:translate-y-0"
               title={`Add ${label.toLowerCase()} table`}
             >
-              {icon}
-              <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-ink-3">{label}</span>
+              <div className="h-12 w-full">
+                <TableThumb shape={shape} />
+              </div>
+              <div className="text-center">
+                <div className="font-display text-[13px] leading-tight">{label}</div>
+                <div className="font-mono text-[9px] uppercase tracking-[0.12em] text-ink-3">Seats {seats}</div>
+              </div>
             </button>
           ))}
         </div>
-      </div>
 
-      {/* Fixtures */}
-      <div>
-        <div className="label-mono mb-2">Add feature</div>
-        <div className="grid grid-cols-1 gap-1">
-          {FIXTURE_LIST.map(t => {
+        {/* Features */}
+        <div className="label-mono mb-2.5 mt-5">Features</div>
+        <div className="grid grid-cols-2 gap-2">
+          {FIXTURE_LIST.map((t) => {
             const meta = FIXTURE_META[t];
             return (
               <button
                 key={t}
                 disabled={!canEdit}
                 onClick={() => addFixture(t)}
-                className="flex items-center gap-2 rounded-md border hairline bg-paper px-2.5 py-1.5 text-left text-[13px] text-ink-2 transition hover:border-terracotta hover:text-terracotta disabled:opacity-40"
+                className="group flex flex-col items-center gap-1.5 rounded-lg border hairline bg-paper p-2.5 text-ink transition hover:-translate-y-0.5 hover:border-terracotta hover:shadow-soft disabled:opacity-40 disabled:hover:translate-y-0"
               >
-                <span className="text-[14px]">{meta.emoji}</span>
-                <span className="flex-1 truncate">{meta.label}</span>
+                <div className="h-10 w-full">
+                  <FixtureThumb type={t} />
+                </div>
+                <div className="font-display text-[12px] leading-tight">{meta.label.replace(" / door", "")}</div>
               </button>
             );
           })}
@@ -181,14 +310,14 @@ export function AddRail({ planId, scenarioId, tables, roomConfig, canEdit, onSav
 
       {/* AI */}
       {canEdit && (
-        <div className="mt-auto border-t hairline pt-4">
-          <div className="label-mono mb-2">Describe with AI</div>
+        <div className="border-t hairline bg-paper-2/40 p-3">
+          <div className="label-mono mb-1.5">Describe with AI</div>
           <Input
             value={aiText}
             onChange={(e) => setAiText(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && runAI()}
-            placeholder="e.g. 20×14m ballroom, 12 rounds of 8, dance floor by the bar"
-            className="h-10 font-display-italic text-[13px]"
+            placeholder="20×14m room, 12 rounds of 8, bar by entry"
+            className="h-9 font-display-italic text-[12px]"
             disabled={aiBusy}
           />
           <Button
@@ -196,14 +325,11 @@ export function AddRail({ planId, scenarioId, tables, roomConfig, canEdit, onSav
             size="sm"
             onClick={runAI}
             disabled={aiBusy || !aiText.trim()}
-            className="mt-2 w-full gap-1.5 rounded-full border-hairline"
+            className="mt-1.5 w-full gap-1.5 rounded-full border-hairline"
           >
             {aiBusy ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
             {aiBusy ? "Reading…" : "Set up with AI"}
           </Button>
-          <p className="mt-2 font-mono text-[10px] leading-snug text-ink-3">
-            One sentence — dimensions, table count, and where the bar/DJ/dance floor go.
-          </p>
         </div>
       )}
 
