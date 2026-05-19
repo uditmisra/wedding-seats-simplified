@@ -134,6 +134,18 @@ const Planner = () => {
     if (showOnboarding) setTab("seating");
   }, [showOnboarding]);
 
+  // Legacy query-param redirect: ?tab=tables|room → ?tab=venue
+  useEffect(() => {
+    const t = searchParams.get("tab");
+    if (t === "tables" || t === "room") {
+      const next = new URLSearchParams(searchParams);
+      next.set("tab", "venue");
+      setSearchParams(next, { replace: true });
+      setTab("venue");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (plan) {
       addRecentPlan({ code: plan.code, name: plan.name, openedAt: Date.now() });
