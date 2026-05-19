@@ -70,8 +70,8 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
   };
   const rl = roomLayout(cfg, PAD_X, PAD_TOP, PAD_BOTTOM);
 
-  // Aspect-aware column count keeps tables filling the room rather than piling
-  // in one corner. May be bumped below if fixtures block too many cells.
+  // Aspect-aware seed; the real grid shape is chosen below by scoring every
+  // (cols, rows) candidate so we don't collapse into a single row.
   const aspect = (rl.roomW || 1) / (rl.roomH || 1);
   const rawCols = Math.round(Math.sqrt(Math.max(1, tables.length) * aspect));
   const baseCols = Math.max(1, Math.min(6, rawCols || 1));
@@ -116,14 +116,50 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
     return false;
   };
 
-  // Pick a column count that yields enough fixture-free cells.
+  // Pick the (cols, rows) shape that best fills the room around fixtures.
+  // We sweep all viable grids (cap 8 each), require enough free cells, and
+  // score by (a) cell aspect close to 1 and (b) actual spread across both axes
+  // so we never collapse into a single row when wider grids also fit.
+  const N = Math.max(1, tables.length);
   let cols = baseCols;
-  let rows = Math.max(1, Math.ceil(tables.length / cols));
+  let rows = Math.max(1, Math.ceil(N / cols));
   let freeCells: { cx: number; cy: number }[] = [];
-  for (let c = baseCols; c <= 8; c++) {
-    const r = Math.max(1, Math.ceil(tables.length / c));
-    const cellW = roomW / c;
-    const cellH = roomH / r;
+  let bestScore = -Infinity;
+  for (let c = 1; c <= Math.min(8, N); c++) {
+    for (let r = 1; r <= Math.min(8, N); r++) {
+      if (c * r < N) continue;
+      const cellW = roomW / c;
+      const cellH = roomH / r;
+      const candidates: { cx: number; cy: number }[] = [];
+      for (let row = 0; row < r; row++) {
+        for (let col = 0; col < c; col++) {
+          const cx = roomX + col * cellW + cellW / 2;
+          const cy = roomY + row * cellH + cellH / 2;
+          if (!collidesAny(cx, cy, maxW, maxH)) candidates.push({ cx, cy });
+        }
+      }
+      if (candidates.length < N) continue;
+      // Take the first N in scan order — that's how tables will land.
+      const chosen = candidates.slice(0, N);
+      // Score: prefer balanced cell shape AND real spread across both axes.
+      const cellAspect = cellW / cellH;
+      const aspectPenalty = Math.abs(Math.log(cellAspect)); // 0 = square
+      const usedRows = new Set(chosen.map(p => Math.round((p.cy - roomY) / cellH))).size;
+      const usedCols = new Set(chosen.map(p => Math.round((p.cx - roomX) / cellW))).size;
+      const spread = Math.min(usedRows, usedCols); // 1 = single row/col (bad)
+      const score = spread * 2 - aspectPenalty;
+      if (score > bestScore) {
+        bestScore = score;
+        cols = c; rows = r;
+        freeCells = chosen;
+      }
+    }
+  }
+  // Fallback (room so crowded no grid fits): take whatever the densest grid gives.
+  if (freeCells.length === 0) {
+    const c = Math.min(8, N);
+    const r = Math.max(1, Math.ceil(N / c));
+    const cellW = roomW / c, cellH = roomH / r;
     const candidates: { cx: number; cy: number }[] = [];
     for (let row = 0; row < r; row++) {
       for (let col = 0; col < c; col++) {
@@ -132,28 +168,7 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
         if (!collidesAny(cx, cy, maxW, maxH)) candidates.push({ cx, cy });
       }
     }
-    if (candidates.length >= tables.length || c === 8) {
-      cols = c; rows = r;
-      // When we have surplus cells, prefer the ones farthest from any fixture
-      // so tables breathe instead of crowding the DJ booth / bar edges.
-      if (candidates.length > tables.length && fixtureRects.length > 0) {
-        const scored = candidates.map(p => {
-          let minD = Infinity;
-          for (const fr of fixtureRects) {
-            const dx = Math.max(fr.x - p.cx, 0, p.cx - (fr.x + fr.w));
-            const dy = Math.max(fr.y - p.cy, 0, p.cy - (fr.y + fr.h));
-            const d = Math.hypot(dx, dy);
-            if (d < minD) minD = d;
-          }
-          return { p, d: minD };
-        }).sort((a, b) => b.d - a.d).slice(0, tables.length);
-        // Re-sort by scan order so visual layout stays predictable (top→bottom, left→right).
-        freeCells = scored.map(s => s.p).sort((a, b) => (a.cy - b.cy) || (a.cx - b.cx));
-      } else {
-        freeCells = candidates;
-      }
-      break;
-    }
+    cols = c; rows = r; freeCells = candidates;
   }
 
   // Live positions during arrange-mode drag (overrides stored positions while dragging)
