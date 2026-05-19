@@ -237,9 +237,10 @@ export const DEMO_TABLES: TableDef[] = [
   //   - Dance floor   bottom-right  (~x 777..1027, y 460..737)
   // Tables are laid out to leave each of those zones clear.
 
-  // Row 1 — head table + kids' long table across the top, below the entry.
-  table("t-head", "Head Table", 8, "head", 430, 155),
-  table("t-kids", "Kids' Table", 12, "long", 700, 155),
+  // Row 1 — head table + kids' long table + T13 across the top.
+  table("t-head", "Head Table", 8, "head", 330, 155),
+  table("t-kids", "Kids' Table", 12, "long", 560, 155),
+  table("t-13", "Table 13", 8, "round", 820, 165),
 
   // Row 2 — five rounds across the full width (above the dance floor band).
   table("t-1", "Table 1", 10, "round", 175, 310),
@@ -248,17 +249,16 @@ export const DEMO_TABLES: TableDef[] = [
   table("t-4", "Table 4", 10, "round", 655, 310),
   table("t-5", "Table 5", 10, "round", 815, 310),
 
-  // Row 3 — four rounds left of the dance floor.
+  // Row 3 — four rounds, all left of the dance floor.
   table("t-6", "Table 6", 10, "round", 175, 450),
   table("t-7", "Table 7", 10, "round", 335, 450),
   table("t-8", "Table 8", 10, "round", 495, 450),
   table("t-9", "Table 9", 10, "round", 655, 450),
 
-  // Row 4 — four eights tucked between the bar and the dance floor.
-  table("t-10", "Table 10", 8, "round", 290, 580),
-  table("t-11", "Table 11", 8, "round", 430, 580),
-  table("t-12", "Table 12", 8, "round", 570, 580),
-  table("t-13", "Table 13", 8, "round", 710, 580),
+  // Row 4 — three eights tucked between the bar and the dance floor.
+  table("t-10", "Table 10", 8, "round", 350, 585),
+  table("t-11", "Table 11", 8, "round", 515, 585),
+  table("t-12", "Table 12", 8, "round", 680, 585),
 ];
 
 // ── Constraints (10) ─────────────────────────────────────────────────
