@@ -2,11 +2,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import type { Guest, TableDef, Assignment, ConstraintDef } from "@/lib/types";
 import { tableConflicts } from "@/lib/seating";
-import { Plus, Minus, Maximize2, RotateCcw, Move } from "lucide-react";
+import { Plus, Minus, Maximize2, RotateCcw, Move, Trash2 } from "lucide-react";
 import { SeatMenu } from "./SeatMenu";
 import { SeatPicker } from "./SeatPicker";
 import { guestColor } from "@/lib/guestColor";
-import { type RoomConfig, type Fixture, DEFAULT_ROOM_CONFIG, roomLayout } from "@/lib/roomConfig";
+import { type RoomConfig, type Fixture, type FixtureType, DEFAULT_ROOM_CONFIG, roomLayout } from "@/lib/roomConfig";
 
 interface Props {
   tables: TableDef[];
@@ -30,6 +30,10 @@ interface Props {
   chromeHeight?: number;
   /** Force fit-to-viewport on mount, regardless of saved state. Used by /demo. */
   autoFit?: boolean;
+  /** Persist a fixture's new pct coords. Only invoked while arrangeMode is on. */
+  onFixtureMove?: (id: string, x_pct: number, y_pct: number) => void;
+  /** Remove a fixture from the room. Only invoked while arrangeMode is on. */
+  onFixtureDelete?: (id: string) => void;
 }
 
 const MIN_ZOOM = 0.2;
@@ -41,7 +45,12 @@ const PAD_BOTTOM = 110;
 const TABLE_GAP = 44; // breathing room between table bounding boxes in auto-grid
 
 const noop = () => {};
-export function FloorPlan({ tables, assignments, guests, constraints, highlights, scenarioId, onUnassign = noop, onTogglePin = noop, onMoveTo = noop, onSwapWith = noop, unassigned = [], onAssign, canEdit = true, arrangeMode = false, onTableMove, roomConfig, chromeHeight = 240, autoFit = false }: Props) {
+const BLOCKING_FIXTURE_TYPES = new Set<FixtureType>([
+  "bar", "dance_floor", "dj", "stage", "catering", "photo_booth", "bathroom", "coat_check", "entry",
+]);
+const FIXTURE_CLEARANCE = 16;
+
+export function FloorPlan({ tables, assignments, guests, constraints, highlights, scenarioId, onUnassign = noop, onTogglePin = noop, onMoveTo = noop, onSwapWith = noop, unassigned = [], onAssign, canEdit = true, arrangeMode = false, onTableMove, onFixtureMove, onFixtureDelete, roomConfig, chromeHeight = 240, autoFit = false }: Props) {
   const guestById = useMemo(() => new Map(guests.map(g => [g.id, g])), [guests]);
 
   // Cell size grows with the largest table so big tables don't crowd neighbours.
@@ -62,23 +71,71 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
   const rl = roomLayout(cfg, PAD_X, PAD_TOP, PAD_BOTTOM);
 
   // Aspect-aware column count keeps tables filling the room rather than piling
-  // in one corner. Falls back to a sane minimum when there are very few tables.
+  // in one corner. May be bumped below if fixtures block too many cells.
   const aspect = (rl.roomW || 1) / (rl.roomH || 1);
   const rawCols = Math.round(Math.sqrt(Math.max(1, tables.length) * aspect));
-  const cols = Math.max(1, Math.min(6, rawCols || 1));
-  const rows = Math.max(1, Math.ceil(tables.length / cols));
+  const baseCols = Math.max(1, Math.min(6, rawCols || 1));
 
   let width: number, height: number, roomX: number, roomY: number, roomW: number, roomH: number;
   if (roomConfig) {
     ({ canvasW: width, canvasH: height, roomX, roomY, roomW, roomH } = rl);
   } else {
     // Auto-size: room must contain all tables with TABLE_GAP breathing room
-    roomW = Math.max(cols * (maxW + TABLE_GAP) - TABLE_GAP, 400);
-    roomH = Math.max(rows * (maxH + TABLE_GAP) - TABLE_GAP, 300);
+    const rows0 = Math.max(1, Math.ceil(tables.length / baseCols));
+    roomW = Math.max(baseCols * (maxW + TABLE_GAP) - TABLE_GAP, 400);
+    roomH = Math.max(rows0 * (maxH + TABLE_GAP) - TABLE_GAP, 300);
     roomX = PAD_X;
     roomY = PAD_TOP;
     width  = roomW + 2 * PAD_X;
     height = roomH + PAD_TOP + PAD_BOTTOM;
+  }
+
+  // Pre-compute fixture rectangles in canvas coords for collision testing.
+  const fixtureRects = useMemo(() => {
+    return cfg.fixtures
+      .filter(f => f.visible && BLOCKING_FIXTURE_TYPES.has(f.type))
+      .map(f => ({
+        x: roomX + f.x_pct * roomW,
+        y: roomY + f.y_pct * roomH,
+        w: (f.w_pct ?? 0.1) * roomW,
+        h: (f.h_pct ?? 0.06) * roomH,
+      }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cfg.fixtures, roomX, roomY, roomW, roomH]);
+
+  const collidesAny = (cx: number, cy: number, w: number, h: number) => {
+    const l = cx - w / 2 - FIXTURE_CLEARANCE;
+    const r = cx + w / 2 + FIXTURE_CLEARANCE;
+    const t = cy - h / 2 - FIXTURE_CLEARANCE;
+    const b = cy + h / 2 + FIXTURE_CLEARANCE;
+    for (const fr of fixtureRects) {
+      if (r < fr.x || l > fr.x + fr.w) continue;
+      if (b < fr.y || t > fr.y + fr.h) continue;
+      return true;
+    }
+    return false;
+  };
+
+  // Pick a column count that yields enough fixture-free cells.
+  let cols = baseCols;
+  let rows = Math.max(1, Math.ceil(tables.length / cols));
+  let freeCells: { cx: number; cy: number }[] = [];
+  for (let c = baseCols; c <= 8; c++) {
+    const r = Math.max(1, Math.ceil(tables.length / c));
+    const cellW = roomW / c;
+    const cellH = roomH / r;
+    const candidates: { cx: number; cy: number }[] = [];
+    for (let row = 0; row < r; row++) {
+      for (let col = 0; col < c; col++) {
+        const cx = roomX + col * cellW + cellW / 2;
+        const cy = roomY + row * cellH + cellH / 2;
+        if (!collidesAny(cx, cy, maxW, maxH)) candidates.push({ cx, cy });
+      }
+    }
+    if (candidates.length >= tables.length || c === 8) {
+      cols = c; rows = r; freeCells = candidates;
+      break;
+    }
   }
 
   // Live positions during arrange-mode drag (overrides stored positions while dragging)
@@ -252,15 +309,18 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
 
   // Pre-compute table positions/seats once.
   // Priority while arranging: live drag → stored DB. Otherwise: always auto-grid
-  // inside the room so the Seating view stays tidy regardless of Venue drops.
+  // inside the room, skipping cells that overlap fixtures, so the Seating view
+  // stays tidy regardless of Venue drops.
+  const cellW = roomW / cols;
+  const cellH = roomH / rows;
   const layout = tables.map((t, i) => {
-    const col = i % cols;
-    const row = Math.floor(i / cols);
-    // Auto-grid: divide room rectangle into equal cells, center table in each cell
-    const gridCellW = roomW / cols;
-    const gridCellH = roomH / rows;
-    const gridCx = roomX + col * gridCellW + gridCellW / 2;
-    const gridCy = roomY + row * gridCellH + gridCellH / 2;
+    const fallbackCol = i % cols;
+    const fallbackRow = Math.floor(i / cols);
+    const fallbackCx = roomX + fallbackCol * cellW + cellW / 2;
+    const fallbackCy = roomY + fallbackRow * cellH + cellH / 2;
+    const free = freeCells[i];
+    const gridCx = free?.cx ?? fallbackCx;
+    const gridCy = free?.cy ?? fallbackCy;
     const live = livePos.get(t.id);
     const stored = arrangeMode && (t.x > 0 || t.y > 0) ? { cx: t.x, cy: t.y } : null;
     const cx = live?.cx ?? stored?.cx ?? gridCx;
