@@ -239,7 +239,15 @@ export function VenueCanvas({ planId, tables, assignments, roomConfig, canEdit, 
 
   /* ----- Inline edits ----- */
   const renameTable = async (id: string, name: string) => {
-    await supabase.from("tables_def").update({ name }).eq("id", id);
+    const trimmed = name.trim();
+    if (!trimmed) { setEditName(null); return; }
+    const clash = tables.some(t => t.id !== id && t.name.trim().toLowerCase() === trimmed.toLowerCase());
+    if (clash) {
+      toast.error("A table with that name already exists.");
+      setEditName(null);
+      return;
+    }
+    await supabase.from("tables_def").update({ name: trimmed }).eq("id", id);
     setEditName(null);
     refresh();
   };

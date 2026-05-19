@@ -9,6 +9,7 @@ import type { Shape } from "@/lib/types";
 import { analytics } from "@/lib/analytics";
 import { invokeAISingle } from "@/lib/aiParse";
 import { AIProgress } from "@/components/AIProgress";
+import { dedupeTableNames } from "@/lib/uniqueName";
 
 interface ParsedTable { name: string; shape: Shape; capacity: number }
 
@@ -16,6 +17,7 @@ interface Props {
   planId: string;
   scenarioId: string;
   existingCount: number;
+  existingNames?: string[];
   onDone: () => void;
 }
 
@@ -24,7 +26,7 @@ const PLACEHOLDER = `Try things like:
 • Two long tables of 12, four squares of 4
 • Sweetheart table + 12 rounds seating 10`;
 
-export function SmartTableInput({ planId, scenarioId, existingCount, onDone }: Props) {
+export function SmartTableInput({ planId, scenarioId, existingCount, existingNames = [], onDone }: Props) {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [parsed, setParsed] = useState<ParsedTable[] | null>(null);
@@ -42,10 +44,12 @@ export function SmartTableInput({ planId, scenarioId, existingCount, onDone }: P
 
   const create = async () => {
     if (!parsed) return;
-    const rows = parsed.filter(t => t.name?.trim()).map((t, i) => ({
+    const clean = parsed.filter(t => t.name?.trim());
+    const uniqueNames = dedupeTableNames(clean.map(t => t.name.trim()), existingNames);
+    const rows = clean.map((t, i) => ({
       plan_id: planId,
       scenario_id: scenarioId,
-      name: t.name.trim(),
+      name: uniqueNames[i],
       shape: t.shape,
       capacity: t.capacity,
       x: ((existingCount + i) % 5) * 180,

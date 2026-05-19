@@ -11,6 +11,7 @@ import {
 } from "@/lib/roomConfig";
 import { invokeAIRoom, invokeAISingle } from "@/lib/aiParse";
 import { AddTableModal } from "./AddTableModal";
+import { uniqueTableName, dedupeTableNames } from "@/lib/uniqueName";
 
 interface Props {
   planId: string;
@@ -179,9 +180,11 @@ export function AddRail({ planId, scenarioId, tables, roomConfig, canEdit, onSav
 
   const addTable = async (shape: Shape, name: string, capacity: number) => {
     const { x, y } = dropTableAt(shape, name, capacity);
+    const finalName = uniqueTableName(name, tables.map(t => t.name));
+    if (finalName !== name) toast.info(`Renamed to "${finalName}" — name already used.`);
     await supabase.from("tables_def").insert({
       plan_id: planId, scenario_id: scenarioId,
-      name, shape, capacity, x, y, rotation: 0,
+      name: finalName, shape, capacity, x, y, rotation: 0,
     });
     setPendingShape(null);
     refresh();
@@ -231,6 +234,7 @@ export function AddRail({ planId, scenarioId, tables, roomConfig, canEdit, onSav
       const parsedTables = (tablesRes.data as { tables?: Array<{ name: string; shape: Shape; capacity: number }> } | undefined)?.tables ?? [];
       if (parsedTables.length) {
         const base = tables.length;
+        const uniqueNames = dedupeTableNames(parsedTables.map(t => t.name), tables.map(t => t.name));
         const rows = parsedTables.map((t, i) => {
           const idx = base + i;
           const col = idx % 3;
@@ -238,7 +242,7 @@ export function AddRail({ planId, scenarioId, tables, roomConfig, canEdit, onSav
           return {
             plan_id: planId,
             scenario_id: scenarioId,
-            name: t.name,
+            name: uniqueNames[i],
             shape: t.shape,
             capacity: t.capacity,
             x: Math.round(newRl.roomX + 100 + col * 180),
@@ -336,7 +340,7 @@ export function AddRail({ planId, scenarioId, tables, roomConfig, canEdit, onSav
       {pendingShape && (
         <AddTableModal
           shape={pendingShape}
-          defaultName={`Table ${tables.length + 1}`}
+          defaultName={uniqueTableName(`Table ${tables.length + 1}`, tables.map(t => t.name))}
           onClose={() => setPendingShape(null)}
           onSave={(name, capacity) => addTable(pendingShape, name, capacity)}
         />
