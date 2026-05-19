@@ -231,24 +231,34 @@ const table = (
 });
 
 export const DEMO_TABLES: TableDef[] = [
-  table("t-head", "Head Table", 8, "head", 540, 130),
+  // The default room places fixtures in three corners of the bottom/right:
+  //   - DJ booth      top-right     (~x 863..978, y  22..51)
+  //   - Bar           bottom-left   (~x  21..229, y 597..648)
+  //   - Dance floor   bottom-right  (~x 777..1027, y 460..737)
+  // Tables are laid out to leave each of those zones clear.
 
-  table("t-1", "Table 1", 10, "round", 180, 290),
-  table("t-2", "Table 2", 10, "round", 360, 290),
-  table("t-3", "Table 3", 10, "round", 540, 290),
-  table("t-4", "Table 4", 10, "round", 720, 290),
-  table("t-5", "Table 5", 10, "round", 900, 290),
+  // Row 1 — head table + kids' long table + T13 across the top.
+  table("t-head", "Head Table", 8, "head", 330, 155),
+  table("t-kids", "Kids' Table", 12, "long", 560, 155),
+  table("t-13", "Table 13", 8, "round", 820, 165),
 
-  table("t-6", "Table 6", 10, "round", 180, 450),
-  table("t-7", "Table 7", 10, "round", 360, 450),
-  table("t-8", "Table 8", 10, "round", 540, 450),
-  table("t-9", "Table 9", 10, "round", 720, 450),
-  table("t-10", "Table 10", 10, "round", 900, 450),
+  // Row 2 — five rounds across the full width (above the dance floor band).
+  table("t-1", "Table 1", 10, "round", 175, 310),
+  table("t-2", "Table 2", 10, "round", 335, 310),
+  table("t-3", "Table 3", 10, "round", 495, 310),
+  table("t-4", "Table 4", 10, "round", 655, 310),
+  table("t-5", "Table 5", 10, "round", 815, 310),
 
-  table("t-11", "Table 11", 8, "round", 200, 610),
-  table("t-12", "Table 12", 8, "round", 400, 610),
-  table("t-13", "Table 13", 8, "round", 600, 610),
-  table("t-kids", "Kids' Table", 12, "long", 850, 610),
+  // Row 3 — four rounds, all left of the dance floor.
+  table("t-6", "Table 6", 10, "round", 175, 450),
+  table("t-7", "Table 7", 10, "round", 335, 450),
+  table("t-8", "Table 8", 10, "round", 495, 450),
+  table("t-9", "Table 9", 10, "round", 655, 450),
+
+  // Row 4 — three eights tucked between the bar and the dance floor.
+  table("t-10", "Table 10", 8, "round", 350, 585),
+  table("t-11", "Table 11", 8, "round", 515, 585),
+  table("t-12", "Table 12", 8, "round", 680, 585),
 ];
 
 // ── Constraints (10) ─────────────────────────────────────────────────

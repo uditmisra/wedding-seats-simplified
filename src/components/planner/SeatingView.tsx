@@ -405,7 +405,7 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
             <UnassignedPanel guests={unassigned} search={search} setSearch={setSearch} totalGuests={guests.length} onAddGuest={onGoToGuests}/>
           )}
           <FloorPlan
-            chromeHeight={demoMode ? 320 : 240}
+            chromeHeight={240}
             autoFit={demoMode}
             tables={tables} assignments={assignments} guests={guests} constraints={constraints} scenarioId={scenarioId}
             onUnassign={async (a) => {

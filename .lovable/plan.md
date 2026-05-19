@@ -1,112 +1,66 @@
 
-# Demo: reflect new venue + open up the sandbox
+## Problem
 
-Today `/demo` mounts only `SeatingView` over a frozen sample. None of the recent venue work (Venue tab, unique table names, balanced auto-arrange, movable/deletable fixtures) is reachable, and there's nothing to do beyond drag a guest and run auto-seat. This rebuild adds the new surfaces in a way that doesn't dump every control on the user at once.
+The `/demo` Seating canvas opens at ~30% zoom with tables shoved into the upper-left, leaving a large empty L-shape around the dance floor and bar. Three independent causes:
 
-## Goals
+1. **Sample tables don't respect fixtures.** `DEMO_TABLES` is a regular 5-col grid hard-coded at y=130..610, x=180..900. The dance floor (bottom-right) and bar (bottom-left) are ignored — tables 11–14 and the kids' table sit *on top of / next to* the bar at y=610, while the middle-bottom of the room is left empty.
+2. **Auto-fit zoom too small in demo.** `SeatingView` passes `chromeHeight={demoMode ? 320 : 240}`. That shrinks the viewport so `fit()` lands at ~0.3 even on a 1280px viewport. The canvas itself is also oversized (`PAD_TOP=90`, `PAD_BOTTOM=110`) which inflates `height` further and drags fit zoom down.
+3. **No visual hierarchy at low zoom.** At 30% table names and seat dots collapse into tiny smudges, which is what makes the whole thing look "terrible" even though tables technically fit.
 
-1. **Reflect the product** — the demo should show the Venue tab and the new behaviours we just shipped.
-2. **More to play with** — visitors can add/rename/delete tables, move and delete fixtures, add a guest, run auto-arrange, run auto-seat.
-3. **Progressive disclosure** — first impression stays a single focused canvas; advanced surfaces appear as the user signals intent.
+## Fix
 
-## UX shape
+### 1. Rebalance `DEMO_TABLES` to fit around fixtures
+
+Default room is 20m × 14m → canvas ~1040 × 728 inside the room rect. Fixtures (in pct → px relative to room):
+- Entry: top center
+- DJ: top-right (~x 863..978, y 22..51)
+- Bar: bottom-left (~x 21..229, y 597..648)
+- Dance floor: bottom-right (~x 707..957, y 400..677)
+
+Re-lay the 15 tables in a 4-row layout that **avoids the dance floor and bar**:
 
 ```text
-┌─ sample-data header (unchanged) ────────────────────────────┐
-│                                                             │
-│  Emma & James — a sample wedding                            │
-│  [ Seating  ·  Venue  ·  Guests  ·  Rules ]   ← tab strip   │
-│                                                             │
-│  ┌─ Coach strip (dismissable, per-tab) ──────────────────┐  │
-│  │ ✦ Try this: drag Linda off the head table, or hit    │  │
-│  │   Auto-seat. Want to play more? Open Venue.          │  │
-│  └──────────────────────────────────────────────────────┘  │
-│                                                             │
-│  <active tab body>                                          │
-│                                                             │
-└─ conversion bar (unchanged) ────────────────────────────────┘
+Row 1 (head + back row, y=140):      [Head Table @ 520]
+Row 2 (y=290): T1 T2 T3 T4 T5          (5 across, x=160,340,520,700,880)
+Row 3 (y=440): T6 T7 T8 T9 T10         (5 across, same x)
+Row 4 (y=580): T11 T12 T13 Kids        (4 across, x=300,470,640, Kids long @ 850 but
+                                         only if it clears bar+floor — otherwise
+                                         move Kids next to Head Table on row 1 right side)
 ```
 
-### Progressive-disclosure rules
+Concretely:
+- Drop the kids' long table onto **row 1** beside the head table (x=820, y=140) so it doesn't fight the dance floor.
+- Bottom row becomes T11/T12/T13 only at y=560, x=200/380/560 — leaves the bar and dance floor with clean breathing room.
+- All round tables get `~150px` horizontal pitch, `~150px` vertical pitch — already roughly what they are, just shifted up/left to clear bottom fixtures.
 
-- **First paint:** only Seating is visible. Other tabs render as "+ More" pill on the right of the tab strip; clicking expands the rest.  
-  Rationale: returning visitors / those who came from a "see the room editor" link can jump straight in; first-timers aren't overwhelmed.
-- **Coach strip** sits above the tab body, one per tab, dismissable (sessionStorage `demo:coach:{tab}:dismissed`). Copy is task-led, not feature-led:
-  - Seating: "Drag Linda — she and Robert are flagged 'not near'. Or hit Auto-seat to watch it solve in 2s."
-  - Venue: "Add a table from the rail, drag it anywhere, or hit Auto-arrange. Try deleting the bar."
-  - Guests: "Add a guest, change an RSVP — they'll show up in the unassigned list on Seating."
-  - Rules: "Add a 'not near' between any two guests — it'll flag the moment you seat them together."
-- **Auto-expand** the full tab strip the first time the user interacts with anything (reuses existing `hasInteracted` flag), so power users see all surfaces after one drag.
+This is sample-data-only; no logic changes.
 
-### Per-tab body
+### 2. Loosen auto-fit so the demo opens at a readable zoom
 
-| Tab | Component | Demo wiring |
-|---|---|---|
-| Seating | existing `SeatingView` | unchanged |
-| Venue | `VenueTab` (lg) / `MobileVenueList` (below lg) | demo-mode handlers (see below) |
-| Guests | `GuestsTab` | demo-mode handlers |
-| Rules | `ConstraintsPanel` | demo-mode handlers, constraints become editable (currently locked) |
+In `src/components/planner/SeatingView.tsx`:
+- Reduce `chromeHeight` in demo mode from `320` → `240` (the coach strip is ~80px, not 160px — current value over-counts).
 
-Below `lg:` the Venue tab already falls back to `MobileVenueList`, so this works on mobile without extra code.
+In `src/components/planner/FloorPlan.tsx` `fit()`:
+- Use `PAD_X` (70) on each side rather than the hard-coded `60` so we don't double-pad.
+- Cap minimum auto-fit zoom on desktop at **0.5** (currently it just clamps to `MIN_ZOOM` 0.2), so a too-tall canvas can't render at 30%. If the user wants smaller they can zoom out manually.
+- Center on the **tables' bounding box** (not the whole room rect) when `autoFit` is true — that way the empty dance-floor corner doesn't drag the fit zoom down.
 
-## Demo state needs to grow
+### 3. (Bonus, cheap) Reduce vertical padding on the canvas
 
-Today `demoStore` persists `{guests, tables, assignments, constraints}`. We need to also persist `roomConfig` (now mutable) and let constraints/guests change. Update `DemoState` and `loadDemoState`/`saveDemoState`/`resetDemoState` to:
-
-- include `roomConfig: RoomConfig` (seeded from `DEMO_PLAN.room_config`)
-- bump storage key to `demo:state:v2` (avoid crashing on stale v1 payloads — fall back to seed on parse mismatch)
-
-`Demo.tsx` then holds `roomConfig` in state and passes a `setRoomConfig` everywhere the real Planner passes `onSavedRoom`.
-
-## Demo-mode handlers
-
-Components that today only know how to write to Supabase need a demo path. Two strategies, picked per component:
-
-1. **Already supports `demoMode` prop** (`SeatingView`, `AutoAssignDialog`): keep using it.
-2. **Doesn't** (`VenueTab`/`AddRail`/`VenueCanvas`/`MobileVenueList`, `GuestsTab`, `ConstraintsPanel`): wrap the Supabase client at the call sites by introducing a thin `demoMode` prop that gates the writes, mirroring the SeatingView pattern. Where adding a prop is invasive, an alternative is a `useDemoSupabase()` shim — but the prop is cleaner and matches the existing pattern, so prefer that.
-
-State changes are mirrored into `setGuests` / `setTables` / `setAssignments` / `setConstraints` / `setRoomConfig` so the optimistic UI stays the source of truth, then `refresh` becomes a no-op.
-
-## Reset button
-
-`reset()` now also restores `roomConfig` and `constraints` from the seed, and clears coach-dismissed flags so the tour reappears on the fresh demo.
-
-## SEO + analytics
-
-- Title/description in `useSeoHead` updated: "Try Wedding Seater — drag guests, design the room, run auto-seat." (still <60 / <160 chars).
-- JSON-LD description updated to mention room editing.
-- Add an `analytics.track('demo_tab_change', { tab })` and `demo_coach_dismissed` for visibility into which surfaces get explored.
+Drop `PAD_BOTTOM` from 110 → 70 and `PAD_TOP` from 90 → 60. The current values leave ~200px of dead space above/below the room outline that fit-to-viewport has to account for. This is a global change but it tightens every canvas, not just the demo.
 
 ## Files
 
-**Modified**
-- `src/pages/Demo.tsx` — tab strip, progressive expand, coach strip, mount new tabs, pass demo handlers.
-- `src/lib/demo/demoStore.ts` — add `roomConfig`, bump key to v2.
-- `src/components/planner/venue/AddRail.tsx` — accept `demoMode` prop; gate `supabase.*` writes; call `onSavedRoom`/`refresh` consistently.
-- `src/components/planner/venue/VenueCanvas.tsx` — same.
-- `src/components/planner/venue/MobileVenueList.tsx` — same.
-- `src/components/planner/VenueTab.tsx` — thread `demoMode` to children.
-- `src/components/planner/GuestsTab.tsx` — accept `demoMode`; for the 5–8 supabase calls, gate behind it and call the existing `setGuests` prop (already plumbed) instead.
-- `src/components/planner/ConstraintsPanel.tsx` — accept `demoMode` + `setConstraints`; mirror writes locally.
-
-**New**
-- `src/components/planner/demo/DemoCoach.tsx` — small dismissable strip with per-tab copy + sessionStorage keying.
-- `src/components/planner/demo/DemoTabs.tsx` — the progressive-disclosure tab strip (collapsed → expanded), keeps Demo.tsx tidy.
-
-**No deletes.**
+- `src/lib/demo/sampleData.ts` — re-coord `DEMO_TABLES` (data only).
+- `src/components/planner/SeatingView.tsx` — `chromeHeight={demoMode ? 240 : 240}` (effectively drop the demo override).
+- `src/components/planner/FloorPlan.tsx` — tweak `fit()` math + lower `PAD_TOP`/`PAD_BOTTOM`.
 
 ## Out of scope
 
-- Export/Compare tabs in the demo (require auth-style flows and PDF generation that's better kept out of the public sandbox).
-- Persisting demo state across tabs/devices (still sessionStorage).
-- Onboarding flow in demo (Empty-state already covers).
-- Schema or RLS changes (none — demo never hits the DB).
+- The auto-arrange algorithm itself (already fixed in prior pass).
+- Layout-balancer rewrite (the sample is hand-placed; auto-arrange already produces good output when triggered).
+- Mobile demo canvas (separate pass).
 
 ## Verification
 
-- Load `/demo` fresh: only Seating visible + coach strip. After one drag, full tab strip expands.
-- Switch to Venue, add a table named "Table 2" → should auto-bump to "Table 2 (2)". Drag a fixture, delete the bar, hit Auto-arrange — tables should redistribute respecting the cleared fixture.
-- Switch to Rules, add a NOT_WITH between any two guests, then seat them together on Seating tab — conflict ring appears.
-- Refresh page → state persists (sessionStorage v2). Close tab + reopen → fresh seed.
-- Reset button restores room, guests, tables, assignments, constraints, and re-shows coach strips.
-- Mobile (<lg): Venue tab shows the existing MobileVenueList; tab strip collapses sanely.
+Open `/demo` fresh → canvas opens at ≥50% zoom; head + kids tables read clearly across the top; T1–T10 fill the middle two rows; T11–T13 sit between bar and dance floor with breathing room; no table overlaps a fixture.

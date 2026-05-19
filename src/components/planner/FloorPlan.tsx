@@ -40,8 +40,8 @@ const MIN_ZOOM = 0.2;
 const MAX_ZOOM = 2.5;
 
 const PAD_X = 70;
-const PAD_TOP = 90;
-const PAD_BOTTOM = 110;
+const PAD_TOP = 60;
+const PAD_BOTTOM = 70;
 const TABLE_GAP = 44; // breathing room between table bounding boxes in auto-grid
 
 const noop = () => {};
@@ -259,16 +259,29 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
     const vp = viewportRef.current; if (!vp) return;
     const rect = vp.getBoundingClientRect();
     const isSmall = rect.width < 640;
-    const pad = isSmall ? 16 : 60;
-    const fitZ = Math.min((rect.width - pad * 2) / width, (rect.height - pad * 2) / height, 1.5);
-    // On small screens, prefer a zoom that keeps tables tappable (~80px wide)
-    // over a zoom that crams the whole chart on screen. Users can pan from there.
-    const targetZ = isSmall ? Math.max(fitZ, 0.65) : fitZ;
+    const pad = isSmall ? 16 : PAD_X;
+    // Fit to the tables' bounding box (with a small margin) rather than the
+    // full canvas — that way an empty dance-floor corner doesn't drag the
+    // auto-fit zoom into "tiny smudge" territory.
+    let fitW = width, fitH = height, cx = roomX + roomW / 2, cy = roomY + roomH / 2;
+    if (autoFit && tables.length > 0) {
+      const xs = tables.map(t => t.x ?? 0);
+      const ys = tables.map(t => t.y ?? 0);
+      const minX = Math.min(...xs) - maxW / 2 - 20;
+      const maxX = Math.max(...xs) + maxW / 2 + 20;
+      const minY = Math.min(...ys) - maxH / 2 - 20;
+      const maxY = Math.max(...ys) + maxH / 2 + 20;
+      fitW = Math.max(200, maxX - minX);
+      fitH = Math.max(200, maxY - minY);
+      cx = (minX + maxX) / 2;
+      cy = (minY + maxY) / 2;
+    }
+    const fitZ = Math.min((rect.width - pad * 2) / fitW, (rect.height - pad * 2) / fitH, 1.5);
+    // Phone: keep tables tappable (~80px). Desktop: don't fall below 0.5 or
+    // tables become illegible smudges; user can still zoom out manually.
+    const floor = isSmall ? 0.65 : 0.5;
+    const targetZ = Math.max(fitZ, floor);
     const zc = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, targetZ));
-    // Center on the room's center of mass, not the full canvas, so the
-    // tables-rich area lands in the middle of the viewport.
-    const cx = roomX + roomW / 2;
-    const cy = roomY + roomH / 2;
     const x = rect.width / 2 - cx * zc;
     const y = rect.height / 2 - cy * zc;
     setAnimate(true); setView({ x, y, z: zc });
