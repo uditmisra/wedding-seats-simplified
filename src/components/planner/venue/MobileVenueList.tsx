@@ -9,6 +9,7 @@ import { Plus, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import type { TableDef, Shape, Assignment } from "@/lib/types";
 import { type RoomConfig, type FixtureType, DEFAULT_ROOM_CONFIG, FIXTURE_META } from "@/lib/roomConfig";
+import { uniqueTableName } from "@/lib/uniqueName";
 
 const SHAPES: Shape[] = ["round", "rectangle", "square", "long", "head"];
 const FIXTURE_LIST: FixtureType[] = ["bar", "dj", "dance_floor", "stage", "catering", "photo_booth", "bathroom", "coat_check", "entry"];
@@ -159,20 +160,26 @@ export function MobileVenueList({ planId, scenarioId, tables, assignments, roomC
       {editing && (
         <TableEditor planId={planId} scenarioId={scenarioId}
           table={editing === "new" ? null : editing} count={tables.length}
+          existingNames={tables.map(t => t.name)}
           onClose={() => { setEditing(null); refresh(); }} />
       )}
     </div>
   );
 }
 
-function TableEditor({ planId, scenarioId, table, count, onClose }: {
-  planId: string; scenarioId: string; table: TableDef | null; count: number; onClose: () => void;
+function TableEditor({ planId, scenarioId, table, count, existingNames, onClose }: {
+  planId: string; scenarioId: string; table: TableDef | null; count: number; existingNames: string[]; onClose: () => void;
 }) {
-  const [name, setName] = useState(table?.name ?? `Table ${count + 1}`);
+  const [name, setName] = useState(
+    table?.name ?? uniqueTableName(`Table ${count + 1}`, existingNames),
+  );
   const [capacity, setCapacity] = useState(table?.capacity ?? 8);
   const [shape, setShape] = useState<Shape>(table?.shape ?? "round");
   const save = async () => {
     if (!name.trim()) { toast.error("Name required"); return; }
+    const others = existingNames.filter(n => !table || n !== table.name);
+    const clash = others.some(n => n.trim().toLowerCase() === name.trim().toLowerCase());
+    if (clash) { toast.error("A table with that name already exists."); return; }
     if (table) await supabase.from("tables_def").update({ name, capacity, shape }).eq("id", table.id);
     else await supabase.from("tables_def").insert({ plan_id: planId, scenario_id: scenarioId, name, capacity, shape });
     onClose();
