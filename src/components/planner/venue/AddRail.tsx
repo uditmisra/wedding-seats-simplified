@@ -11,6 +11,7 @@ import {
 } from "@/lib/roomConfig";
 import { invokeAIRoom, invokeAISingle } from "@/lib/aiParse";
 import { AddTableModal } from "./AddTableModal";
+import { uniqueTableName, dedupeTableNames } from "@/lib/uniqueName";
 
 interface Props {
   planId: string;
