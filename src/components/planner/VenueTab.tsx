@@ -44,7 +44,7 @@ export function VenueTab({
 
   return (
     <div className="overflow-hidden rounded-2xl border hairline">
-      <div className="grid lg:grid-cols-[240px_1fr]">
+      <div className="grid lg:grid-cols-[280px_1fr]">
         <AddRail
           planId={planId} scenarioId={scenarioId}
           tables={tables} roomConfig={roomConfig}
