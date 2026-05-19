@@ -32,6 +32,8 @@ interface Props {
   onActivityLog?: (action: string, subject?: string, detail?: string) => void;
   roomConfig?: RoomConfig | null;
   onAutoAssign?: () => void;
+  /** Persist a fixture move/delete from the Seating arrange overlay. */
+  onSavedRoom?: (cfg: RoomConfig) => void;
   /** Demo mode — skip Supabase writes; rely on setAssignments + setTables for state. */
   demoMode?: boolean;
   setTables?: React.Dispatch<React.SetStateAction<TableDef[]>>;
@@ -95,7 +97,7 @@ function firstFreeSeat(table: TableDef, seated: Assignment[], excludeId?: string
   return null;
 }
 
-export function SeatingView({ planId, scenarioId, guests, tables, assignments, setAssignments, constraints, refresh, onGoToGuests, onGoToTables, canEdit = true, onActivityLog, roomConfig, onAutoAssign, demoMode = false, setTables }: Props) {
+export function SeatingView({ planId, scenarioId, guests, tables, assignments, setAssignments, constraints, refresh, onGoToGuests, onGoToTables, canEdit = true, onActivityLog, roomConfig, onAutoAssign, onSavedRoom, demoMode = false, setTables }: Props) {
   const [search, setSearch] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [view, setView] = useState<"list" | "floor" | "grouped">("floor");
