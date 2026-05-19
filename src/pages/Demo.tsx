@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { SeatingView } from "@/components/planner/SeatingView";
+import { VenueTab } from "@/components/planner/VenueTab";
+import { ConstraintsPanel } from "@/components/planner/ConstraintsPanel";
 import { AutoAssignDialog } from "@/components/planner/AutoAssignDialog";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { Sparkles, RotateCcw, ArrowRight } from "lucide-react";
@@ -15,11 +17,19 @@ import { useUnlock } from "@/hooks/useUnlock";
 import { JsonLd } from "@/components/JsonLd";
 import { SITE_URL } from "@/lib/siteUrl";
 import { useSeoHead } from "@/lib/useSeoHead";
+import { DemoTabs, type DemoTabDef } from "@/components/planner/demo/DemoTabs";
+import { DemoCoach, resetDemoCoaches } from "@/components/planner/demo/DemoCoach";
+
+const TABS: DemoTabDef[] = [
+  { value: "seating", numeral: "I", label: "Seating" },
+  { value: "venue",   numeral: "II", label: "Venue",  secondary: true },
+  { value: "rules",   numeral: "III", label: "Rules", secondary: true },
+];
 
 export default function Demo() {
   useSeoHead({
-    title: "Try Wedding Seater — Live Demo (Emma & James, 120 guests)",
-    description: "Play with a real wedding seating chart. Drag guests, fix conflicts, run auto-seat — no account, no signup. See how Wedding Seater handles the divorced parents, the feuding cousins, the kids' table.",
+    title: "Try Wedding Seater — Drag, design, auto-seat (live demo)",
+    description: "Play with a real wedding seating chart. Drag guests, design the room, add rules, run auto-seat — no account, no signup. Emma & James, 120 guests.",
     canonical: `${SITE_URL}/demo`,
     ogImage: `${SITE_URL}/brand/wedding-seater-mark.png`,
   });
@@ -27,7 +37,9 @@ export default function Demo() {
   const [guests, setGuests] = useState(initial.guests);
   const [tables, setTables] = useState(initial.tables);
   const [assignments, setAssignments] = useState(initial.assignments);
-  const [constraints] = useState(initial.constraints);
+  const [constraints, setConstraints] = useState(initial.constraints);
+  const [roomConfig, setRoomConfig] = useState(initial.roomConfig);
+  const [tab, setTab] = useState<string>("seating");
   const [autoOpen, setAutoOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -41,11 +53,11 @@ export default function Demo() {
 
   // Persist state across refreshes within the session
   useEffect(() => {
-    saveDemoState({ guests, tables, assignments, constraints });
-  }, [guests, tables, assignments, constraints]);
+    saveDemoState({ guests, tables, assignments, constraints, roomConfig });
+  }, [guests, tables, assignments, constraints, roomConfig]);
 
   // Flip hasInteracted the first time the user changes anything (drag,
-  // table move, auto-seat). The first effect run after mount is the
+  // table move, auto-seat, fixture move, rule added). The first effect run after mount is the
   // baseline — ignore it.
   useEffect(() => {
     if (interactionBaselineRef.current) {
@@ -54,15 +66,19 @@ export default function Demo() {
     }
     if (!hasInteracted) setHasInteracted(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [assignments, tables]);
+  }, [assignments, tables, constraints, roomConfig]);
 
   const reset = () => {
     const fresh = resetDemoState();
     setGuests(fresh.guests);
     setTables(fresh.tables);
     setAssignments(fresh.assignments);
+    setConstraints(fresh.constraints);
+    setRoomConfig(fresh.roomConfig);
+    setTab("seating");
     setHasInteracted(false);
     interactionBaselineRef.current = true;
+    resetDemoCoaches();
     toast.success("Demo reset to a fresh wedding.");
   };
 
@@ -75,7 +91,7 @@ export default function Demo() {
         "url": `${SITE_URL}/demo`,
         "applicationCategory": "LifestyleApplication",
         "operatingSystem": "Web browser",
-        "description": "Interactive demo of Wedding Seater. Drag guests onto tables, resolve seating conflicts, and run auto-seat — using a sample wedding (Emma & James, 120 guests). No account needed.",
+        "description": "Interactive demo of Wedding Seater. Drag guests onto tables, design the venue, add must-sit and keep-apart rules, and run auto-seat — using a sample wedding (Emma & James, 120 guests). No account needed.",
         "offers": {
           "@type": "Offer",
           "price": "0",
@@ -128,31 +144,76 @@ export default function Demo() {
             <h1 className="m-0 font-display text-[22px] leading-tight sm:text-[28px] sm:leading-none">
               Emma &amp; James <span className="font-display-italic text-ink-3">— a sample wedding</span>
             </h1>
-            <p className="mt-1.5 hidden text-[13px] text-ink-2 sm:block">
-              Drag a guest to a seat. Try the conflict at the head table — Linda and Robert are flagged "not near."
-              Or hit auto-seat and watch it solve.
-            </p>
-            <p className="mt-1.5 text-[13px] text-ink-2 sm:hidden">
-              Tap <span className="font-medium text-ink">Auto-seat</span> to watch it solve a 120-guest chart in 2 seconds. Pinch to zoom in.
-            </p>
           </div>
         </div>
 
-        <SeatingView
-          planId={DEMO_PLAN_ID}
-          scenarioId={DEMO_SCENARIO_ID}
-          guests={guests}
-          tables={tables}
-          assignments={assignments}
-          setAssignments={setAssignments}
-          setTables={setTables}
-          constraints={constraints}
-          refresh={() => {}}
-          canEdit={true}
-          demoMode={true}
-          roomConfig={DEMO_PLAN.room_config}
-          onAutoAssign={() => setAutoOpen(true)}
-        />
+        <div className="mb-3">
+          <DemoTabs tabs={TABS} value={tab} onChange={setTab} forceExpanded={hasInteracted} />
+        </div>
+
+        {tab === "seating" && (
+          <>
+            <DemoCoach tabKey="seating">
+              Drag <span className="font-medium text-ink">Linda</span> off the head table — she and Robert are flagged "not near".
+              Or hit <span className="font-medium text-ink">Auto-seat</span> to watch it solve in two seconds.
+              {!hasInteracted && <> Once you start, the <span className="font-medium text-ink">Venue</span> and <span className="font-medium text-ink">Rules</span> tabs appear too.</>}
+            </DemoCoach>
+            <SeatingView
+              planId={DEMO_PLAN_ID}
+              scenarioId={DEMO_SCENARIO_ID}
+              guests={guests}
+              tables={tables}
+              assignments={assignments}
+              setAssignments={setAssignments}
+              setTables={setTables}
+              constraints={constraints}
+              refresh={() => {}}
+              canEdit={true}
+              demoMode={true}
+              roomConfig={roomConfig}
+              onAutoAssign={() => setAutoOpen(true)}
+            />
+          </>
+        )}
+
+        {tab === "venue" && (
+          <>
+            <DemoCoach tabKey="venue">
+              Drag a table anywhere in the room. Add a new one from the left rail — try the name "Table 1" and watch it auto-bump to keep names unique.
+              Click the bar or DJ to move or delete them.
+            </DemoCoach>
+            <VenueTab
+              planId={DEMO_PLAN_ID}
+              scenarioId={DEMO_SCENARIO_ID}
+              tables={tables}
+              assignments={assignments}
+              roomConfig={roomConfig}
+              canEdit={true}
+              refresh={() => {}}
+              onSavedRoom={setRoomConfig}
+              demoMode={true}
+              setTables={setTables}
+            />
+          </>
+        )}
+
+        {tab === "rules" && (
+          <>
+            <DemoCoach tabKey="rules">
+              Add a <span className="font-medium text-ink">keep-apart</span> rule between any two guests, then jump back to <span className="font-medium text-ink">Seating</span>.
+              Seat them at the same table and you'll see a conflict ring appear.
+            </DemoCoach>
+            <ConstraintsPanel
+              planId={DEMO_PLAN_ID}
+              guests={guests}
+              constraints={constraints}
+              refresh={() => {}}
+              onAutoAssign={() => setAutoOpen(true)}
+              demoMode={true}
+              setConstraints={setConstraints}
+            />
+          </>
+        )}
 
         {autoOpen && (
           <AutoAssignDialog
