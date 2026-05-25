@@ -253,7 +253,7 @@ export const DEMO_TABLES: TableDef[] = [
   // Capacity: head(10) + kids(14) + 7 rounds(12) = 108 seats for
   // 120 guests. 12 unseated by design — gives Auto-seat a real job.
 
-  table("t-head", "Head Table",  10, "head",  600, 680),
+  table("t-head", "Head Table",  10, "head",  600, 630),
   table("t-kids", "Kids' Table", 14, "long",  870, 230),
 
   // Row 1 (top-west) — three rounds, clear of kids' table on the right.
