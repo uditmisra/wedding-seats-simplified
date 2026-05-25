@@ -277,9 +277,11 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
       cy = (minY + maxY) / 2;
     }
     const fitZ = Math.min((rect.width - pad * 2) / fitW, (rect.height - pad * 2) / fitH, 1.5);
-    // Phone: keep tables tappable (~80px). Desktop: don't fall below 0.5 or
-    // tables become illegible smudges; user can still zoom out manually.
-    const floor = isSmall ? 0.65 : 0.5;
+    // Phone: keep tables tappable (~80px). Desktop: don't fall below 0.5
+    // for user plans (tables become illegible smudges). The demo (autoFit)
+    // ships with a fully-positioned room and must show all of it on first
+    // paint, so we let the zoom go lower there.
+    const floor = isSmall ? 0.65 : (autoFit ? 0.35 : 0.5);
     const targetZ = Math.max(fitZ, floor);
     const zc = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, targetZ));
     const x = rect.width / 2 - cx * zc;
