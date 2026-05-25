@@ -217,9 +217,10 @@ export const DEMO_GUESTS: Guest[] = [
 ];
 
 // ── Tables (15) ──────────────────────────────────────────────────────
-// 1 head + 10 round 10s + 3 round 8s + 1 long kids' table = 8 + 100 + 24 + 12
-// = 144 seats for 120 guests, ~24 spare. Layout fits inside the default
-// 20m × 14m room.
+// 1 head (10) + 1 long kids (14) + 7 rounds (12 each) = 10 + 14 + 84
+// = 108 seats for 120 guests. 12 guests intentionally unseated so the
+// "Auto-seat" CTA has real work to do in the demo. Layout fits cleanly
+// inside the 26m × 18m demo room (canvas clamps to 1200 × 800 px).
 
 const table = (
   slug: string,
@@ -241,32 +242,29 @@ const table = (
 });
 
 export const DEMO_TABLES: TableDef[] = [
-  // 26m × 18m demo room (canvas ~1352 × 936). Fixtures sit at:
-  //   - DJ booth      top-right     (~x 1122..1271, y  28..94)
-  //   - Bar           bottom-left   (~x   27..297,  y 767..833)
-  //   - Dance floor   bottom-right  (~x  919..1244, y 515..871)
-  // Round 10-seat tables render at ~186 × 186 px (min radius 60 + seat
-  // gap + dot), so every neighbour needs ≥200 px pitch.
+  // 26m × 18m demo room — canvas clamps to 1200 × 800 px. Fixtures:
+  //   Entry        x 504..696   y top wall
+  //   DJ booth     x 996..1128  y  24..80   (NE)
+  //   Bar          x  24..264   y 656..712  (SW)
+  //   Dance floor  x 816..1104  y 440..744  (SE)
+  // Round tables (12-cap) render at 186 × 186 px incl. seat ring;
+  // neighbours sit at 200 px pitch. Head table front-and-centre on the
+  // south wall facing the dance floor; kids tucked top-right away from
+  // the bridal party.
 
-  // Row 1 (y=170) — head + kids' long across the top, well clear of DJ.
-  table("t-head", "Head Table", 8, "head", 400, 170),
-  table("t-kids", "Kids' Table", 12, "long", 900, 170),
+  table("t-head", "Head Table",  10, "head",  440, 680),
+  table("t-kids", "Kids' Table", 14, "long",  870, 230),
 
-  // Row 2 (y=360) — four rounds at 210 px pitch.
-  table("t-1", "Table 1", 10, "round", 160, 360),
-  table("t-2", "Table 2", 10, "round", 370, 360),
-  table("t-3", "Table 3", 10, "round", 580, 360),
-  table("t-4", "Table 4", 10, "round", 790, 360),
+  // Row 1 — three rounds across the top-west, clear of kids' table.
+  table("t-1", "Table 1", 12, "round", 150, 230),
+  table("t-2", "Table 2", 12, "round", 350, 230),
+  table("t-3", "Table 3", 12, "round", 550, 230),
 
-  // Row 3 (y=560) — four more rounds, last one still clears dance floor.
-  table("t-5", "Table 5", 10, "round", 160, 560),
-  table("t-6", "Table 6", 10, "round", 370, 560),
-  table("t-7", "Table 7", 10, "round", 580, 560),
-  table("t-8", "Table 8", 10, "round", 790, 560),
-
-  // Row 4 (y=760) — two rounds tucked between the bar and the dance floor.
-  table("t-9", "Table 9", 10, "round", 450, 760),
-  table("t-10", "Table 10", 10, "round", 660, 760),
+  // Row 2 — four rounds across the middle, last one clears dance floor.
+  table("t-4", "Table 4", 12, "round", 150, 430),
+  table("t-5", "Table 5", 12, "round", 350, 430),
+  table("t-6", "Table 6", 12, "round", 550, 430),
+  table("t-7", "Table 7", 12, "round", 720, 430),
 ];
 
 // ── Constraints (10) ─────────────────────────────────────────────────
