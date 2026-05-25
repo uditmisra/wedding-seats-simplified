@@ -253,19 +253,19 @@ export const DEMO_TABLES: TableDef[] = [
   // Capacity: head(10) + kids(14) + 7 rounds(12) = 108 seats for
   // 120 guests. 12 unseated by design — gives Auto-seat a real job.
 
-  table("t-head", "Head Table",  10, "head",  600, 630),
-  table("t-kids", "Kids' Table", 14, "long",  870, 230),
+  table("t-head", "Head Table",  10, "head",  600, 560),
+  table("t-kids", "Kids' Table", 14, "long",  870, 200),
 
   // Row 1 (top-west) — three rounds, clear of kids' table on the right.
-  table("t-1", "Table 1", 12, "round", 150, 230),
-  table("t-2", "Table 2", 12, "round", 350, 230),
-  table("t-3", "Table 3", 12, "round", 550, 230),
+  table("t-1", "Table 1", 12, "round", 150, 200),
+  table("t-2", "Table 2", 12, "round", 350, 200),
+  table("t-3", "Table 3", 12, "round", 550, 200),
 
   // Row 2 (middle) — four rounds; T7 clears dance floor by 3 px.
-  table("t-4", "Table 4", 12, "round", 150, 430),
-  table("t-5", "Table 5", 12, "round", 350, 430),
-  table("t-6", "Table 6", 12, "round", 550, 430),
-  table("t-7", "Table 7", 12, "round", 720, 430),
+  table("t-4", "Table 4", 12, "round", 150, 380),
+  table("t-5", "Table 5", 12, "round", 350, 380),
+  table("t-6", "Table 6", 12, "round", 550, 380),
+  table("t-7", "Table 7", 12, "round", 720, 380),
 ];
 
 // ── Constraints (10) ─────────────────────────────────────────────────

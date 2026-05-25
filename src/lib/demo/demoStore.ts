@@ -15,7 +15,7 @@ import {
   DEMO_PLAN,
 } from "./sampleData";
 
-const KEY = "demo:state:v5";
+const KEY = "demo:state:v6";
 
 export interface DemoState {
   guests: Guest[];
