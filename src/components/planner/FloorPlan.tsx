@@ -379,7 +379,10 @@ export function FloorPlan({ tables, assignments, guests, constraints, highlights
     const gridCx = free?.cx ?? fallbackCx;
     const gridCy = free?.cy ?? fallbackCy;
     const live = livePos.get(t.id);
-    const stored = arrangeMode && (t.x > 0 || t.y > 0) ? { cx: t.x, cy: t.y } : null;
+    // Honor stored coordinates whenever they're set — whether the user
+    // arranged the room manually or a seeded plan (like the demo) shipped
+    // with positions. Falls back to the auto-grid when x/y are zero.
+    const stored = (t.x > 0 || t.y > 0) ? { cx: t.x, cy: t.y } : null;
     const cx = live?.cx ?? stored?.cx ?? gridCx;
     const cy = live?.cy ?? stored?.cy ?? gridCy;
     const d = dims[i];
