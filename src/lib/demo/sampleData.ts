@@ -242,29 +242,33 @@ const table = (
 });
 
 export const DEMO_TABLES: TableDef[] = [
-  // 26m × 18m demo room — canvas clamps to 1200 × 800 px. Fixtures:
-  //   Entry        x 504..696   y top wall
-  //   DJ booth     x 996..1128  y  24..80   (NE)
-  //   Bar          x  24..264   y 656..712  (SW)
-  //   Dance floor  x 816..1104  y 440..744  (SE)
-  // Round tables (12-cap) render at 186 × 186 px incl. seat ring;
-  // neighbours sit at 200 px pitch. Head table front-and-centre on the
-  // south wall facing the dance floor; kids tucked top-right away from
-  // the bridal party.
+  // 26m × 18m demo room — fixtures: Entry (top), DJ (NE), Bar (SW),
+  // Dance floor (SE). The Seating canvas auto-grids tables by array
+  // order (it ignores stored x/y outside arrange-mode), so order here
+  // is what determines visual placement.
+  //
+  // Goal: Head table centred along the top (front of room, facing
+  // dance floor). Kids' table tucked into the opposite corner from
+  // the head table, well away from the bridal party. Rounds wrap
+  // around to fill the remaining cells.
+  //
+  // Capacity: head(10) + kids(14) + 7 rounds(12) = 108 seats for
+  // 120 guests. 12 unseated by design — gives Auto-seat a real job.
 
-  table("t-head", "Head Table",  10, "head",  440, 680),
-  table("t-kids", "Kids' Table", 14, "long",  870, 230),
+  // Top row: round, HEAD (centred), round, round
+  table("t-1",    "Table 1",    12, "round", 150, 230),
+  table("t-head", "Head Table", 10, "head",  440, 230),
+  table("t-2",    "Table 2",    12, "round", 740, 230),
+  table("t-3",    "Table 3",    12, "round", 950, 230),
 
-  // Row 1 — three rounds across the top-west, clear of kids' table.
-  table("t-1", "Table 1", 12, "round", 150, 230),
-  table("t-2", "Table 2", 12, "round", 350, 230),
-  table("t-3", "Table 3", 12, "round", 550, 230),
-
-  // Row 2 — four rounds across the middle, last one clears dance floor.
+  // Middle row: four rounds across
   table("t-4", "Table 4", 12, "round", 150, 430),
   table("t-5", "Table 5", 12, "round", 350, 430),
   table("t-6", "Table 6", 12, "round", 550, 430),
-  table("t-7", "Table 7", 12, "round", 720, 430),
+  table("t-7", "Table 7", 12, "round", 750, 430),
+
+  // Bottom-left corner: kids' table (away from head, away from dance floor)
+  table("t-kids", "Kids' Table", 14, "long", 440, 680),
 ];
 
 // ── Constraints (10) ─────────────────────────────────────────────────
