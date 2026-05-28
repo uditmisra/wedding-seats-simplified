@@ -54,6 +54,10 @@ export function useSeoHead({
     setMeta('meta[property="og:title"]', ogTitle ?? title);
     setMeta('meta[property="og:description"]', ogDescription ?? description);
     setMeta('meta[property="og:type"]', ogType);
+    // og:url should mirror the canonical (or fall back to the live URL) so
+    // subpages don't all advertise the homepage as their social preview URL.
+    const ogUrl = canonical ?? (typeof window !== "undefined" ? window.location.href : undefined);
+    if (ogUrl) setMeta('meta[property="og:url"]', ogUrl);
     setMeta('meta[name="twitter:title"]', ogTitle ?? title);
     setMeta('meta[name="twitter:description"]', ogDescription ?? description);
     if (ogImage) {
