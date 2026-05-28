@@ -33,7 +33,12 @@ const Dashboard = () => {
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const { isPaid, loading: unlockLoading } = useUnlock();
 
-  useSeoHead({ title: "Your plans | Wedding Seater", description: "Your Wedding Seater dashboard.", noindex: true });
+  useSeoHead({
+    title: "Your plans | Wedding Seater",
+    description:
+      "Manage every wedding seating chart tied to your account — open a saved plan, start a new one, or jump back into a draft you left earlier.",
+    noindex: true,
+  });
 
   useEffect(() => {
     if (!loading && !user) navigate("/auth?next=/dashboard", { replace: true });
@@ -139,8 +144,11 @@ const Dashboard = () => {
               YOUR PLANS · {plans?.length ?? "—"}
             </div>
             <h1 className="m-0 font-display text-[36px] leading-[1] tracking-[-0.02em] sm:text-[42px]">
-              Hello, <span className="font-display-italic">{greetingName}.</span>
+              Your wedding seating <span className="font-display-italic">plans.</span>
             </h1>
+            <p className="mt-1 font-display-italic text-[18px] text-ink-3">
+              Hello, {greetingName}.
+            </p>
             {plans !== null && (
               <p className="mt-2 text-[14px] text-ink-3">
                 {plans.length === 0
