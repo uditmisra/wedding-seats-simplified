@@ -26,6 +26,24 @@
 
   <!-- Blog posts (sorted by publishDate, newest first) -->
   <url>
+    <loc>https://weddingseater.app/blog/awkward-wedding-seating-arrangements</loc>
+    <lastmod>2026-05-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://weddingseater.app/blog/how-to-display-wedding-seating-chart</loc>
+    <lastmod>2026-05-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://weddingseater.app/blog/do-you-need-wedding-seating-chart</loc>
+    <lastmod>2026-05-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://weddingseater.app/blog/wedding-seating-chart-checklist</loc>
     <lastmod>2026-04-28</lastmod>
     <changefreq>monthly</changefreq>

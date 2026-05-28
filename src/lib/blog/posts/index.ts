@@ -19,9 +19,15 @@ import { post as post17 } from "./head-table-seating-guide";
 import { post as post18 } from "./wedding-seater-vs-allseated";
 import { post as post19 } from "./when-to-start-wedding-seating-chart";
 import { post as post20 } from "./wedding-seating-chart-checklist";
+import { post as post21 } from "./do-you-need-wedding-seating-chart";
+import { post as post22 } from "./how-to-display-wedding-seating-chart";
+import { post as post23 } from "./awkward-wedding-seating-arrangements";
 
 // Most-recent first
 const posts: BlogPost[] = [
+  post23,
+  post22,
+  post21,
   post20,
   post19,
   post18,
