@@ -239,7 +239,7 @@ const Planner = () => {
                 onClick={() => canEdit && setEditingName(true)}
                 className={`group flex max-w-full items-center gap-1.5 truncate text-left ${canEdit ? "" : "cursor-default"}`}
               >
-                <span className="truncate font-display text-[17px] leading-tight">{plan.name}</span>
+                <h1 className="m-0 truncate font-display text-[17px] font-normal leading-tight">{plan.name}</h1>
                 {canEdit && <Pencil size={11} className="shrink-0 opacity-0 transition group-hover:opacity-50" />}
               </button>
             )}
