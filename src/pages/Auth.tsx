@@ -19,7 +19,12 @@ export default function Auth() {
   const next = params.get("next") || "/";
   const { user, loading } = useAuth();
 
-  useSeoHead({ title: "Sign in | Wedding Seater", description: "Sign in to Wedding Seater.", noindex: true });
+  useSeoHead({
+    title: "Sign in | Wedding Seater",
+    description:
+      "Sign in to Wedding Seater to save, share, and edit your wedding seating charts across devices. Your guest list and table layout stay tied to your account.",
+    noindex: true,
+  });
 
   useEffect(() => { if (!loading && user) navigate(next, { replace: true }); }, [user, loading, next, navigate]);
 
