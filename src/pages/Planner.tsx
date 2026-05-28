@@ -49,7 +49,8 @@ const Planner = () => {
 
   useSeoHead({
     title: plan ? `${plan.name} | Wedding Seater` : "Wedding Seater",
-    description: "Private wedding seating chart.",
+    description:
+      "Your private wedding seating chart — drag guests onto tables, manage RSVPs, resolve constraints, and share the live plan with whoever's helping.",
     noindex: true,
   });
   const [editingName, setEditingName] = useState(false);
