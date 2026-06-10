@@ -310,21 +310,22 @@ const Planner = () => {
           </div>
         )}
 
-        {/* View-only banner — owned by someone else */}
+        {/* View-only banner — owned by someone else. Every viewer is a
+            wedding-adjacent prospect (partner, parent, MOH), so the CTA
+            sends them to the demo where the product sells itself, not to
+            a sign-in form. */}
         {!canEdit && hasOwner && (
           <div className="flex flex-wrap items-center gap-2.5 rounded-xl border hairline bg-paper-2/60 px-4 py-2.5 text-[13px]">
             <Eye size={14} className="text-ink-3" />
             <span className="text-ink-2">
               <span className="font-display-italic">View only.</span> Ask the owner if you need to edit.
             </span>
-            {!user && (
-              <Link
-                to={`/auth?next=${encodeURIComponent(window.location.pathname)}`}
-                className="ml-auto text-terracotta hover:underline"
-              >
-                Start your own plan
-              </Link>
-            )}
+            <Link
+              to={user ? "/dashboard" : "/demo?ref=shared-plan"}
+              className="ml-auto text-terracotta hover:underline"
+            >
+              Plan your own wedding →
+            </Link>
           </div>
         )}
 

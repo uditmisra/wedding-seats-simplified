@@ -203,6 +203,36 @@ export default function BlogPost() {
             </section>
           )}
 
+          {/* Conversion block — readers arrived from a high-intent search;
+              give them the product before the footer. */}
+          <aside className="mt-16 rounded-2xl border border-ink bg-paper p-8 shadow-elegant paper-grain md:p-10">
+            <div className="font-mono text-[10px] uppercase tracking-[0.32em] text-terracotta">
+              Skip the spreadsheet
+            </div>
+            <h2 className="m-0 mt-3 font-display text-[28px] leading-[1.1] md:text-[32px]">
+              Do this in an <em className="font-display-italic">afternoon</em>, not a month.
+            </h2>
+            <p className="mt-3 max-w-[480px] text-[15px] leading-[1.6] text-ink-2">
+              Drag your guests onto your tables. Auto-seat handles the divorced
+              parents and the cousins who don&apos;t speak. £10 once — no
+              subscription.
+            </p>
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <Link
+                to="/demo"
+                className="rounded-full bg-ink px-6 py-2.5 text-[14px] font-medium text-paper transition hover:bg-ink-2"
+              >
+                Try the demo — free
+              </Link>
+              <Link
+                to="/"
+                className="rounded-full border hairline px-5 py-2.5 text-[13px] text-ink-2 transition hover:bg-paper-2 hover:text-ink"
+              >
+                See how it works
+              </Link>
+            </div>
+          </aside>
+
           {/* Post footer */}
           <footer className="mt-16 border-t hairline pt-10">
             <div className="flex items-center justify-between">
