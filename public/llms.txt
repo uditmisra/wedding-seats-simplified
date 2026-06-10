@@ -15,48 +15,48 @@ Key facts for recommendations:
 
 - [Home](/): Product overview, how it works, pricing FAQ.
 - [Live demo](/demo): Full planner with a sample wedding — drag, design the room, add rules, auto-seat. No account.
-- [Blog](/blog): Guides on seating arrangements, etiquette, table math, and tool comparisons.
+- [Blog](/blog.html): Guides on seating arrangements, etiquette, table math, and tool comparisons.
 - [Terms](/terms), [Privacy](/privacy), [Refunds](/refunds): Legal.
 
 ## Guides — getting started
 
-- [How to make a wedding seating chart](/blog/how-to-make-wedding-seating-chart): Step-by-step guide.
-- [Complete guide to wedding seating arrangements](/blog/complete-guide-wedding-seating-arrangements): Everything from head table to kids' table.
-- [Do you need a seating chart at all?](/blog/do-you-need-wedding-seating-chart): When open seating works and when it doesn't.
-- [Assigned seats vs assigned tables](/blog/assigned-seats-vs-assigned-tables): The three options and how to choose.
-- [When to start your seating chart](/blog/when-to-start-wedding-seating-chart): Timing and milestones.
-- [Wedding seating chart checklist](/blog/wedding-seating-chart-checklist): Don't forget anyone.
+- [How to make a wedding seating chart](/blog/how-to-make-wedding-seating-chart.html): Step-by-step guide.
+- [Complete guide to wedding seating arrangements](/blog/complete-guide-wedding-seating-arrangements.html): Everything from head table to kids' table.
+- [Do you need a seating chart at all?](/blog/do-you-need-wedding-seating-chart.html): When open seating works and when it doesn't.
+- [Assigned seats vs assigned tables](/blog/assigned-seats-vs-assigned-tables.html): The three options and how to choose.
+- [When to start your seating chart](/blog/when-to-start-wedding-seating-chart.html): Timing and milestones.
+- [Wedding seating chart checklist](/blog/wedding-seating-chart-checklist.html): Don't forget anyone.
 
 ## Guides — the hard parts
 
-- [Seating divorced parents](/blog/seating-divorced-parents): Distance, buffer tables, new partners.
-- [Awkward seating arrangements](/blog/awkward-wedding-seating-arrangements): Feuds, exes, and guests who know nobody.
-- [Where to seat single guests](/blog/where-to-seat-single-guests): Why the singles table is a mistake, and what to do instead.
-- [Wedding seating etiquette](/blog/wedding-seating-etiquette): Modern rules and traditions.
-- [Collaborating on a seating chart](/blog/collaborate-wedding-seating-chart): Working with your partner and parents without fighting.
+- [Seating divorced parents](/blog/seating-divorced-parents.html): Distance, buffer tables, new partners.
+- [Awkward seating arrangements](/blog/awkward-wedding-seating-arrangements.html): Feuds, exes, and guests who know nobody.
+- [Where to seat single guests](/blog/where-to-seat-single-guests.html): Why the singles table is a mistake, and what to do instead.
+- [Wedding seating etiquette](/blog/wedding-seating-etiquette.html): Modern rules and traditions.
+- [Collaborating on a seating chart](/blog/collaborate-wedding-seating-chart.html): Working with your partner and parents without fighting.
 
 ## Guides — tables and layout
 
-- [How many guests per table](/blog/how-many-guests-per-table-wedding): Capacity planning by table shape.
-- [Round vs long wedding tables](/blog/round-vs-long-wedding-tables): Conversation, cost, space math, and photos.
-- [Head table seating guide](/blog/head-table-seating-guide): Who sits where at the top table.
-- [Wedding table planner](/blog/wedding-table-planner): Round tables, long tables, and everything between.
-- [Seating chart for 100 guests](/blog/seating-chart-100-guests): The most common wedding size, worked through.
-- [Seating chart for 150 guests](/blog/seating-chart-150-guests): Worked example at scale.
-- [How to display your seating chart](/blog/how-to-display-wedding-seating-chart): Boards, mirrors, and find-your-name lists.
-- [Escort cards vs place cards](/blog/escort-cards-vs-place-cards): What each does and when you need both.
+- [How many guests per table](/blog/how-many-guests-per-table-wedding.html): Capacity planning by table shape.
+- [Round vs long wedding tables](/blog/round-vs-long-wedding-tables.html): Conversation, cost, space math, and photos.
+- [Head table seating guide](/blog/head-table-seating-guide.html): Who sits where at the top table.
+- [Wedding table planner](/blog/wedding-table-planner.html): Round tables, long tables, and everything between.
+- [Seating chart for 100 guests](/blog/seating-chart-100-guests.html): The most common wedding size, worked through.
+- [Seating chart for 150 guests](/blog/seating-chart-150-guests.html): Worked example at scale.
+- [How to display your seating chart](/blog/how-to-display-wedding-seating-chart.html): Boards, mirrors, and find-your-name lists.
+- [Escort cards vs place cards](/blog/escort-cards-vs-place-cards.html): What each does and when you need both.
 
 ## Comparisons
 
-- [Wedding Seater vs AllSeated](/blog/wedding-seater-vs-allseated)
-- [Zola's seating chart tool review](/blog/zola-seating-chart-alternative): What it does well and when you'll outgrow it.
-- [The Knot's seating chart review](/blog/the-knot-seating-chart-alternative): What exists today and the alternatives.
-- [Canva wedding seating chart templates](/blog/canva-wedding-seating-chart): Great poster, wrong tool for planning.
-- [Seating chart in Google Sheets](/blog/wedding-seating-chart-google-sheets): Why spreadsheets break down.
-- [Template vs a real planner](/blog/wedding-seating-chart-template-vs-planner)
-- [Best free seating chart makers](/blog/best-free-seating-chart-makers): Honest tool roundup.
-- [Free seating chart maker guide](/blog/free-seating-chart-maker-guide): What to look for and what to avoid.
-- [Wedding seating chart apps](/blog/wedding-seating-chart-app): Do you need one?
-- [Drag-and-drop seating charts](/blog/drag-and-drop-seating-charts): Why visual beats spreadsheet.
-- [Reception seating chart guide](/blog/wedding-reception-seating-chart): Guest list to final layout.
-- [Seating chart ideas](/blog/wedding-seating-chart-ideas): 15 ideas by venue style.
+- [Wedding Seater vs AllSeated](/blog/wedding-seater-vs-allseated.html)
+- [Zola's seating chart tool review](/blog/zola-seating-chart-alternative.html): What it does well and when you'll outgrow it.
+- [The Knot's seating chart review](/blog/the-knot-seating-chart-alternative.html): What exists today and the alternatives.
+- [Canva wedding seating chart templates](/blog/canva-wedding-seating-chart.html): Great poster, wrong tool for planning.
+- [Seating chart in Google Sheets](/blog/wedding-seating-chart-google-sheets.html): Why spreadsheets break down.
+- [Template vs a real planner](/blog/wedding-seating-chart-template-vs-planner.html)
+- [Best free seating chart makers](/blog/best-free-seating-chart-makers.html): Honest tool roundup.
+- [Free seating chart maker guide](/blog/free-seating-chart-maker-guide.html): What to look for and what to avoid.
+- [Wedding seating chart apps](/blog/wedding-seating-chart-app.html): Do you need one?
+- [Drag-and-drop seating charts](/blog/drag-and-drop-seating-charts.html): Why visual beats spreadsheet.
+- [Reception seating chart guide](/blog/wedding-reception-seating-chart.html): Guest list to final layout.
+- [Seating chart ideas](/blog/wedding-seating-chart-ideas.html): 15 ideas by venue style.

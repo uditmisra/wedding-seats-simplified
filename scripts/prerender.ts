@@ -2,19 +2,22 @@
  * Build-time prerender for the blog.
  *
  * Problem: as a client-rendered SPA, every URL serves the same empty HTML
- * shell — Google discovers the 37 sitemap URLs, samples a couple, sees
+ * shell — Google discovers the sitemap URLs, samples a couple, sees
  * indistinguishable shells, and reschedules the rest forever ("Discovered –
- * currently not indexed"). Rendering happens in a separate, budgeted queue
- * that young domains rarely win.
+ * currently not indexed").
  *
- * Fix: after `vite build`, emit a real static HTML file per blog route —
- * unique <title>/meta/canonical/JSON-LD plus the full article text inside
- * #root. Crawlers index the static HTML in the first wave; the SPA bundle
- * still loads and takes over for humans (React's createRoot().render simply
- * replaces the static children).
+ * Fix: after `vite build`, emit a real static HTML file per post — unique
+ * <title>/meta/canonical/JSON-LD plus the full article text inside #root.
+ * The SPA bundle still loads and takes over for humans.
  *
- * No headless browser: posts are markdown in the repo, so this renders them
- * with `marked` directly. Runs via `tsx` as part of `npm run build`.
+ * Hosting constraint (verified 2026-06-11): Lovable's CDN serves a static
+ * file ONLY on an exact path match — extensionless URLs and trailing-slash
+ * directories fall through to the SPA shell. So the canonical blog URLs are
+ * the flat `.html` paths (dist/blog/<slug>.html), which match exactly.
+ * Sitemap, llms.txt, and the SPA's canonical tags all agree on `.html`.
+ *
+ * No headless browser: posts are markdown in the repo, rendered with
+ * `marked`. Runs via `tsx` as part of `npm run build`.
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -70,7 +73,7 @@ function jsonLd(schema: object): string {
 }
 
 function postSchemas(post: BlogPost): string {
-  const url = `${SITE_URL}/blog/${post.slug}`;
+  const url = `${SITE_URL}/blog/${post.slug}.html`;
   const article = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
@@ -114,14 +117,14 @@ function postBody(post: BlogPost): string {
         .join("")}</dl></section>`
     : "";
   return [
-    `<header><nav><a href="/">Wedding Seater</a> · <a href="/blog">Blog</a></nav></header>`,
+    `<header><nav><a href="/">Wedding Seater</a> · <a href="/blog.html">Blog</a></nav></header>`,
     `<main><article>`,
     `<p>${esc(post.category)} · ${post.readTime} min read</p>`,
     `<h1>${esc(post.title)}</h1>`,
     `<p><em>${esc(post.excerpt)}</em></p>`,
     marked(post.content) as string,
     faqHtml,
-    `<footer><p><a href="/demo">Try the Wedding Seater demo</a> · <a href="/blog">All guides</a></p></footer>`,
+    `<footer><p><a href="/demo">Try the Wedding Seater demo</a> · <a href="/blog.html">All guides</a></p></footer>`,
     `</article></main>`,
   ].join("\n");
 }
@@ -133,10 +136,11 @@ function renderPage(base: string, head: string, schemas: string, body: string): 
   return html;
 }
 
+/** Write a flat `.html` file — the only shape Lovable's CDN serves exactly. */
 function writeRoute(route: string, html: string): void {
-  const dir = join(DIST, route);
-  mkdirSync(dir, { recursive: true });
-  writeFileSync(join(dir, "index.html"), html);
+  const file = join(DIST, `${route}.html`);
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, html);
 }
 
 // ── Run ─────────────────────────────────────────────────────────────────────
@@ -149,7 +153,7 @@ for (const post of posts) {
   const head = headBlock({
     title: post.metaTitle,
     description: post.metaDescription,
-    canonical: `${SITE_URL}/blog/${post.slug}`,
+    canonical: `${SITE_URL}/blog/${post.slug}.html`,
     ogType: "article",
     publishDate: post.publishDate,
     updatedDate: post.updatedDate,
@@ -161,12 +165,12 @@ for (const post of posts) {
 const indexHead = headBlock({
   title: "Seating Chart Tips & Wedding Advice | Wedding Seater",
   description: "Guides on wedding seating charts: table math, etiquette, divorced parents, escort cards, and tool comparisons — written for stressed couples.",
-  canonical: `${SITE_URL}/blog`,
+  canonical: `${SITE_URL}/blog.html`,
 });
 const indexBody = [
   `<header><nav><a href="/">Wedding Seater</a></nav></header>`,
   `<main><h1>Seating chart guides</h1><ul>`,
-  ...posts.map(p => `<li><a href="/blog/${p.slug}">${esc(p.title)}</a> — ${esc(p.excerpt)}</li>`),
+  ...posts.map(p => `<li><a href="/blog/${p.slug}.html">${esc(p.title)}</a> — ${esc(p.excerpt)}</li>`),
   `</ul></main>`,
 ].join("\n");
 writeRoute("blog", renderPage(base, indexHead, "", indexBody));

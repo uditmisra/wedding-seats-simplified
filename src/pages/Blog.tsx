@@ -20,7 +20,7 @@ export default function Blog() {
   useSeoHead({
     title: "Seating Chart Tips & Wedding Advice | Wedding Seater",
     description: "Free guides on wedding seating charts, seating arrangement tips, and planning advice from the team behind Wedding Seater.",
-    canonical: `${SITE_URL}/blog`,
+    canonical: `${SITE_URL}/blog.html`,
     ogType: "website",
   });
 
@@ -29,7 +29,7 @@ export default function Blog() {
     "@type": "Blog",
     "name": "Wedding Seater Blog",
     "description": "Wedding planning tips, seating chart advice, and free guides for couples.",
-    "url": `${SITE_URL}/blog`,
+    "url": `${SITE_URL}/blog.html`,
     "publisher": {
       "@type": "Organization",
       "name": "Wedding Seater",
@@ -39,7 +39,7 @@ export default function Blog() {
       "@type": "BlogPosting",
       "headline": p.title,
       "description": p.excerpt,
-      "url": `${SITE_URL}/blog/${p.slug}`,
+      "url": `${SITE_URL}/blog/${p.slug}.html`,
       "datePublished": p.publishDate,
       ...(p.updatedDate ? { "dateModified": p.updatedDate } : {}),
     })),
@@ -50,7 +50,7 @@ export default function Blog() {
     "@type": "BreadcrumbList",
     "itemListElement": [
       { "@type": "ListItem", "position": 1, "name": "Home", "item": SITE_URL },
-      { "@type": "ListItem", "position": 2, "name": "Blog", "item": `${SITE_URL}/blog` },
+      { "@type": "ListItem", "position": 2, "name": "Blog", "item": `${SITE_URL}/blog.html` },
     ],
   };
 

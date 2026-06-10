@@ -18,7 +18,7 @@
 
   <!-- Blog index -->
   <url>
-    <loc>https://weddingseater.app/blog</loc>
+    <loc>https://weddingseater.app/blog.html</loc>
     <lastmod>2026-06-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -26,187 +26,187 @@
 
   <!-- Blog posts (sorted by publishDate, newest first) -->
   <url>
-    <loc>https://weddingseater.app/blog/canva-wedding-seating-chart</loc>
+    <loc>https://weddingseater.app/blog/canva-wedding-seating-chart.html</loc>
     <lastmod>2026-06-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://weddingseater.app/blog/the-knot-seating-chart-alternative</loc>
+    <loc>https://weddingseater.app/blog/the-knot-seating-chart-alternative.html</loc>
     <lastmod>2026-06-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://weddingseater.app/blog/zola-seating-chart-alternative</loc>
+    <loc>https://weddingseater.app/blog/zola-seating-chart-alternative.html</loc>
     <lastmod>2026-06-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://weddingseater.app/blog/where-to-seat-single-guests</loc>
+    <loc>https://weddingseater.app/blog/where-to-seat-single-guests.html</loc>
     <lastmod>2026-06-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://weddingseater.app/blog/round-vs-long-wedding-tables</loc>
+    <loc>https://weddingseater.app/blog/round-vs-long-wedding-tables.html</loc>
     <lastmod>2026-06-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://weddingseater.app/blog/seating-chart-100-guests</loc>
+    <loc>https://weddingseater.app/blog/seating-chart-100-guests.html</loc>
     <lastmod>2026-06-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://weddingseater.app/blog/escort-cards-vs-place-cards</loc>
+    <loc>https://weddingseater.app/blog/escort-cards-vs-place-cards.html</loc>
     <lastmod>2026-06-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://weddingseater.app/blog/assigned-seats-vs-assigned-tables</loc>
+    <loc>https://weddingseater.app/blog/assigned-seats-vs-assigned-tables.html</loc>
     <lastmod>2026-06-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://weddingseater.app/blog/awkward-wedding-seating-arrangements</loc>
+    <loc>https://weddingseater.app/blog/awkward-wedding-seating-arrangements.html</loc>
     <lastmod>2026-05-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://weddingseater.app/blog/how-to-display-wedding-seating-chart</loc>
+    <loc>https://weddingseater.app/blog/how-to-display-wedding-seating-chart.html</loc>
     <lastmod>2026-05-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://weddingseater.app/blog/do-you-need-wedding-seating-chart</loc>
+    <loc>https://weddingseater.app/blog/do-you-need-wedding-seating-chart.html</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://weddingseater.app/blog/wedding-seating-chart-checklist</loc>
+    <loc>https://weddingseater.app/blog/wedding-seating-chart-checklist.html</loc>
     <lastmod>2026-04-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://weddingseater.app/blog/when-to-start-wedding-seating-chart</loc>
+    <loc>https://weddingseater.app/blog/when-to-start-wedding-seating-chart.html</loc>
     <lastmod>2026-04-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://weddingseater.app/blog/wedding-seater-vs-allseated</loc>
+    <loc>https://weddingseater.app/blog/wedding-seater-vs-allseated.html</loc>
     <lastmod>2026-04-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://weddingseater.app/blog/head-table-seating-guide</loc>
+    <loc>https://weddingseater.app/blog/head-table-seating-guide.html</loc>
     <lastmod>2026-04-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://weddingseater.app/blog/seating-chart-150-guests</loc>
+    <loc>https://weddingseater.app/blog/seating-chart-150-guests.html</loc>
     <lastmod>2026-04-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://weddingseater.app/blog/collaborate-wedding-seating-chart</loc>
+    <loc>https://weddingseater.app/blog/collaborate-wedding-seating-chart.html</loc>
     <lastmod>2026-04-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://weddingseater.app/blog/wedding-seating-etiquette</loc>
+    <loc>https://weddingseater.app/blog/wedding-seating-etiquette.html</loc>
     <lastmod>2026-04-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://weddingseater.app/blog/how-many-guests-per-table-wedding</loc>
+    <loc>https://weddingseater.app/blog/how-many-guests-per-table-wedding.html</loc>
     <lastmod>2026-04-12</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://weddingseater.app/blog/wedding-table-planner</loc>
+    <loc>https://weddingseater.app/blog/wedding-table-planner.html</loc>
     <lastmod>2026-04-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://weddingseater.app/blog/wedding-seating-chart-google-sheets</loc>
+    <loc>https://weddingseater.app/blog/wedding-seating-chart-google-sheets.html</loc>
     <lastmod>2026-04-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://weddingseater.app/blog/how-to-make-wedding-seating-chart</loc>
+    <loc>https://weddingseater.app/blog/how-to-make-wedding-seating-chart.html</loc>
     <lastmod>2026-04-07</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://weddingseater.app/blog/wedding-reception-seating-chart</loc>
+    <loc>https://weddingseater.app/blog/wedding-reception-seating-chart.html</loc>
     <lastmod>2026-04-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://weddingseater.app/blog/seating-divorced-parents</loc>
+    <loc>https://weddingseater.app/blog/seating-divorced-parents.html</loc>
     <lastmod>2026-04-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://weddingseater.app/blog/wedding-seating-chart-app</loc>
+    <loc>https://weddingseater.app/blog/wedding-seating-chart-app.html</loc>
     <lastmod>2026-03-31</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://weddingseater.app/blog/drag-and-drop-seating-charts</loc>
+    <loc>https://weddingseater.app/blog/drag-and-drop-seating-charts.html</loc>
     <lastmod>2026-03-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://weddingseater.app/blog/complete-guide-wedding-seating-arrangements</loc>
+    <loc>https://weddingseater.app/blog/complete-guide-wedding-seating-arrangements.html</loc>
     <lastmod>2026-03-24</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://weddingseater.app/blog/free-seating-chart-maker-guide</loc>
+    <loc>https://weddingseater.app/blog/free-seating-chart-maker-guide.html</loc>
     <lastmod>2026-03-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://weddingseater.app/blog/wedding-seating-chart-ideas</loc>
+    <loc>https://weddingseater.app/blog/wedding-seating-chart-ideas.html</loc>
     <lastmod>2026-03-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://weddingseater.app/blog/wedding-seating-chart-template-vs-planner</loc>
+    <loc>https://weddingseater.app/blog/wedding-seating-chart-template-vs-planner.html</loc>
     <lastmod>2026-03-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://weddingseater.app/blog/best-free-seating-chart-makers</loc>
+    <loc>https://weddingseater.app/blog/best-free-seating-chart-makers.html</loc>
     <lastmod>2026-03-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>

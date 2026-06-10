@@ -30,7 +30,11 @@ function relatedPosts(current: BlogPostType): BlogPostType[] {
 
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
-  const post = slug ? getPostBySlug(slug) : undefined;
+  // Canonical blog URLs carry .html (the prerendered static files — the only
+  // path shape Lovable's CDN serves exactly). Strip it so hydration over a
+  // static page resolves to the same post instead of bouncing to /blog.
+  const cleanSlug = slug?.replace(/\.html$/, "");
+  const post = cleanSlug ? getPostBySlug(cleanSlug) : undefined;
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const html = useMemo(
@@ -45,7 +49,7 @@ export default function BlogPost() {
       ? {
           title: post.metaTitle,
           description: post.metaDescription,
-          canonical: `${SITE_URL}/blog/${post.slug}`,
+          canonical: `${SITE_URL}/blog/${post.slug}.html`,
           ogType: "article",
           publishDate: post.publishDate,
           updatedDate: post.updatedDate,
@@ -74,7 +78,7 @@ export default function BlogPost() {
     "@type": "BlogPosting",
     "headline": post.title,
     "description": post.metaDescription,
-    "url": `${SITE_URL}/blog/${post.slug}`,
+    "url": `${SITE_URL}/blog/${post.slug}.html`,
     "datePublished": post.publishDate,
     ...(post.updatedDate ? { "dateModified": post.updatedDate } : {}),
     "author": { "@type": "Organization", "name": "Wedding Seater", "url": SITE_URL },
@@ -84,7 +88,7 @@ export default function BlogPost() {
       "url": SITE_URL,
       "logo": { "@type": "ImageObject", "url": `${SITE_URL}/brand/wedding-seater-mark.png` },
     },
-    "mainEntityOfPage": { "@type": "WebPage", "@id": `${SITE_URL}/blog/${post.slug}` },
+    "mainEntityOfPage": { "@type": "WebPage", "@id": `${SITE_URL}/blog/${post.slug}.html` },
     ...(post.heroImage ? { "image": `${SITE_URL}${post.heroImage}` } : {}),
   };
 
@@ -93,8 +97,8 @@ export default function BlogPost() {
     "@type": "BreadcrumbList",
     "itemListElement": [
       { "@type": "ListItem", "position": 1, "name": "Home", "item": SITE_URL },
-      { "@type": "ListItem", "position": 2, "name": "Blog", "item": `${SITE_URL}/blog` },
-      { "@type": "ListItem", "position": 3, "name": post.title, "item": `${SITE_URL}/blog/${post.slug}` },
+      { "@type": "ListItem", "position": 2, "name": "Blog", "item": `${SITE_URL}/blog.html` },
+      { "@type": "ListItem", "position": 3, "name": post.title, "item": `${SITE_URL}/blog/${post.slug}.html` },
     ],
   };
 
