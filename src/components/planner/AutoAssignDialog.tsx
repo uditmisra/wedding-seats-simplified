@@ -8,6 +8,7 @@ import type { Guest, TableDef, Assignment, ConstraintDef } from "@/lib/types";
 import { toast } from "sonner";
 import { AlertTriangle, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
 import { analytics } from "@/lib/analytics";
+import type { AssignmentUndo } from "@/hooks/useAssignmentUndo";
 
 interface Props {
   planId: string;
@@ -20,6 +21,8 @@ interface Props {
   onClose: () => void;
   /** Demo mode — skip Supabase writes; setAssignments is the only persistence. */
   demoMode?: boolean;
+  /** Shared undo stack — auto-assign is the highest-stakes mutation to walk back. */
+  undoApi?: AssignmentUndo;
 }
 
 interface TableRow {
@@ -28,7 +31,7 @@ interface TableRow {
   conflicts: ConstraintDef[];
 }
 
-export function AutoAssignDialog({ planId, scenarioId, guests, tables, assignments, setAssignments, constraints, onClose, demoMode = false }: Props) {
+export function AutoAssignDialog({ planId, scenarioId, guests, tables, assignments, setAssignments, constraints, onClose, demoMode = false, undoApi }: Props) {
   const [includeMaybe, setIncludeMaybe] = useState(false);
   const [keepExisting, setKeepExisting] = useState(true);
   const [preview, setPreview] = useState<Map<string, string> | null>(null);
@@ -75,6 +78,7 @@ export function AutoAssignDialog({ planId, scenarioId, guests, tables, assignmen
   const apply = async () => {
     if (!preview) return;
     setLoading(true);
+    undoApi?.snapshot(assignments);
     const pinnedIds = new Set(assignments.filter(a => a.pinned).map(a => a.guest_id));
     const rows = [...preview.entries()]
       .filter(([gid]) => !pinnedIds.has(gid))
@@ -105,7 +109,12 @@ export function AutoAssignDialog({ planId, scenarioId, guests, tables, assignmen
       }));
     } catch {}
     analytics.autoAssignRun({ guestCount: rows.length });
-    toast.success(`Seated ${rows.length} guests`);
+    toast.success(`Seated ${rows.length} guests`, {
+      // Auto-assign rearranges everything at once — the Undo right here is
+      // what makes it safe to try.
+      action: undoApi ? { label: "Undo", onClick: () => void undoApi.undo() } : undefined,
+      duration: 8000,
+    });
     onClose();
   };
 

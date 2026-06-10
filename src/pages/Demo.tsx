@@ -19,6 +19,7 @@ import { useSeoHead } from "@/lib/useSeoHead";
 import { DemoTabs, type DemoTabDef } from "@/components/planner/demo/DemoTabs";
 import { DemoCoach, resetDemoCoaches } from "@/components/planner/demo/DemoCoach";
 import { analytics } from "@/lib/analytics";
+import { useAssignmentUndo } from "@/hooks/useAssignmentUndo";
 
 const TABS: DemoTabDef[] = [
   { value: "seating", numeral: "I", label: "Seating" },
@@ -46,6 +47,12 @@ export default function Demo() {
   const interactionBaselineRef = useRef(true); // skip the first state sync
   const navigate = useNavigate();
   const { isPaid, loading: unlockLoading } = useUnlock();
+  const undoApi = useAssignmentUndo({
+    scenarioId: DEMO_SCENARIO_ID,
+    setAssignments,
+    refresh: () => {},
+    demoMode: true,
+  });
   const startChart = () => {
     if (unlockLoading) return;
     if (isPaid) { navigate("/dashboard"); return; }
@@ -174,6 +181,7 @@ export default function Demo() {
               demoMode={true}
               roomConfig={roomConfig}
               onAutoAssign={() => setAutoOpen(true)}
+              undoApi={undoApi}
             />
           </>
         )}
@@ -228,6 +236,7 @@ export default function Demo() {
             constraints={constraints}
             demoMode={true}
             onClose={() => setAutoOpen(false)}
+            undoApi={undoApi}
           />
         )}
       </main>

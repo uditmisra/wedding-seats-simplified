@@ -16,6 +16,7 @@ import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { useBelowLg } from "@/hooks/use-mobile";
 import { guestColor } from "@/lib/guestColor";
 import type { RoomConfig } from "@/lib/roomConfig";
+import type { AssignmentUndo } from "@/hooks/useAssignmentUndo";
 
 interface Props {
   planId: string;
@@ -37,6 +38,8 @@ interface Props {
   /** Demo mode — skip Supabase writes; rely on setAssignments + setTables for state. */
   demoMode?: boolean;
   setTables?: React.Dispatch<React.SetStateAction<TableDef[]>>;
+  /** Shared undo stack (lives in the page so auto-assign shares it). */
+  undoApi?: AssignmentUndo;
 }
 
 // Snap DragOverlay to cursor center so the card's grab-offset doesn't shift
@@ -97,7 +100,7 @@ function firstFreeSeat(table: TableDef, seated: Assignment[], excludeId?: string
   return null;
 }
 
-export function SeatingView({ planId, scenarioId, guests, tables, assignments, setAssignments, constraints, refresh, onGoToGuests, onGoToTables, canEdit = true, onActivityLog, roomConfig, onAutoAssign, onSavedRoom, demoMode = false, setTables }: Props) {
+export function SeatingView({ planId, scenarioId, guests, tables, assignments, setAssignments, constraints, refresh, onGoToGuests, onGoToTables, canEdit = true, onActivityLog, roomConfig, onAutoAssign, onSavedRoom, demoMode = false, setTables, undoApi }: Props) {
   const [search, setSearch] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [view, setView] = useState<"list" | "floor" | "grouped">("floor");
@@ -152,6 +155,23 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scenarioId, canEdit]);
 
+  // Cmd+Z / Ctrl+Z walks back the last seating change — drags, swaps,
+  // unseats, auto-assign. The undo toast is the discoverable affordance;
+  // this is for the couple who lives on the keyboard at 11pm.
+  useEffect(() => {
+    if (!canEdit || !undoApi) return;
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === "z") {
+        const t = e.target as HTMLElement | null;
+        if (t?.closest("input,textarea,select,[contenteditable]")) return;
+        e.preventDefault();
+        void undoApi.undo();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [canEdit, undoApi]);
+
   const unassigned = useMemo(() => {
     const q = search.toLowerCase();
     return guests
@@ -178,6 +198,32 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
     const occupant = targetIdx != null
       ? tableSeated.find(a => a.seat_index === targetIdx && a.guest_id !== guestId)
       : undefined;
+
+    undoApi?.snapshot(assignments);
+
+    // Warn the moment a hand-placed guest violates a keep-apart rule — not at
+    // 11pm during final review. Predicted state: the guest lands at this
+    // table; any displaced occupant leaves it. (A swap can also create a
+    // conflict back at the occupant's new table — rarer; the rules tab and
+    // table outlines still catch that one.)
+    const predicted: Assignment[] = assignments
+      .filter(a => a.guest_id !== guestId && (!occupant || a.id !== occupant.id))
+      .concat([{
+        id: "predict", plan_id: planId, scenario_id: scenarioId, guest_id: guestId,
+        table_id: tableId, seat_index: targetIdx ?? null, pinned: existing?.pinned ?? false,
+      }]);
+    const newConflicts = tableConflicts(tableId, predicted, constraints)
+      .filter(c => c.guest_a === guestId || c.guest_b === guestId);
+    if (newConflicts.length) {
+      const c = newConflicts[0];
+      const moved = guestById.get(guestId);
+      const other = guestById.get(c.guest_a === guestId ? c.guest_b : c.guest_a);
+      if (moved && other) {
+        toast.warning(`${moved.name} and ${other.name} are meant to stay apart — they're both at ${tbl.name} now.`, {
+          action: undoApi ? { label: "Undo", onClick: () => void undoApi.undo() } : undefined,
+        });
+      }
+    }
 
     // ── Optimistic update — instant UI ────────────────────────
     setAssignments(prev => {
@@ -226,6 +272,7 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
     const overId = e.over?.id ? String(e.over.id) : null;
     if (!overId) return;
     if (overId === "__unassign__") {
+      undoApi?.snapshot(assignments);
       setAssignments(prev => prev.filter(a => a.guest_id !== guestId));
       if (!demoMode) {
         await supabase.from("assignments").delete().eq("guest_id", guestId).eq("scenario_id", scenarioId);
@@ -241,6 +288,7 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
 
   const handleUnassign = async (a: Assignment) => {
     if (!canEdit) return;
+    undoApi?.snapshot(assignments);
     if (demoMode) {
       setAssignments(prev => prev.filter(x => x.id !== a.id));
       return;
@@ -262,6 +310,20 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
     const tbl = tableById.get(targetTableId); if (!tbl) return;
     const seated = assignments.filter(x => x.table_id === targetTableId);
     const idx = firstFreeSeat(tbl, seated);
+    undoApi?.snapshot(assignments);
+    const predicted = assignments.map(x => x.id === a.id ? { ...x, table_id: targetTableId, seat_index: idx ?? null } : x);
+    const newConflicts = tableConflicts(targetTableId, predicted, constraints)
+      .filter(c => c.guest_a === a.guest_id || c.guest_b === a.guest_id);
+    if (newConflicts.length) {
+      const c = newConflicts[0];
+      const moved = guestById.get(a.guest_id);
+      const other = guestById.get(c.guest_a === a.guest_id ? c.guest_b : c.guest_a);
+      if (moved && other) {
+        toast.warning(`${moved.name} and ${other.name} are meant to stay apart — they're both at ${tbl.name} now.`, {
+          action: undoApi ? { label: "Undo", onClick: () => void undoApi.undo() } : undefined,
+        });
+      }
+    }
     if (demoMode) {
       setAssignments(prev => prev.map(x => x.id === a.id ? { ...x, table_id: targetTableId, seat_index: idx } : x));
       return;
@@ -271,6 +333,7 @@ export function SeatingView({ planId, scenarioId, guests, tables, assignments, s
   };
   const handleSwap = async (a: Assignment, b: Assignment) => {
     if (!canEdit) return;
+    undoApi?.snapshot(assignments);
     if (demoMode) {
       setAssignments(prev => prev.map(x => {
         if (x.id === a.id) return { ...x, table_id: b.table_id, seat_index: b.seat_index };

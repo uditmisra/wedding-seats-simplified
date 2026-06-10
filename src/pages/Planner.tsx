@@ -22,6 +22,8 @@ import { Logo } from "@/components/Logo";
 import { analytics } from "@/lib/analytics";
 import { Link as LinkIcon, Check, GitCompareArrows, ShieldAlert, Download, Mail, Bookmark, MoreHorizontal, Pencil, Eye, Sparkles, Clock } from "lucide-react";
 import { ClaimPlanModal } from "@/components/ClaimPlanModal";
+import { SavedIndicator } from "@/components/planner/SavedIndicator";
+import { useAssignmentUndo } from "@/hooks/useAssignmentUndo";
 import { SignInNudge } from "@/components/SignInNudge";
 import { ActivityDrawer } from "@/components/planner/ActivityDrawer";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -44,8 +46,9 @@ const TAB_DEFS = [
 const Planner = () => {
   const { code } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { plan, setPlan, scenarios, scenarioId, setScenarioId, guests, tables, assignments, setAssignments, constraints, loading, notFound, refresh } = usePlanData(code);
+  const { plan, setPlan, scenarios, scenarioId, setScenarioId, guests, tables, assignments, setAssignments, constraints, loading, notFound, refresh, lastSyncedAt } = usePlanData(code);
   const { user } = useAuth();
+  const undoApi = useAssignmentUndo({ scenarioId, setAssignments, refresh });
 
   useSeoHead({
     title: plan ? `${plan.name} | Wedding Seater` : "Wedding Seater",
@@ -249,7 +252,7 @@ const Planner = () => {
           </div>
           <TooltipProvider delayDuration={200}>
             <div className="flex items-center gap-2">
-              <span className="hidden font-mono text-[11px] text-ink-2 sm:inline">Saved · just now</span>
+              <SavedIndicator lastSyncedAt={lastSyncedAt} />
               <SharePopover
                 planName={plan.name}
                 planUrl={typeof window !== "undefined" ? window.location.href : ""}
@@ -415,6 +418,7 @@ const Planner = () => {
               roomConfig={plan.room_config}
               onAutoAssign={() => setAutoOpen(true)}
               onSavedRoom={(cfg) => plan && setPlan({ ...plan, room_config: cfg })}
+              undoApi={undoApi}
             />
           </TabsContent>
           <TabsContent value="guests" className="mt-6 animate-tab-in">
@@ -456,6 +460,7 @@ const Planner = () => {
           setAssignments={setAssignments}
           constraints={constraints}
           onClose={() => { setAutoOpen(false); refresh(); }}
+          undoApi={undoApi}
         />
       )}
 
