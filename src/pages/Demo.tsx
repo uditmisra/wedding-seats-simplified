@@ -31,7 +31,7 @@ export default function Demo() {
     title: "Try Wedding Seater — Drag, design, auto-seat (live demo)",
     description: "Play with a real wedding seating chart. Drag guests, design the room, add rules, run auto-seat — no account, no signup. Emma & James, 120 guests.",
     canonical: `${SITE_URL}/demo`,
-    ogImage: `${SITE_URL}/brand/wedding-seater-mark.png`,
+    ogImage: `${SITE_URL}/og/og-image.jpg`,
   });
   const initial = useMemo(() => loadDemoState(), []);
   const [guests, setGuests] = useState(initial.guests);

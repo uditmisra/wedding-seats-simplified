@@ -27,9 +27,15 @@ import { post as post25 } from "./escort-cards-vs-place-cards";
 import { post as post26 } from "./seating-chart-100-guests";
 import { post as post27 } from "./round-vs-long-wedding-tables";
 import { post as post28 } from "./where-to-seat-single-guests";
+import { post as post29 } from "./zola-seating-chart-alternative";
+import { post as post30 } from "./the-knot-seating-chart-alternative";
+import { post as post31 } from "./canva-wedding-seating-chart";
 
 // Most-recent first
 const posts: BlogPost[] = [
+  post31,
+  post30,
+  post29,
   post28,
   post27,
   post26,
