@@ -298,7 +298,7 @@ export function FloorPlanPDF({
         <span>
           {totalGuests} GUESTS · {totalTables} TABLES
         </span>
-        <span>SEATLY.APP / {planCode.toUpperCase()}</span>
+        <span>WEDDINGSEATER.APP / {planCode.toUpperCase()}</span>
       </div>
     </PaperSheet>
   );

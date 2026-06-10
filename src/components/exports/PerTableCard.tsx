@@ -220,6 +220,23 @@ export function PerTableCard({
         {coupleName.toUpperCase()}
         {numericDate && <>&nbsp;&nbsp;·&nbsp;&nbsp;{numericDate}</>}
       </div>
+      {/* Maker's mark — every guest reads this card to find their seat, so the
+          quiet credit line is the product's single biggest organic surface. */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 18,
+          left: 0,
+          right: 0,
+          textAlign: "center",
+          fontFamily: '"Geist Mono", monospace',
+          fontSize: 5.5,
+          color: "hsl(var(--ink-4))",
+          letterSpacing: "0.28em",
+        }}
+      >
+        WEDDINGSEATER.APP
+      </div>
     </PaperSheet>
   );
 }

@@ -221,11 +221,11 @@ export function AlphabeticalIndex({
           letterSpacing: "0.25em",
         }}
       >
-        <span>SEATLY · {coupleName.toUpperCase()}</span>
+        <span>WEDDING SEATER · {coupleName.toUpperCase()}</span>
         <span>
           PG {String(pageIndex).padStart(2, "0")} / {String(pageCount).padStart(2, "0")}
         </span>
-        <span>SEATLY.APP / {planCode.toUpperCase()}</span>
+        <span>WEDDINGSEATER.APP / {planCode.toUpperCase()}</span>
       </div>
     </PaperSheet>
   );

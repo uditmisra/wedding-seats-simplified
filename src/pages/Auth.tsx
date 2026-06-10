@@ -286,7 +286,7 @@ function LinkSentPage({
                 className="label-mono"
                 style={{ marginBottom: 8, fontSize: 8 }}
               >
-                FROM SEATLY · TO YOU
+                FROM WEDDING SEATER · TO YOU
               </div>
               <div className="font-display text-[22px] leading-[1.15]">
                 Your sign-in <span className="font-display-italic">link</span>
