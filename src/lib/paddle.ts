@@ -30,7 +30,18 @@ export async function initializePaddle() {
     const onReady = () => {
       const env = getPaddleEnvironment() === "sandbox" ? "sandbox" : "production";
       window.Paddle.Environment.set(env);
-      window.Paddle.Initialize({ token: clientToken });
+      window.Paddle.Initialize({
+        token: clientToken,
+        // Re-broadcast checkout lifecycle as a DOM event so UI (UpgradeModal)
+        // can react to the overlay closing without importing Paddle.
+        eventCallback: (event: { name?: string }) => {
+          if (event?.name === "checkout.completed") {
+            window.dispatchEvent(new CustomEvent("paddle:checkout-completed"));
+          } else if (event?.name === "checkout.closed") {
+            window.dispatchEvent(new CustomEvent("paddle:checkout-closed"));
+          }
+        },
+      });
       paddleInitialized = true;
       resolve();
     };

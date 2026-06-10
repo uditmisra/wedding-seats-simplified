@@ -70,6 +70,8 @@ export async function captureElement(
 interface RenderToPdfOptions extends RenderOptions {
   filename: string;
   paper: PaperSize;
+  /** Called before each page renders — drive a "Page 3 of 40" indicator. */
+  onProgress?: (done: number, total: number) => void;
 }
 
 /**
@@ -98,7 +100,7 @@ export async function renderPagesToPdf(
   elements: ReactElement[],
   opts: RenderToPdfOptions,
 ): Promise<void> {
-  const { filename, paper, scale = 2, background } = opts;
+  const { filename, paper, scale = 2, background, onProgress } = opts;
   if (elements.length === 0) return;
 
   const doc = new jsPDF({
@@ -108,6 +110,11 @@ export async function renderPagesToPdf(
   });
 
   for (let i = 0; i < elements.length; i++) {
+    onProgress?.(i + 1, elements.length);
+    // html2canvas needs the live DOM, so this can't move off the main thread —
+    // but yielding between pages lets the progress label paint instead of the
+    // tab freezing solid for a 100-card run.
+    await new Promise<void>(r => setTimeout(r, 0));
     if (i > 0) doc.addPage(paper.format as "a4", paper.orientation);
     const canvas = await captureElement(elements[i], paper.px.w, paper.px.h, { scale, background });
     doc.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, paper.mm.w, paper.mm.h);

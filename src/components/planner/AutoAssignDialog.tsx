@@ -109,11 +109,27 @@ export function AutoAssignDialog({ planId, scenarioId, guests, tables, assignmen
       }));
     } catch {}
     analytics.autoAssignRun({ guestCount: rows.length });
-    toast.success(`Seated ${rows.length} guests`, {
+
+    // Say who didn't fit, not just how many seated — "78 seated" with 4
+    // missing reads as success until the couple counts chairs at midnight.
+    const eligible = guests.filter(g => g.rsvp === "attending" || (includeMaybe && g.rsvp === "maybe"));
+    const placedIds = new Set([
+      ...preview.keys(),
+      ...(keepExisting ? assignments.filter(a => a.pinned).map(a => a.guest_id) : []),
+    ]);
+    const unseated = eligible.filter(g => !placedIds.has(g.id));
+    const unseatedNote = unseated.length === 0
+      ? undefined
+      : unseated.length <= 3
+        ? `Couldn't fit ${unseated.map(g => g.name).join(", ")} — add seats or another table.`
+        : `${unseated.length} guests couldn't fit (${unseated.slice(0, 2).map(g => g.name).join(", ")}…) — add seats or another table.`;
+
+    toast.success(`Seated ${rows.length + (keepExisting ? pinnedIds.size : 0)} guests`, {
+      description: unseatedNote,
       // Auto-assign rearranges everything at once — the Undo right here is
       // what makes it safe to try.
       action: undoApi ? { label: "Undo", onClick: () => void undoApi.undo() } : undefined,
-      duration: 8000,
+      duration: unseatedNote ? 10000 : 8000,
     });
     onClose();
   };

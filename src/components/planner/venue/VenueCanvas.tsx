@@ -279,6 +279,14 @@ export function VenueCanvas({ planId, tables, assignments, roomConfig, canEdit, 
   };
   const setTableCapacity = async (id: string, capacity: number) => {
     const cap = Math.max(1, Math.min(30, capacity));
+    // Shrinking below current occupancy doesn't unseat anyone — but it
+    // shouldn't happen silently either. The table outline goes butter and
+    // the list view shows the overflow; this toast points there.
+    const seated = seatedByTable.get(id) ?? 0;
+    if (cap < seated) {
+      const tbl = tables.find(t => t.id === id);
+      toast.warning(`${tbl?.name ?? "That table"} now seats ${cap}, but ${seated} are seated there. Everyone keeps their seat — move ${seated - cap} when you're ready.`);
+    }
     if (demoMode) {
       setTables?.(prev => prev.map(t => t.id === id ? { ...t, capacity: cap } : t));
       return;

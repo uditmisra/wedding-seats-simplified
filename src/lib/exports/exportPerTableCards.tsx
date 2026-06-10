@@ -11,10 +11,11 @@ interface Args {
   assignments: Assignment[];
   paper: PaperColor;
   cutMarks: boolean;
+  onProgress?: (done: number, total: number) => void;
 }
 
 export async function exportPerTableCards({
-  plan, tables, guests, assignments, paper, cutMarks,
+  plan, tables, guests, assignments, paper, cutMarks, onProgress,
 }: Args) {
   if (tables.length === 0) return;
   const guestById = new Map(guests.map(g => [g.id, g]));
@@ -55,5 +56,6 @@ export async function exportPerTableCards({
   await renderPagesToPdf(pageElements, {
     filename: `${plan.name} — Table cards.pdf`,
     paper: PER_TABLE_CARD,
+    onProgress,
   });
 }

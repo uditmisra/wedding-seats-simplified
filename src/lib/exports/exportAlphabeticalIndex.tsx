@@ -16,6 +16,7 @@ interface Args {
   assignments: Assignment[];
   paper: PaperColor;
   cutMarks: boolean;
+  onProgress?: (done: number, total: number) => void;
 }
 
 function lastFirst(name: string): string {
@@ -27,7 +28,7 @@ function lastFirst(name: string): string {
 }
 
 export async function exportAlphabeticalIndex({
-  plan, tables, guests, assignments, paper, cutMarks,
+  plan, tables, guests, assignments, paper, cutMarks, onProgress,
 }: Args) {
   const tableNumByTableId = new Map(tables.map((t, i) => [t.id, i + 1]));
   const guestById = new Map(guests.map(g => [g.id, g]));
@@ -71,5 +72,6 @@ export async function exportAlphabeticalIndex({
   await renderPagesToPdf(pageElements, {
     filename: `${plan.name} — Alphabetical index.pdf`,
     paper: ALPHABETICAL_INDEX,
+    onProgress,
   });
 }

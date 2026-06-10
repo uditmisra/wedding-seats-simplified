@@ -165,6 +165,7 @@ export function MobileVenueList({ planId, scenarioId, tables, assignments, roomC
         <TableEditor planId={planId} scenarioId={scenarioId}
           table={editing === "new" ? null : editing} count={tables.length}
           existingNames={tables.map(t => t.name)}
+          seated={editing === "new" ? 0 : (seatedByTable.get(editing.id) ?? 0)}
           demoMode={demoMode}
           setTables={setTables}
           onClose={() => { setEditing(null); refresh(); }} />
@@ -173,8 +174,9 @@ export function MobileVenueList({ planId, scenarioId, tables, assignments, roomC
   );
 }
 
-function TableEditor({ planId, scenarioId, table, count, existingNames, demoMode, setTables, onClose }: {
+function TableEditor({ planId, scenarioId, table, count, existingNames, seated = 0, demoMode, setTables, onClose }: {
   planId: string; scenarioId: string; table: TableDef | null; count: number; existingNames: string[];
+  seated?: number;
   demoMode?: boolean; setTables?: React.Dispatch<React.SetStateAction<TableDef[]>>; onClose: () => void;
 }) {
   const [name, setName] = useState(
@@ -187,6 +189,10 @@ function TableEditor({ planId, scenarioId, table, count, existingNames, demoMode
     const others = existingNames.filter(n => !table || n !== table.name);
     const clash = others.some(n => n.trim().toLowerCase() === name.trim().toLowerCase());
     if (clash) { toast.error("A table with that name already exists."); return; }
+    // Shrinking below occupancy never unseats anyone — but say so out loud.
+    if (table && capacity < seated) {
+      toast.warning(`${name} now seats ${capacity}, but ${seated} are seated there. Everyone keeps their seat — move ${seated - capacity} when you're ready.`);
+    }
     if (demoMode) {
       if (table) {
         setTables?.(prev => prev.map(t => t.id === table.id ? { ...t, name, capacity, shape } : t));

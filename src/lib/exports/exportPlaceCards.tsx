@@ -11,11 +11,12 @@ interface Args {
   assignments: Assignment[];
   paper: PaperColor;
   cutMarks: boolean;
+  onProgress?: (done: number, total: number) => void;
   showMeal: boolean;
 }
 
 export async function exportPlaceCards({
-  plan, tables, guests, assignments, paper, cutMarks, showMeal,
+  plan, tables, guests, assignments, paper, cutMarks, showMeal, onProgress,
 }: Args) {
   if (assignments.length === 0) return;
   const guestById = new Map(guests.map(g => [g.id, g]));
@@ -49,5 +50,6 @@ export async function exportPlaceCards({
   await renderPagesToPdf(pageElements, {
     filename: `${plan.name} — Place cards.pdf`,
     paper: PLACE_CARD,
+    onProgress,
   });
 }

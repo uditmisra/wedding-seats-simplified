@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,25 @@ export function UpgradeModal({ open, onOpenChange, headline, subhead, hideDemoEs
   const isTest = getPaddleEnvironment() === "sandbox";
   // Hide the demo escape if explicitly disabled OR we're already on /demo.
   const showDemoEscape = !hideDemoEscape && location.pathname !== "/demo";
+
+  // Closing the Paddle overlay without paying drops the user back on this
+  // modal with no feedback. A quiet "no charge" line answers the question
+  // they're silently asking. checkout.closed also fires after a SUCCESSFUL
+  // payment (just before the redirect), so completion suppresses it.
+  const [checkoutState, setCheckoutState] = useState<"idle" | "dismissed" | "completed">("idle");
+  useEffect(() => {
+    if (open) setCheckoutState("idle");
+  }, [open]);
+  useEffect(() => {
+    const onCompleted = () => setCheckoutState("completed");
+    const onClosed = () => setCheckoutState(s => (s === "completed" ? s : "dismissed"));
+    window.addEventListener("paddle:checkout-completed", onCompleted);
+    window.addEventListener("paddle:checkout-closed", onClosed);
+    return () => {
+      window.removeEventListener("paddle:checkout-completed", onCompleted);
+      window.removeEventListener("paddle:checkout-closed", onClosed);
+    };
+  }, []);
 
   const start = async () => {
     // Carry the user's current location through the payment flow so they land
@@ -84,6 +103,17 @@ export function UpgradeModal({ open, onOpenChange, headline, subhead, hideDemoEs
               {loading ? <Loader2 className="animate-spin" /> : <>Unlock for £10 →</>}
             </Button>
           </div>
+
+          {checkoutState === "dismissed" && (
+            <p className="mt-4 text-center font-display-italic text-[13px] text-ink-3">
+              Checkout closed — nothing was charged. Whenever you&apos;re ready.
+            </p>
+          )}
+          {checkoutState === "completed" && (
+            <p className="mt-4 text-center font-display-italic text-[13px] text-olive">
+              Payment received — taking you back to your chart…
+            </p>
+          )}
 
           {isTest && (
             <p className="mt-4 text-center font-mono text-[10px] uppercase tracking-[0.18em] text-ink-3">

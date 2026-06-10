@@ -56,6 +56,7 @@ export function ExportPanel({ plan, guests, tables, assignments }: Props) {
   const [cutMarks, setCutMarks] = useState(true);
   const [greyscale, setGreyscale] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [pageProgress, setPageProgress] = useState<{ done: number; total: number } | null>(null);
 
   const attending = guests.filter(g => g.rsvp === "attending" || g.rsvp === "maybe").length;
   const seated = assignments.length;
@@ -201,27 +202,31 @@ export function ExportPanel({ plan, guests, tables, assignments }: Props) {
       return;
     }
     setBusy(true);
+    const onProgress = (done: number, total: number) =>
+      setPageProgress(total > 1 ? { done, total } : null);
     try {
       switch (format) {
         case "floor":
           await exportFloorPlan({ plan, tables, guests, assignments, paper, cutMarks });
           break;
         case "alpha":
-          await exportAlphabeticalIndex({ plan, tables, guests, assignments, paper, cutMarks });
+          await exportAlphabeticalIndex({ plan, tables, guests, assignments, paper, cutMarks, onProgress });
           break;
         case "table":
-          await exportPerTableCards({ plan, tables, guests, assignments, paper, cutMarks });
+          await exportPerTableCards({ plan, tables, guests, assignments, paper, cutMarks, onProgress });
           break;
         case "place":
-          await exportPlaceCards({ plan, tables, guests, assignments, paper, cutMarks, showMeal });
+          await exportPlaceCards({ plan, tables, guests, assignments, paper, cutMarks, showMeal, onProgress });
           break;
       }
       analytics.exportDownloaded({ format });
+      toast.success("PDF saved to your downloads.");
     } catch (e) {
       console.error(e);
       toast.error((e as Error)?.message ?? "Couldn't generate the PDF");
     } finally {
       setBusy(false);
+      setPageProgress(null);
     }
   };
 
@@ -358,7 +363,9 @@ export function ExportPanel({ plan, guests, tables, assignments }: Props) {
                 {busy ? (
                   <>
                     <Loader2 size={14} className="mr-1.5 animate-spin" />
-                    Rendering…
+                    {pageProgress
+                      ? <span className="tabular-nums">Page {pageProgress.done} of {pageProgress.total}…</span>
+                      : "Rendering…"}
                   </>
                 ) : !isPaid ? (
                   <>
