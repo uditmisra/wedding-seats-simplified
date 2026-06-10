@@ -19,12 +19,42 @@
   <!-- Blog index -->
   <url>
     <loc>https://weddingseater.app/blog</loc>
-    <lastmod>2026-05-08</lastmod>
+    <lastmod>2026-06-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <!-- Blog posts (sorted by publishDate, newest first) -->
+  <url>
+    <loc>https://weddingseater.app/blog/where-to-seat-single-guests</loc>
+    <lastmod>2026-06-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://weddingseater.app/blog/round-vs-long-wedding-tables</loc>
+    <lastmod>2026-06-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://weddingseater.app/blog/seating-chart-100-guests</loc>
+    <lastmod>2026-06-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://weddingseater.app/blog/escort-cards-vs-place-cards</loc>
+    <lastmod>2026-06-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://weddingseater.app/blog/assigned-seats-vs-assigned-tables</loc>
+    <lastmod>2026-06-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
   <url>
     <loc>https://weddingseater.app/blog/awkward-wedding-seating-arrangements</loc>
     <lastmod>2026-05-06</lastmod>

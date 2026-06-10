@@ -22,9 +22,19 @@ import { post as post20 } from "./wedding-seating-chart-checklist";
 import { post as post21 } from "./do-you-need-wedding-seating-chart";
 import { post as post22 } from "./how-to-display-wedding-seating-chart";
 import { post as post23 } from "./awkward-wedding-seating-arrangements";
+import { post as post24 } from "./assigned-seats-vs-assigned-tables";
+import { post as post25 } from "./escort-cards-vs-place-cards";
+import { post as post26 } from "./seating-chart-100-guests";
+import { post as post27 } from "./round-vs-long-wedding-tables";
+import { post as post28 } from "./where-to-seat-single-guests";
 
 // Most-recent first
 const posts: BlogPost[] = [
+  post28,
+  post27,
+  post26,
+  post25,
+  post24,
   post23,
   post22,
   post21,

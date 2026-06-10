@@ -5,12 +5,28 @@ import { Logo } from "@/components/Logo";
 import { UserMenu } from "@/components/UserMenu";
 import { JsonLd } from "@/components/JsonLd";
 import { useSeoHead } from "@/lib/useSeoHead";
-import { getPostBySlug } from "@/lib/blog/registry";
+import { getPostBySlug, getAllPosts } from "@/lib/blog/registry";
 import { SITE_URL } from "@/lib/siteUrl";
 import { ChevronDown } from "lucide-react";
+import type { BlogPost as BlogPostType } from "@/lib/blog/types";
 
 // Configure marked once
 marked.setOptions({ gfm: true, breaks: false });
+
+/** Pick the 3 most related posts: same category first, then tag overlap. */
+function relatedPosts(current: BlogPostType): BlogPostType[] {
+  const tags = new Set(current.tags ?? []);
+  return getAllPosts()
+    .filter(p => p.slug !== current.slug)
+    .map(p => {
+      const tagOverlap = (p.tags ?? []).filter(t => tags.has(t)).length;
+      const score = (p.category === current.category ? 2 : 0) + tagOverlap * 3;
+      return { p, score };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+    .map(({ p }) => p);
+}
 
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
@@ -21,6 +37,8 @@ export default function BlogPost() {
     () => (post ? (marked(post.content) as string) : ""),
     [post],
   );
+
+  const related = useMemo(() => (post ? relatedPosts(post) : []), [post]);
 
   useSeoHead(
     post
@@ -64,7 +82,7 @@ export default function BlogPost() {
       "@type": "Organization",
       "name": "Wedding Seater",
       "url": SITE_URL,
-      "logo": { "@type": "ImageObject", "url": `${SITE_URL}/og-image.png` },
+      "logo": { "@type": "ImageObject", "url": `${SITE_URL}/brand/wedding-seater-mark.png` },
     },
     "mainEntityOfPage": { "@type": "WebPage", "@id": `${SITE_URL}/blog/${post.slug}` },
     ...(post.heroImage ? { "image": `${SITE_URL}${post.heroImage}` } : {}),
@@ -232,6 +250,35 @@ export default function BlogPost() {
               </Link>
             </div>
           </aside>
+
+          {/* Related posts — internal links keep readers (and crawlers)
+              inside the topic cluster. */}
+          {related.length > 0 && (
+            <section aria-labelledby="related-heading" className="mt-16 border-t hairline pt-12">
+              <h2 id="related-heading" className="m-0 mb-7 font-display text-[24px] leading-[1.15]">
+                Keep <span className="font-display-italic">reading</span>
+              </h2>
+              <div className="grid gap-4 sm:grid-cols-3">
+                {related.map(r => (
+                  <Link
+                    key={r.slug}
+                    to={`/blog/${r.slug}`}
+                    className="group rounded-xl border hairline bg-paper p-5 transition hover:bg-paper-2/60"
+                  >
+                    <div className="mb-3 font-mono text-[9px] uppercase tracking-[0.14em] text-terracotta">
+                      {r.category}
+                    </div>
+                    <div className="font-display text-[17px] leading-[1.25] group-hover:text-terracotta transition-colors">
+                      {r.title}
+                    </div>
+                    <div className="mt-3 font-mono text-[9px] uppercase tracking-[0.12em] text-ink-4">
+                      {r.readTime} min read
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Post footer */}
           <footer className="mt-16 border-t hairline pt-10">
