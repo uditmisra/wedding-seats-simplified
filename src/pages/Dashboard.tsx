@@ -14,6 +14,7 @@ import { UserMenu } from "@/components/UserMenu";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { useUnlock } from "@/hooks/useUnlock";
 import { useSeoHead } from "@/lib/useSeoHead";
+import { analytics } from "@/lib/analytics";
 
 interface DashboardPlan {
   id: string;
@@ -97,6 +98,7 @@ const Dashboard = () => {
   const createPlan = async () => {
     if (!user) return;
     if (!isPaid) {
+      analytics.paywallShown({ source: "dashboard_create" });
       setUpgradeOpen(true);
       return;
     }

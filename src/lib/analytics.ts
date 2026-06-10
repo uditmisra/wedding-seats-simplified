@@ -39,4 +39,10 @@ export const analytics = {
   // Exports
   exportOpened:     ()                                     => posthog.capture("export_opened"),
   exportDownloaded: (p: { format: string })                => posthog.capture("export_downloaded",  p),
+
+  // Revenue funnel — paywall impression → checkout → completion. `source`
+  // tells us which gate converts (export button, dashboard, demo, etc.).
+  paywallShown:     (p: { source: string })                => posthog.capture("paywall_shown",      p),
+  checkoutOpened:   (p: { source: string })                => posthog.capture("checkout_opened",    p),
+  paymentCompleted: ()                                     => posthog.capture("payment_completed"),
 };

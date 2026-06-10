@@ -18,6 +18,7 @@ import { SITE_URL } from "@/lib/siteUrl";
 import { useSeoHead } from "@/lib/useSeoHead";
 import { DemoTabs, type DemoTabDef } from "@/components/planner/demo/DemoTabs";
 import { DemoCoach, resetDemoCoaches } from "@/components/planner/demo/DemoCoach";
+import { analytics } from "@/lib/analytics";
 
 const TABS: DemoTabDef[] = [
   { value: "seating", numeral: "I", label: "Seating" },
@@ -47,7 +48,9 @@ export default function Demo() {
   const { isPaid, loading: unlockLoading } = useUnlock();
   const startChart = () => {
     if (unlockLoading) return;
-    isPaid ? navigate("/dashboard") : setUpgradeOpen(true);
+    if (isPaid) { navigate("/dashboard"); return; }
+    analytics.paywallShown({ source: "demo" });
+    setUpgradeOpen(true);
   };
 
   // Persist state across refreshes within the session

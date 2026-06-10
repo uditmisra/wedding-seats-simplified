@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUnlock } from "@/hooks/useUnlock";
 import { useSeoHead } from "@/lib/useSeoHead";
+import { analytics } from "@/lib/analytics";
 import { Sparkles, Loader2 } from "lucide-react";
 
 /**
@@ -52,6 +53,7 @@ export default function PostPay() {
     // Case 1: signed in + paid → go.
     if (user && isPaid) {
       handled.current = true;
+      analytics.paymentCompleted();
       navigate("/dashboard?unlock=success", { replace: true });
       return;
     }

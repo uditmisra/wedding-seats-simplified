@@ -16,6 +16,7 @@ import { exportCsv } from "@/lib/exports/csv";
 import { toast } from "sonner";
 import { useUnlock } from "@/hooks/useUnlock";
 import { UpgradeModal } from "@/components/UpgradeModal";
+import { analytics } from "@/lib/analytics";
 
 interface Props {
   plan: Plan;
@@ -190,7 +191,11 @@ export function ExportPanel({ plan, guests, tables, assignments }: Props) {
 
   // ── Download handlers ──────────────────────────────────────────
   const handleDownload = async () => {
-    if (!isPaid) { setUpgradeOpen(true); return; }
+    if (!isPaid) {
+      analytics.paywallShown({ source: "export_download" });
+      setUpgradeOpen(true);
+      return;
+    }
     setBusy(true);
     try {
       switch (format) {
@@ -207,6 +212,7 @@ export function ExportPanel({ plan, guests, tables, assignments }: Props) {
           await exportPlaceCards({ plan, tables, guests, assignments, paper, cutMarks, showMeal });
           break;
       }
+      analytics.exportDownloaded({ format });
     } catch (e) {
       console.error(e);
       toast.error((e as Error)?.message ?? "Couldn't generate the PDF");

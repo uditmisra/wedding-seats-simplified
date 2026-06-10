@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { initializePaddle, getPaddlePriceId } from "@/lib/paddle";
 import { useAuth } from "@/hooks/useAuth";
+import { analytics } from "@/lib/analytics";
 
 /**
  * Opens Paddle Checkout for the £10 lifetime unlock. Works in two modes:
@@ -21,9 +22,10 @@ export function usePaddleCheckout() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
 
-  const openCheckout = async (priceId: string, opts: { successUrl?: string } = {}) => {
+  const openCheckout = async (priceId: string, opts: { successUrl?: string; source?: string } = {}) => {
     setLoading(true);
     try {
+      analytics.checkoutOpened({ source: opts.source ?? "unknown" });
       await initializePaddle();
       const paddlePriceId = await getPaddlePriceId(priceId);
       window.Paddle.Checkout.open({

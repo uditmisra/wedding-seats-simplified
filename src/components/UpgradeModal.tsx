@@ -24,7 +24,7 @@ export function UpgradeModal({ open, onOpenChange, headline, subhead, hideDemoEs
   const showDemoEscape = !hideDemoEscape && location.pathname !== "/demo";
 
   const start = async () => {
-    try { await openCheckout("unlock_lifetime"); }
+    try { await openCheckout("unlock_lifetime", { source: location.pathname }); }
     catch (e) { console.error(e); }
   };
 
