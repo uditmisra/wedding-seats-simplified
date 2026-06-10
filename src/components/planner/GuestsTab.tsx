@@ -683,6 +683,15 @@ function GuestEditor({ planId, guests, guest, onClose, onActivityLog }: {
     if (!form.name?.trim()) { toast.error("Name required"); return; }
     if (guest) {
       await supabase.from("guests").update({ ...form }).eq("id", guest.id);
+      // A declined guest shouldn't keep their chair — clearing it here keeps
+      // the seated count honest and the seat visibly free to re-fill.
+      if (form.rsvp === "declined" && guest.rsvp !== "declined") {
+        const { data: freed } = await supabase
+          .from("assignments").delete().eq("guest_id", guest.id).select();
+        if (freed?.length) {
+          toast.success(`${form.name} marked as declined — their seat is free again.`);
+        }
+      }
       onActivityLog?.("updated guest", form.name);
     } else {
       await supabase.from("guests").insert({ ...form, plan_id: planId, name: form.name });

@@ -24,7 +24,16 @@ export function UpgradeModal({ open, onOpenChange, headline, subhead, hideDemoEs
   const showDemoEscape = !hideDemoEscape && location.pathname !== "/demo";
 
   const start = async () => {
-    try { await openCheckout("unlock_lifetime", { source: location.pathname }); }
+    // Carry the user's current location through the payment flow so they land
+    // back exactly where they were (e.g. the Export tab) — losing your place
+    // right after paying reads as "did that even work?".
+    const next = encodeURIComponent(location.pathname + location.search);
+    try {
+      await openCheckout("unlock_lifetime", {
+        source: location.pathname,
+        successUrl: `${window.location.origin}/post-pay?next=${next}`,
+      });
+    }
     catch (e) { console.error(e); }
   };
 

@@ -12,10 +12,15 @@ export function usePlanData(code: string | undefined) {
   const [constraints, setConstraints] = useState<ConstraintDef[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  // Timestamp of the last confirmed round-trip with the database — set on
+  // every successful snapshot load and every realtime change event. This is
+  // what the header's saved indicator reflects, so it must never be faked.
+  const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null);
 
   const loadAll = useCallback(async (planCode: string, scnId: string | null) => {
     const { data, error } = await supabase.rpc("get_plan_snapshot", { _code: planCode });
     if (error || !data) return;
+    setLastSyncedAt(Date.now());
     const snap = data as unknown as {
       scenarios: Scenario[]; guests: Guest[];
       tables: TableDef[]; assignments: Assignment[]; constraints: ConstraintDef[];
@@ -61,6 +66,7 @@ export function usePlanData(code: string | undefined) {
       setTables(chosen?.id ? tables.filter(t => t.scenario_id === chosen!.id) : tables);
       setAssignments(chosen?.id ? assigns.filter(a => a.scenario_id === chosen!.id) : assigns);
       setConstraints(s.constraints ?? []);
+      setLastSyncedAt(Date.now());
       setLoading(false);
     })();
     return () => { active = false; };
@@ -73,6 +79,9 @@ export function usePlanData(code: string | undefined) {
     if (!plan || !code) return;
     let timer: ReturnType<typeof setTimeout> | null = null;
     const reload = () => {
+      // A change event means a write reached the database — our own or a
+      // collaborator's. Either way, what's on the server is current.
+      setLastSyncedAt(Date.now());
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => loadAll(code, scenarioId), 350);
     };
@@ -100,5 +109,5 @@ export function usePlanData(code: string | undefined) {
     }
   }, [plan, code, loadAll]);
 
-  return { plan, setPlan, scenarios, scenarioId, setScenarioId, guests, tables, assignments, setAssignments, constraints, loading, notFound, refresh };
+  return { plan, setPlan, scenarios, scenarioId, setScenarioId, guests, tables, assignments, setAssignments, constraints, loading, notFound, refresh, lastSyncedAt };
 }

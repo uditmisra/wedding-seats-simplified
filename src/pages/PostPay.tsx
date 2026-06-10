@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUnlock } from "@/hooks/useUnlock";
 import { useSeoHead } from "@/lib/useSeoHead";
 import { analytics } from "@/lib/analytics";
+import { toast } from "sonner";
 import { Sparkles, Loader2 } from "lucide-react";
 
 /**
@@ -37,6 +38,10 @@ import { Sparkles, Loader2 } from "lucide-react";
 export default function PostPay() {
   const [params] = useSearchParams();
   const ptxn = params.get("_ptxn") ?? params.get("ptxn");
+  // Where the user was when they started checkout. Only accept in-app paths —
+  // anything else falls back to the dashboard (prevents open-redirect abuse).
+  const rawNext = params.get("next");
+  const next = rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : null;
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { isPaid, loading: unlockLoading } = useUnlock();
@@ -50,11 +55,16 @@ export default function PostPay() {
     if (handled.current) return;
     if (authLoading || unlockLoading) return;
 
-    // Case 1: signed in + paid → go.
+    // Case 1: signed in + paid → back to where they were, or the dashboard.
     if (user && isPaid) {
       handled.current = true;
       analytics.paymentCompleted();
-      navigate("/dashboard?unlock=success", { replace: true });
+      if (next) {
+        toast.success("Unlocked — every export is yours now.");
+        navigate(next, { replace: true });
+      } else {
+        navigate("/dashboard?unlock=success", { replace: true });
+      }
       return;
     }
 
@@ -116,7 +126,7 @@ export default function PostPay() {
       };
       await tick();
     }
-  }, [user, authLoading, isPaid, unlockLoading, ptxn, navigate]);
+  }, [user, authLoading, isPaid, unlockLoading, ptxn, next, navigate]);
 
   // Case 4 timeout: signed-in-but-not-paid-yet → wait 30s for is_paid
   // to flip via realtime, then surface a fallback error.
@@ -187,6 +197,15 @@ export default function PostPay() {
             </div>
           </>
         )}
+
+        {/* The minute after paying is when trust is thinnest — keep the
+            guarantee in view the whole time. */}
+        <p className="mt-10 font-mono text-[10px] uppercase tracking-[0.18em] text-ink-4">
+          30-day money-back guarantee ·{" "}
+          <Link to="/refunds" className="underline-offset-4 hover:text-ink-2 hover:underline">
+            refund policy
+          </Link>
+        </p>
       </div>
     </div>
   );

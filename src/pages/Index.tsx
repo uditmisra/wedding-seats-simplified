@@ -656,7 +656,7 @@ const Index = () => {
                   disabled={loading || unlockLoading}
                   className="inline-flex h-12 items-center justify-center gap-1.5 rounded-full border border-ink/20 bg-paper px-6 text-[15px] text-ink transition hover:bg-paper-2 disabled:opacity-60"
                 >
-                  {loading ? <Loader2 size={14} className="animate-spin" /> : <>Start your chart <span className="font-display-italic">→</span></>}
+                  {loading ? <Loader2 size={14} className="animate-spin" /> : <>Start your chart{!isPaid && <span className="font-mono text-[12px] text-ink-3">· £10</span>} <span className="font-display-italic">→</span></>}
                 </button>
               </div>
             </div>
@@ -880,7 +880,7 @@ const Index = () => {
                   disabled={loading || unlockLoading}
                   className="inline-flex h-13 items-center justify-center gap-1.5 rounded-full border border-ink/20 bg-paper px-7 text-[16px] text-ink transition hover:bg-paper-2 disabled:opacity-60"
                 >
-                  {loading ? <Loader2 size={14} className="animate-spin" /> : <>Start your chart <span className="font-display-italic">→</span></>}
+                  {loading ? <Loader2 size={14} className="animate-spin" /> : <>Start your chart{!isPaid && <span className="font-mono text-[12px] text-ink-3">· £10</span>} <span className="font-display-italic">→</span></>}
                 </button>
               </div>
               <p className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-ink-2">

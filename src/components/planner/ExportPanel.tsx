@@ -191,6 +191,10 @@ export function ExportPanel({ plan, guests, tables, assignments }: Props) {
 
   // ── Download handlers ──────────────────────────────────────────
   const handleDownload = async () => {
+    if (seated === 0) {
+      toast.error("Nothing to print yet — seat at least one guest first.");
+      return;
+    }
     if (!isPaid) {
       analytics.paywallShown({ source: "export_download" });
       setUpgradeOpen(true);
@@ -240,7 +244,15 @@ export function ExportPanel({ plan, guests, tables, assignments }: Props) {
             <p className="mt-2 text-[12px] leading-[1.6] text-ink-3">
               Four print-ready artifacts. Newsreader on cream paper. Cut marks and bleeds included.
             </p>
-            {showSeatingWarning && (
+            {seated === 0 ? (
+              <div className="mt-4 rounded-lg border border-terracotta/40 bg-terracotta/5 px-3 py-2.5">
+                <p className="font-mono text-[11px] text-ink-2">
+                  <span className="font-semibold text-terracotta">No one&apos;s seated yet</span>
+                  {" — "}the chart would print as an empty room. Seat a few guests
+                  first, then come back.
+                </p>
+              </div>
+            ) : showSeatingWarning && (
               <div className="mt-4 rounded-lg border border-butter/60 bg-butter/20 px-3 py-2.5">
                 <p className="font-mono text-[11px] text-ink-2">
                   <span className="font-semibold text-ink">{seatedPct}% seated</span>
@@ -341,7 +353,7 @@ export function ExportPanel({ plan, guests, tables, assignments }: Props) {
               <Button
                 className="flex-[2] rounded-full"
                 onClick={handleDownload}
-                disabled={busy}
+                disabled={busy || seated === 0}
               >
                 {busy ? (
                   <>
