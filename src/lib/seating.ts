@@ -22,7 +22,17 @@ export function unmetMustWith(
   });
 }
 
-/** Greedy auto-assign respecting hard constraints and preferring grouping. */
+/**
+ * Greedy auto-assign. Keep-apart ("not_with") is a HARD rule enforced at every
+ * placement; keeping a party together and honouring "must_with" are soft
+ * preferences expressed through table scoring.
+ *
+ * The previous version placed each party as one atomic block and only checked
+ * conflicts against already-seated guests — so two people in the SAME party
+ * with a keep-apart rule (e.g. divorced parents both on "Bride's family")
+ * landed at the same table. Now guests are placed one at a time, biased toward
+ * their party's table, and no placement is allowed beside an enemy.
+ */
 export function autoAssign(
   guests: Guest[],
   tables: TableDef[],
@@ -31,18 +41,23 @@ export function autoAssign(
   opts: { includeMaybe?: boolean; respectPinned?: boolean } = {}
 ): Map<string, string> {
   const result = new Map<string, string>();
-  const tableFill = new Map<string, number>();
-  tables.forEach(t => tableFill.set(t.id, 0));
+  const seatedAt = new Map<string, Set<string>>(); // tableId -> guestIds at that table
+  const fillOf = (tid: string) => seatedAt.get(tid)?.size ?? 0;
+  const place = (gid: string, tid: string) => {
+    result.set(gid, tid);
+    if (!seatedAt.has(tid)) seatedAt.set(tid, new Set());
+    seatedAt.get(tid)!.add(gid);
+  };
 
-  // Keep pinned & existing assignments where requested
+  // Keep pinned assignments where requested.
   if (opts.respectPinned) {
     for (const a of existing) {
-      if (a.pinned) {
-        result.set(a.guest_id, a.table_id);
-        tableFill.set(a.table_id, (tableFill.get(a.table_id) ?? 0) + 1);
-      }
+      if (a.pinned) place(a.guest_id, a.table_id);
     }
   }
+
+  const partyOf = new Map<string, string | null>();
+  for (const g of guests) partyOf.set(g.id, g.party?.trim() || null);
 
   const eligible = guests.filter(g => g.rsvp === "attending" || (opts.includeMaybe && g.rsvp === "maybe"));
   const notWith = new Map<string, Set<string>>();
@@ -55,71 +70,85 @@ export function autoAssign(
     m.get(c.guest_b)!.add(c.guest_a);
   }
 
-  // Group guests by party — keep groups together
-  const groupBy = new Map<string, Guest[]>();
-  for (const g of eligible) {
-    if (result.has(g.id)) continue;
-    const key = g.party?.trim() || `__solo_${g.id}`;
-    if (!groupBy.has(key)) groupBy.set(key, []);
-    groupBy.get(key)!.push(g);
-  }
-  // Sort groups largest-first
-  const groups = [...groupBy.values()].sort((a, b) => b.length - a.length);
+  // Placement order. Two grouping forces, strongest first:
+  //   1. must_with — union-find clusters so linked guests are placed
+  //      back-to-back and claim a table together before anyone fills it.
+  //   2. party — secondary tie-break so a party still tends to land together.
+  // Each guest is still seated individually so keep-apart can always split a
+  // group that contains an internal conflict.
+  const toSeat = eligible.filter(g => !result.has(g.id));
 
-  for (const group of groups) {
-    // Pick best table: enough room, no not_with conflict
-    const best = tables
-      .map(t => {
-        const fill = tableFill.get(t.id) ?? 0;
-        const room = t.capacity - fill;
-        return { t, fill, room };
-      })
-      .filter(x => x.room >= group.length || (x.room > 0 && group.length > x.t.capacity))
-      .filter(x => {
-        const seated = [...result.entries()].filter(([, tid]) => tid === x.t.id).map(([gid]) => gid);
-        for (const g of group) {
-          const enemies = notWith.get(g.id);
-          if (enemies && seated.some(s => enemies.has(s))) return false;
-        }
-        return true;
-      })
-      // Prefer tables that already have someone they "must sit with"
-      .sort((a, b) => {
-        const aBonus = scoreTable(a.t.id, group, mustWith, result);
-        const bBonus = scoreTable(b.t.id, group, mustWith, result);
-        if (aBonus !== bBonus) return bBonus - aBonus;
-        // then tightest fit
-        return a.room - b.room;
-      });
-
-    if (best.length === 0) continue; // can't seat group; skip
-    let target = best[0];
-    for (const g of group) {
-      if ((tableFill.get(target.t.id) ?? 0) >= target.t.capacity) {
-        // overflow: pick next available with room
-        const next = tables.find(t => (tableFill.get(t.id) ?? 0) < t.capacity);
-        if (!next) break;
-        target = { t: next, fill: tableFill.get(next.id) ?? 0, room: next.capacity - (tableFill.get(next.id) ?? 0) };
-      }
-      result.set(g.id, target.t.id);
-      tableFill.set(target.t.id, (tableFill.get(target.t.id) ?? 0) + 1);
+  const parent = new Map<string, string>();
+  const find = (x: string): string => {
+    let r = x;
+    while (parent.get(r) !== r) r = parent.get(r)!;
+    let c = x;
+    while (parent.get(c) !== r) { const n = parent.get(c)!; parent.set(c, r); c = n; }
+    return r;
+  };
+  for (const g of toSeat) parent.set(g.id, g.id);
+  for (const c of constraints) {
+    if (c.kind === "with" && parent.has(c.guest_a) && parent.has(c.guest_b)) {
+      parent.set(find(c.guest_a), find(c.guest_b));
     }
+  }
+  const clusterSize = new Map<string, number>();
+  for (const g of toSeat) {
+    const r = find(g.id);
+    clusterSize.set(r, (clusterSize.get(r) ?? 0) + 1);
+  }
+  const partyCount = new Map<string, number>();
+  for (const g of toSeat) {
+    const p = partyOf.get(g.id);
+    if (p) partyCount.set(p, (partyCount.get(p) ?? 0) + 1);
+  }
+
+  const order = [...toSeat].sort((a, b) => {
+    const ca = clusterSize.get(find(a.id)) ?? 1;
+    const cb = clusterSize.get(find(b.id)) ?? 1;
+    if (ca !== cb) return cb - ca;                       // bigger must_with clusters first
+    if (find(a.id) !== find(b.id)) return find(a.id) < find(b.id) ? -1 : 1; // keep clusters contiguous
+    const pa = partyOf.get(a.id), pb = partyOf.get(b.id);
+    const na = pa ? partyCount.get(pa) ?? 0 : 0;
+    const nb = pb ? partyCount.get(pb) ?? 0 : 0;
+    if (na !== nb) return nb - na;                       // bigger parties first
+    if (pa !== pb) return (pa ?? "") < (pb ?? "") ? -1 : 1; // keep parties contiguous
+    return 0;
+  });
+
+  const hasEnemyAt = (gid: string, tid: string): boolean => {
+    const enemies = notWith.get(gid);
+    if (!enemies) return false;
+    const here = seatedAt.get(tid);
+    if (!here) return false;
+    for (const e of enemies) if (here.has(e)) return true;
+    return false;
+  };
+
+  for (const g of order) {
+    const candidates = tables
+      .filter(t => fillOf(t.id) < t.capacity)   // has room
+      .filter(t => !hasEnemyAt(g.id, t.id));     // HARD: no keep-apart enemy seated here
+    if (candidates.length === 0) continue;       // can't seat this guest without a conflict
+
+    const myParty = partyOf.get(g.id) ?? null;
+    const friends = mustWith.get(g.id);
+    const scored = candidates.map(t => {
+      const here = seatedAt.get(t.id);
+      let score = 0;
+      if (here) {
+        for (const other of here) {
+          if (friends?.has(other)) score += 100;                          // must_with: strongest pull
+          else if (myParty && partyOf.get(other) === myParty) score += 10; // same party
+        }
+      }
+      return { t, score, fill: fillOf(t.id) };
+    });
+    // Highest score; among ties, the fuller table (finish tables before
+    // spreading thin) so parties consolidate rather than scatter.
+    scored.sort((a, b) => b.score - a.score || b.fill - a.fill);
+    place(g.id, scored[0].t.id);
   }
 
   return result;
-}
-
-function scoreTable(
-  tableId: string,
-  group: Guest[],
-  mustWith: Map<string, Set<string>>,
-  current: Map<string, string>
-): number {
-  const seated = [...current.entries()].filter(([, tid]) => tid === tableId).map(([gid]) => gid);
-  let score = 0;
-  for (const g of group) {
-    const friends = mustWith.get(g.id);
-    if (friends) score += seated.filter(s => friends.has(s)).length;
-  }
-  return score;
 }

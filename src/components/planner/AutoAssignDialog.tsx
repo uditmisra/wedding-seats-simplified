@@ -41,7 +41,23 @@ export function AutoAssignDialog({ planId, scenarioId, guests, tables, assignmen
   const compute = () => {
     const result = autoAssign(guests, tables, assignments, constraints, { includeMaybe, respectPinned: keepExisting });
     if (keepExisting) {
-      for (const a of assignments) if (!result.has(a.guest_id)) result.set(a.guest_id, a.table_id);
+      // Re-add original placements for guests auto-assign didn't touch (e.g.
+      // un-included "maybe" RSVPs) — but never if it would seat them beside a
+      // keep-apart enemy who's now at that table.
+      const enemiesOf = new Map<string, Set<string>>();
+      for (const c of constraints.filter(c => c.kind === "not_with")) {
+        if (!enemiesOf.has(c.guest_a)) enemiesOf.set(c.guest_a, new Set());
+        if (!enemiesOf.has(c.guest_b)) enemiesOf.set(c.guest_b, new Set());
+        enemiesOf.get(c.guest_a)!.add(c.guest_b);
+        enemiesOf.get(c.guest_b)!.add(c.guest_a);
+      }
+      const atTable = (tid: string) => [...result.entries()].filter(([, t]) => t === tid).map(([g]) => g);
+      for (const a of assignments) {
+        if (result.has(a.guest_id)) continue;
+        const enemies = enemiesOf.get(a.guest_id);
+        if (enemies && atTable(a.table_id).some(g => enemies.has(g))) continue; // would conflict — leave unseated
+        result.set(a.guest_id, a.table_id);
+      }
     }
     setPreview(result);
 
