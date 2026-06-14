@@ -32,9 +32,30 @@ function generateToken(): string {
     .join('')
 }
 
-// Auth note: this function uses verify_jwt = true in config.toml, so Supabase's
-// gateway validates the caller's JWT (anon or service_role) before the request
-// reaches this code. No in-function auth check is needed.
+// Auth note: verify_jwt = true means the gateway validates the JWT's SIGNATURE
+// before we run — but the public anon key is itself a valid JWT, so signature
+// validity alone would let any anonymous internet user send mail through our
+// verified domain (spam / phishing amplifier). We therefore gate on the JWT's
+// `role` claim, which the gateway has already authenticated:
+//   - service_role  → trusted backend (webhooks): may send any template
+//   - authenticated → a signed-in user: may send only CLIENT_TEMPLATES
+//   - anon / none   → rejected
+// The role claim is trustworthy here precisely because verify_jwt validated
+// the signature, so we can read it without re-verifying.
+const CLIENT_TEMPLATES = new Set(['share-invite'])
+
+function jwtRole(authHeader: string | null): string | null {
+  if (!authHeader?.startsWith('Bearer ')) return null
+  try {
+    const payload = authHeader.slice(7).split('.')[1]
+    const json = JSON.parse(
+      atob(payload.replace(/-/g, '+').replace(/_/g, '/')),
+    )
+    return typeof json.role === 'string' ? json.role : null
+  } catch {
+    return null
+  }
+}
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -89,6 +110,23 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     )
+  }
+
+  // Role-gate before doing any work (see auth note above).
+  const role = jwtRole(req.headers.get('Authorization'))
+  if (role !== 'service_role') {
+    if (role !== 'authenticated') {
+      return new Response(
+        JSON.stringify({ error: 'Sign in to send invitations.' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    if (!CLIENT_TEMPLATES.has(templateName)) {
+      return new Response(
+        JSON.stringify({ error: 'That email type can only be sent by the system.' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
   }
 
   // 1. Look up template from registry (early — needed to resolve recipient)

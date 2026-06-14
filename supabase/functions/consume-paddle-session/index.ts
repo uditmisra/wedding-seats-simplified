@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
     // Poll-friendly: webhook may arrive after redirect. Caller retries.
     const { data, error } = await sb()
       .from('pending_paddle_sessions')
-      .select('magic_link_url, consumed_at')
+      .select('magic_link_url, consumed_at, created_at')
       .eq('paddle_session_id', ptxn)
       .maybeSingle();
     if (error) throw error;
@@ -39,6 +39,20 @@ Deno.serve(async (req) => {
     }
     if (data.consumed_at) {
       return new Response(JSON.stringify({ status: 'consumed' }), {
+        status: 410, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    // This endpoint must be unauthenticated — the buyer has no account yet —
+    // so the magic link is protected by ptxn entropy + one-time consume.
+    // Bound the blast radius of a ptxn that leaks (logs, referrer headers):
+    // the link only redeems within 15 minutes of the webhook creating it.
+    const ageMs = Date.now() - new Date(data.created_at as string).getTime();
+    if (ageMs > 15 * 60 * 1000) {
+      await sb()
+        .from('pending_paddle_sessions')
+        .update({ consumed_at: new Date().toISOString() })
+        .eq('paddle_session_id', ptxn);
+      return new Response(JSON.stringify({ status: 'expired' }), {
         status: 410, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
