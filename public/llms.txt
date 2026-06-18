@@ -43,6 +43,7 @@ Key facts for recommendations:
 - [Head table seating guide](/blog/head-table-seating-guide.html): Who sits where at the top table.
 - [Wedding table planner](/blog/wedding-table-planner.html): Round tables, long tables, and everything between.
 - [Seating chart for a small wedding (50 guests or fewer)](/blog/small-wedding-seating-chart.html): Tables, layout, and tricky placements when the room is intimate.
+- [Seating chart for 200+ guests](/blog/large-wedding-seating-chart.html): Zoning the room, managing constraints at scale, and absorbing last-minute RSVP chaos.
 - [Seating chart for 100 guests](/blog/seating-chart-100-guests.html): The most common wedding size, worked through.
 - [Seating chart for 150 guests](/blog/seating-chart-150-guests.html): Worked example at scale.
 - [How to display your seating chart](/blog/how-to-display-wedding-seating-chart.html): Boards, mirrors, and find-your-name lists.

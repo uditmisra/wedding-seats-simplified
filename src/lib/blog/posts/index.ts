@@ -32,9 +32,11 @@ import { post as post30 } from "./the-knot-seating-chart-alternative";
 import { post as post31 } from "./canva-wedding-seating-chart";
 import { post as post32 } from "./kids-table-wedding";
 import { post as post33 } from "./small-wedding-seating-chart";
+import { post as post34 } from "./large-wedding-seating-chart";
 
 // Most-recent first
 const posts: BlogPost[] = [
+  post34,
   post33,
   post32,
   post31,
