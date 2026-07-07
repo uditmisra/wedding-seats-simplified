@@ -27,7 +27,7 @@ Here is what actually changes.
 
 With a buffet, your seating chart tells guests where to sit — any seat at Table 7 is fine. With a plated dinner where guests pre-selected their meal, your seating chart tells the serving staff which plate goes in front of which person.
 
-That is a fundamentally different job. It means every guest needs a named place card at a specific seat, carrying a discreet signal — a coloured dot, a stamped initial, a ribbon — that tells the server which option they ordered. Without it, service grinds to a halt: staff interrupt every course to poll tables ("who had the beef?"), which slows service for the whole room, reads as chaotic, and puts guests in the uncomfortable position of having to remember — and broadcast — their dietary choices mid-conversation.
+That is a fundamentally different job. It means every guest needs a named [place card](/blog/escort-cards-vs-place-cards.html) at a specific seat, carrying a discreet signal — a coloured dot, a stamped initial, a ribbon — that tells the server which option they ordered. Without it, service grinds to a halt: staff interrupt every course to poll tables ("who had the beef?"), which slows service for the whole room, reads as chaotic, and puts guests in the uncomfortable position of having to remember — and broadcast — their dietary choices mid-conversation.
 
 The moment you commit to a plated dinner with multiple menu choices, you have also committed to collecting meal selections on RSVPs, getting that data into your seating chart, and printing place cards with meal markers. That is more work than buffet logistics, and it is work that compounds with every late RSVP.
 

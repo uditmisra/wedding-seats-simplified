@@ -100,7 +100,7 @@ Tell the venue coordinator about any additions after the headcount is locked, so
 
 By 48 hours before the wedding, the chart should be locked. No new changes unless a guest contacts you with a genuine emergency. Here's the closing sequence:
 
-**Print tonight, not the morning of.** Place cards, escort cards, the alphabetical find-your-name chart — print them the evening before the wedding. A broken printer at 6 a.m. on the day is a catastrophe that's easy to avoid. Print a small number of blank spares in the right size for emergency handwriting.
+**Print tonight, not the morning of.** Place cards, [escort cards](/blog/escort-cards-vs-place-cards.html), the alphabetical find-your-name chart — print them the evening before the wedding. A broken printer at 6 a.m. on the day is a catastrophe that's easy to avoid. Print a small number of blank spares in the right size for emergency handwriting.
 
 **Create a table-by-table manifest.** A simple list: Table 1 — 8 guests — [names]. Give one copy to the venue coordinator and keep one for yourself. If a guest can't find their seat, this is what gets checked — not your phone, not your memory.
 

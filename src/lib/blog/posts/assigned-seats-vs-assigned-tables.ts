@@ -73,9 +73,9 @@ The decision you make here directly determines what you need to design, print, a
 
 **Open seating:** nothing. Maybe a sign that says "pick a seat, not a side."
 
-**Assigned tables:** one of two things. A **seating chart display** — a single large board near the entrance listing every guest and their table number, ideally alphabetized by guest name (not grouped by table — guests know their own name, not their table). Or **escort cards** — one small card per guest on a table near the entrance, with their name and table number; guests collect their card and carry it in. The chart is less printing and zero day-of setup beyond an easel; escort cards double as a favor surface and handle late changes more gracefully, since reprinting one card beats reprinting a whole board.
+**Assigned tables:** one of two things. A **seating chart display** — a single large board near the entrance listing every guest and their table number, ideally alphabetized by guest name (not grouped by table — guests know their own name, not their table). Or **[escort cards](/blog/escort-cards-vs-place-cards.html)** — one small card per guest on a table near the entrance, with their name and table number; guests collect their card and carry it in. The chart is less printing and zero day-of setup beyond an easel; escort cards double as a favor surface and handle late changes more gracefully, since reprinting one card beats reprinting a whole board.
 
-**Assigned seats:** everything above **plus place cards** — one at each chair, with the guest's name and, if there are meal choices, the meal indicator. Escort cards get guests to the right table; place cards get them to the right chair. Yes, formal weddings often use both.
+**Assigned seats:** everything above **plus place cards** — one at each chair, with the guest's name and, if there are meal choices, the meal indicator. Escort cards get guests to the right table; place cards get them to the right chair. The full breakdown is in [escort cards vs. place cards: what's the difference?](/blog/escort-cards-vs-place-cards.html) Yes, formal weddings often use both.
 
 There's also the artifact for you, not your guests: a master alphabetical list for whoever's directing traffic, and a floor plan for the venue so the tables physically end up where your chart assumes they are.
 

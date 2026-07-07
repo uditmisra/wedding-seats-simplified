@@ -23,7 +23,7 @@ Here's how to set it up so it works.
 
 **3. Place cards.** Individual cards *at each seat* at each table. Tells guests exactly which chair is theirs. Use *in addition to* one of the above — never alone, because guests still need to find their table first.
 
-Most weddings use **the sign + place cards**: the sign tells guests their table, the place card tells them their seat. Escort cards replace the sign if you want the more formal look.
+Most weddings use **the sign + place cards**: the sign tells guests their table, the place card tells them their seat. [Escort cards](/blog/escort-cards-vs-place-cards.html) replace the sign if you want the more formal look.
 
 ## Sign size: don't go smaller than this
 
