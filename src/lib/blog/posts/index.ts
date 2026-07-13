@@ -39,9 +39,11 @@ import { post as post37 } from "./final-two-weeks-rsvp-seating-chart";
 import { post as post38 } from "./last-minute-rsvp-changes-seating-chart";
 import { post as post39 } from "./buffet-vs-plated-dinner-seating-chart";
 import { post as post40 } from "./seating-elderly-guests-wedding";
+import { post as post41 } from "./table-numbers-vs-table-names";
 
 // Most-recent first
 const posts: BlogPost[] = [
+  post41,
   post40,
   post39,
   post38,
