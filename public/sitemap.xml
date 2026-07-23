@@ -19,12 +19,18 @@
   <!-- Blog index -->
   <url>
     <loc>https://weddingseater.app/blog.html</loc>
-    <lastmod>2026-07-20</lastmod>
+    <lastmod>2026-07-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <!-- Blog posts (sorted by publishDate, newest first) -->
+  <url>
+    <loc>https://weddingseater.app/blog/plus-one-etiquette-wedding-seating.html</loc>
+    <lastmod>2026-07-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
   <url>
     <loc>https://weddingseater.app/blog/10-wedding-seating-chart-mistakes.html</loc>
     <lastmod>2026-07-20</lastmod>
