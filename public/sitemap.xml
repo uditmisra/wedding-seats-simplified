@@ -19,12 +19,18 @@
   <!-- Blog index -->
   <url>
     <loc>https://weddingseater.app/blog.html</loc>
-    <lastmod>2026-09-21</lastmod>
+    <lastmod>2026-09-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <!-- Blog posts (sorted by publishDate, newest first) -->
+  <url>
+    <loc>https://weddingseater.app/blog/long-table-banquet-wedding-seating.html</loc>
+    <lastmod>2026-09-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
   <url>
     <loc>https://weddingseater.app/blog/wedding-reception-table-layout.html</loc>
     <lastmod>2026-09-21</lastmod>

@@ -1,4 +1,5 @@
 import type { BlogPost } from "../types";
+import { post as post62 } from "./long-table-banquet-wedding-seating";
 import { post as post61 } from "./wedding-reception-table-layout";
 import { post as post60 } from "./wedding-vendor-seating";
 import { post as post59 } from "./barn-wedding-seating-chart";
@@ -63,6 +64,7 @@ import { post as post41 } from "./table-numbers-vs-table-names";
 
 // Most-recent first
 const posts: BlogPost[] = [
+  post62,
   post61,
   post60,
   post59,
