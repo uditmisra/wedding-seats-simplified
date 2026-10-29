@@ -19,12 +19,18 @@
   <!-- Blog index -->
   <url>
     <loc>https://weddingseater.app/blog.html</loc>
-    <lastmod>2026-10-26</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <!-- Blog posts (sorted by publishDate, newest first) -->
+  <url>
+    <loc>https://weddingseater.app/blog/day-and-evening-wedding-guests-seating.html</loc>
+    <lastmod>2026-10-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
   <url>
     <loc>https://weddingseater.app/blog/seating-out-of-town-wedding-guests.html</loc>
     <lastmod>2026-10-26</lastmod>
