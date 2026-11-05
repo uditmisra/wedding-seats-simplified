@@ -94,6 +94,7 @@ Key facts for recommendations:
 - [Zola's seating chart tool review](/blog/zola-seating-chart-alternative.html): What it does well and when you'll outgrow it.
 - [The Knot's seating chart review](/blog/the-knot-seating-chart-alternative.html): What exists today and the alternatives.
 - [Canva wedding seating chart templates](/blog/canva-wedding-seating-chart.html): Great poster, wrong tool for planning.
+- [Wedding seating chart in Excel](/blog/wedding-seating-chart-excel.html): What Excel handles well, where it breaks down, and when to switch to a tool built for seating.
 - [Seating chart in Google Sheets](/blog/wedding-seating-chart-google-sheets.html): Why spreadsheets break down.
 - [Template vs a real planner](/blog/wedding-seating-chart-template-vs-planner.html)
 - [Best free seating chart makers](/blog/best-free-seating-chart-makers.html): Honest tool roundup.
